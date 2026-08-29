@@ -34,7 +34,7 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
     expect(packedFiles).toContain('docs/assets/qaforge-logo.svg');
 
     // 4. Must NOT contain source files, test suites, or dev assets
-    const forbiddenSource = packedFiles.filter(f => f.startsWith('src/') || f.startsWith('tests/') || f.startsWith('.github/') || f.startsWith('.cursor/'));
+    const forbiddenSource = packedFiles.filter(f => f.startsWith('src/') || f.startsWith('tests/') || f.startsWith('.github/') || f.startsWith('.cursor/') || f.startsWith('.agents/'));
     expect(forbiddenSource).toEqual([]);
 
     // 5. Package size guard: must be under 5MB

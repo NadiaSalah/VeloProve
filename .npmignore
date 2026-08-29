@@ -5,6 +5,7 @@ fixtures/
 scripts/
 .github/
 .cursor/
+.agents/
 coverage/
 
 # Development configuration files

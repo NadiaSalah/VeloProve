@@ -48,6 +48,7 @@ blob-report/
 *.pfx
 
 # 7. IDE, Editor & Tool State
+.cursor/
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
