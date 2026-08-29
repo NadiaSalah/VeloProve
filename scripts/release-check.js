@@ -80,6 +80,7 @@ try {
     'dist/cli/index.js',
     'dist/mcp/server.js',
     'docs/GETTING_STARTED.md',
+    'docs/DASHBOARD_UI.md',
     'docs/CLI_REFERENCE.md',
     'docs/MCP_REFERENCE.md',
     'docs/FEATURES_GUIDE.md',

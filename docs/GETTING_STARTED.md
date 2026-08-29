@@ -74,6 +74,12 @@ npx qaforge test
 npx qaforge release
 ```
 
+### Step 7: Launch Live Web Dashboard UI
+```bash
+npx qaforge ui -o
+```
+Explore test plans, real-time runner logs, failure self-healing, Postman-like API tester, and architecture graphs in your browser. (See [Dashboard UI Guide](DASHBOARD_UI.md)).
+
 ---
 
 ## 🤖 Connecting to AI Editors (Cursor, Windsurf, Claude Code, Cline)

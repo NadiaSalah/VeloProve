@@ -29,6 +29,7 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
     const docFiles = packedFiles.filter(f => f.startsWith('docs/'));
     expect(docFiles.length).toBeGreaterThanOrEqual(6);
     expect(packedFiles).toContain('docs/GETTING_STARTED.md');
+    expect(packedFiles).toContain('docs/DASHBOARD_UI.md');
     expect(packedFiles).toContain('docs/CLI_REFERENCE.md');
     expect(packedFiles).toContain('docs/MCP_REFERENCE.md');
     expect(packedFiles).toContain('docs/assets/qaforge-logo.svg');

@@ -25,6 +25,7 @@ QAForge is a local, agentic QA and automated testing toolkit that helps AI codin
 ## 📚 Complete Documentation
 
 - 🚀 **[Getting Started Guide](docs/GETTING_STARTED.md)**: Installation, 5-minute tutorial, and setup.
+- 🖥️ **[Live Dashboard UI Guide](docs/DASHBOARD_UI.md)**: Interactive web command center, Postman studio, and visual topology graphs.
 - ⚡ **[CLI Reference](docs/CLI_REFERENCE.md)**: Full command-line reference, options, and flags.
 - 🤖 **[MCP Reference](docs/MCP_REFERENCE.md)**: Model Context Protocol tools, input schemas, and resources.
 - 🔍 **[Feature Deep Dive](docs/FEATURES_GUIDE.md)**: Detailed breakdown of all QAForge capabilities.
@@ -108,6 +109,30 @@ npx qaforge generate
 npx qaforge test
 npx qaforge release
 ```
+
+---
+
+## 🖥️ Live Web Dashboard & Command Center
+
+QAForge includes a **zero-cloud, local-first interactive Web Dashboard UI** with dark mode, real-time testing controls, and rich visual diagnostics.
+
+```bash
+# Start Dashboard on default port (http://localhost:3333)
+npx qaforge ui
+
+# Start on custom port and open automatically in browser
+npx qaforge ui -p 4000 -o
+```
+
+### ✨ Dashboard Highlights:
+* 📊 **Project Discovery & Diagnostics**: Inspect discovered routes, frameworks, test runners, and PRD requirements with single-click Doctor checks.
+* 📝 **Visual Test Planner**: Browse risk-scored test cases, filter by scope (`critical`, `e2e`, `api`, `changed`), and materialize tests on demand.
+* 🧪 **Live Runner & Self-Healing Studio**: Execute tests in real time, view failure classifications, and preview Visual-Aria locator healing diffs.
+* 📬 **Postman-like API Studio**: Send interactive HTTP requests, execute Postman v2.1 collections, and export discovered routes to Postman JSON.
+* 🗺️ **Architecture & Topology Graph**: Render interactive Mermaid.js diagrams mapping UI routes, backend APIs, databases, and microservices.
+* 🛡️ **Security & Accessibility Center**: Run OWASP Top 10 scans, audit WCAG 2.1 rules, and simulate screen reader speech flows.
+
+👉 **[Read the Full Dashboard UI Documentation](docs/DASHBOARD_UI.md)**
 
 ---
 
