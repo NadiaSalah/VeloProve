@@ -7,13 +7,15 @@ import path from 'node:path';
 import { QAForgeEngine } from '../application/engine.js';
 import { runMcpServer } from '../mcp/server.js';
 import { DEFAULT_CONFIG } from '../shared/config-loader.js';
+import { renderQAForgeBanner, renderCommandHeader, renderBox } from './banner.js';
 
 const program = new Command();
 
 program
   .name('qaforge')
   .description('Local-First Agentic QA & Automated Testing Toolkit')
-  .version('1.0.0');
+  .version('1.0.0')
+  .addHelpText('before', renderQAForgeBanner());
 
 // 1. init
 program
@@ -23,7 +25,8 @@ program
   .option('--mcp', 'Configure local MCP server integration for AI agents', false)
   .action(async (opts) => {
     const cwd = process.cwd();
-    console.log(pc.bold(pc.cyan('\n⚡ QAForge — Build. Test. Trust.')));
+    console.log(renderQAForgeBanner());
+    renderCommandHeader('init', 'Project Setup & AI Agent Integration');
 
     // 1. Ensure .qaforge directory structure
     const qaforgeDirs = [
@@ -106,10 +109,13 @@ program
     console.log(`- Package Manager: ${pc.bold(profile.packageManager)}`);
     console.log(`- Test Runners: ${pc.bold(profile.testFrameworks.join(', ') || 'None detected (Vitest recommended)')}`);
     console.log(`- Discovered Requirements: ${pc.bold(pc.green(requirements.length))}`);
-    console.log(`\nNext steps:`);
-    console.log(`  ${pc.cyan('npx qaforge doctor')}   -> Verify environment and dependencies`);
-    console.log(`  ${pc.cyan('npx qaforge plan')}     -> Generate risk-scored test plan`);
-    console.log(`  ${pc.cyan('npx qaforge ui')}       -> Launch local live HTML command center`);
+    
+    console.log('\n' + renderBox('Quick Start & Next Steps', [
+      `1. ${pc.cyan('npx qaforge doctor')}   → Verify environment and test runners`,
+      `2. ${pc.cyan('npx qaforge plan')}     → Generate risk-prioritized test plan`,
+      `3. ${pc.cyan('npx qaforge ui')}       → Launch local live Web Command Center`,
+      `4. ${pc.cyan('npx qaforge mcp')}      → Connect AI Coding Agents via stdio`
+    ], pc.green) + '\n');
   });
 
 // 1.1 doctor
@@ -118,12 +124,12 @@ program
   .description('Run environmental, runtime, and project installation diagnostics')
   .action(() => {
     const engine = new QAForgeEngine(process.cwd());
-    console.log(pc.bold(pc.cyan('\n🩺 QAForge Environment & Installation Doctor')));
+    renderCommandHeader('doctor', 'Environment & Installation Diagnostics');
     const report = engine.doctor();
 
     const verdictColor = report.verdict === 'HEALTHY' ? pc.green : report.verdict === 'WARNINGS' ? pc.yellow : pc.red;
     console.log(pc.bold(verdictColor(`\n=== Diagnostic Verdict: ${report.verdict} (${report.passedCount}/${report.totalChecks} Passed) ===`)));
-    console.log(`Platform: ${report.platform} | Node: ${report.nodeVersion} | Root: ${report.projectRoot}\n`);
+    console.log(`Platform: ${pc.cyan(report.platform)} | Node: ${pc.cyan(report.nodeVersion)} | Root: ${pc.dim(report.projectRoot)}\n`);
 
     for (const chk of report.checks) {
       let icon = pc.green('✔');

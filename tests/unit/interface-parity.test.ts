@@ -115,4 +115,19 @@ describe('QAForge Interface Parity & Integrity Validation', () => {
     expect(mcpDocSource).not.toContain('qa.remoteBridge');
     expect(cliDocSource).not.toContain('qaforge remote\n');
   });
+
+  it('verifies CLI banner and stylized box renderers produce clean ANSI strings', async () => {
+    const { renderQAForgeBanner, renderBox } = await import('../../src/cli/banner.js');
+    const banner = renderQAForgeBanner();
+    expect(banner).toContain('QAForge CLI');
+    expect(banner).toContain('LOCAL-FIRST');
+    expect(banner).toContain('64 MCP TOOLS');
+
+    const box = renderBox('Test Title', ['Line 1', 'Line 2']);
+    expect(box).toContain('Test Title');
+    expect(box).toContain('Line 1');
+    expect(box).toContain('Line 2');
+    expect(box).toContain('╭─');
+    expect(box).toContain('╰');
+  });
 });
