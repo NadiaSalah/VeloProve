@@ -1,11 +1,87 @@
+# ==========================================
+# QAForge Comprehensive Git Ignore Configuration
+# ==========================================
+
+# 1. Dependency Directories
 node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# 2. Build & Distribution Outputs (Compiled artifacts)
 dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.turbo/
+
+# 3. Test Coverage & Diagnostic Reports
 coverage/
-*.log
-.DS_Store
-Thumbs.db
+.nyc_output/
+*.lcov
+reports/
+mochawesome-report/
+test-results/
+playwright-report/
+blob-report/
+
+# 4. QAForge Local Runtime State & Snapshots
 .qaforge/
+.qaforge-cache/
+*.db.snapshot
+*.sqlite.bak
+
+# 5. Package Tarballs & Archives
 *.tgz
+*.tar.gz
+*.zip
+
+# 6. Environment Variables, API Keys & Secrets
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.cert
+*.pfx
+
+# 7. IDE, Editor & Tool State
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# 8. OS System Files & Caches
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 9. Logs & Runtime Dumps
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.pid
+*.seed
+*.pid.lock
+
+# 10. TypeScript & Build Cache
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
