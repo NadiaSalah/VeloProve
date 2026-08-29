@@ -93,7 +93,10 @@ export * from './application/rate-limit-auditor.js';
 export * from './application/stateful-mock-server.js';
 export * from './application/architecture-graph.js';
 export * from './application/doctor-service.js';
+export * from './application/report-summary-service.js';
 export * from './cli/banner.js';
+export * from './cli/spinner.js';
+export * from './cli/prompts.js';
 
 export * from './mcp/server.js';
 

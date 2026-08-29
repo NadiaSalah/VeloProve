@@ -8,6 +8,9 @@ import { QAForgeEngine } from '../application/engine.js';
 import { runMcpServer } from '../mcp/server.js';
 import { DEFAULT_CONFIG } from '../shared/config-loader.js';
 import { renderQAForgeBanner, renderCommandHeader, renderBox } from './banner.js';
+import { createSpinner } from './spinner.js';
+import { promptInitQuestions } from './prompts.js';
+import { ReportSummaryService } from '../application/report-summary-service.js';
 
 const program = new Command();
 
@@ -52,7 +55,21 @@ program
 
     // 3. Inspect project environment
     const engine = new QAForgeEngine(cwd);
+    const spinner = createSpinner('Scanning project structure and dependencies...').start();
     const { profile, requirements } = await engine.inspect();
+    spinner.succeed(`Discovered project: ${pc.bold(profile.projectName)} (${profile.frameworks.join(', ') || 'Node.js'})`);
+
+    // Interactive configuration if not -y/--yes
+    if (!opts.yes) {
+      const answers = await promptInitQuestions({
+        projectName: profile.projectName,
+        frameworks: profile.frameworks,
+        testFrameworks: profile.testFrameworks
+      });
+      if (answers.configureMcp) {
+        opts.mcp = true;
+      }
+    }
 
     // 4. Safely configure package.json scripts (non-destructive)
     const pkgPath = path.join(cwd, 'package.json');
@@ -106,10 +123,37 @@ program
 
     console.log(pc.bold(pc.green(`\n✔ QAForge initialized successfully for "${profile.projectName}"!`)));
     console.log(`- Project Type: ${pc.bold(profile.frameworks.join(', ') || 'Node.js')}`);
+    console.log(`- Workspace: ${pc.bold(profile.workspaceType)}`);
     console.log(`- Package Manager: ${pc.bold(profile.packageManager)}`);
     console.log(`- Test Runners: ${pc.bold(profile.testFrameworks.join(', ') || 'None detected (Vitest recommended)')}`);
     console.log(`- Discovered Requirements: ${pc.bold(pc.green(requirements.length))}`);
     
+    // Write summary report
+    ReportSummaryService.writeSummary({
+      projectRoot: cwd,
+      commandName: 'init',
+      title: `Project Initialized: ${profile.projectName}`,
+      verdict: 'HEALTHY',
+      metrics: {
+        'Project Name': profile.projectName,
+        'Framework': profile.frameworks.join(', ') || 'Node.js',
+        'Package Manager': profile.packageManager,
+        'Workspace Type': profile.workspaceType,
+        'Discovered Requirements': requirements.length,
+        'Test Runners': profile.testFrameworks.join(', ') || 'None'
+      },
+      details: [
+        'Initialized configuration in qaforge.config.json',
+        'Scaffolded local state and reports directories in .qaforge/',
+        profile.apps.length > 1 ? `Discovered ${profile.apps.length} workspace applications / packages` : 'Single target project structure'
+      ],
+      recommendations: [
+        'Run "npx qaforge doctor" to verify runtime dependencies',
+        'Run "npx qaforge plan" to create your first test plan',
+        'Launch "npx qaforge ui" to view the live HTML dashboard'
+      ]
+    });
+
     console.log('\n' + renderBox('Quick Start & Next Steps', [
       `1. ${pc.cyan('npx qaforge doctor')}   → Verify environment and test runners`,
       `2. ${pc.cyan('npx qaforge plan')}     → Generate risk-prioritized test plan`,
@@ -123,9 +167,12 @@ program
   .command('doctor')
   .description('Run environmental, runtime, and project installation diagnostics')
   .action(() => {
-    const engine = new QAForgeEngine(process.cwd());
+    const cwd = process.cwd();
+    const engine = new QAForgeEngine(cwd);
     renderCommandHeader('doctor', 'Environment & Installation Diagnostics');
+    const spinner = createSpinner('Running environmental diagnostic probes...').start();
     const report = engine.doctor();
+    spinner.succeed(`Diagnostics complete: ${report.verdict}`);
 
     const verdictColor = report.verdict === 'HEALTHY' ? pc.green : report.verdict === 'WARNINGS' ? pc.yellow : pc.red;
     console.log(pc.bold(verdictColor(`\n=== Diagnostic Verdict: ${report.verdict} (${report.passedCount}/${report.totalChecks} Passed) ===`)));
@@ -151,6 +198,21 @@ program
       }
     }
     console.log('');
+
+    ReportSummaryService.writeSummary({
+      projectRoot: cwd,
+      commandName: 'doctor',
+      title: `Environment & Installation Diagnostics (${report.verdict})`,
+      verdict: report.verdict,
+      metrics: {
+        'Verdict': report.verdict,
+        'Checks Passed': `${report.passedCount}/${report.totalChecks}`,
+        'Platform': report.platform,
+        'Node Version': report.nodeVersion
+      },
+      details: report.checks.map(c => `[${c.status}] **${c.title}**: ${c.message}`),
+      recommendations: report.checks.filter(c => c.remediation).map(c => `${c.title}: ${c.remediation}`)
+    });
   });
 
 // 2. inspect
@@ -158,18 +220,47 @@ program
   .command('inspect')
   .description('Inspect project structure, routes, API endpoints, and existing tests')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const cwd = process.cwd();
+    const engine = new QAForgeEngine(cwd);
+    renderCommandHeader('inspect', 'Project Stack & Route Architecture');
+    const spinner = createSpinner('Scanning AST, routes, endpoints and requirements...').start();
     const { profile, requirements, featureMap } = await engine.inspect();
+    spinner.succeed(`Inspected ${profile.projectName} (${profile.workspaceType})`);
 
     console.log(pc.bold(pc.cyan('\n=== QAForge Project Profile ===')));
     console.log(`Project: ${pc.bold(profile.projectName)} (${profile.packageManager})`);
+    console.log(`Workspace Type: ${pc.bold(profile.workspaceType)}`);
     console.log(`Frameworks: ${profile.frameworks.join(', ')}`);
+    if (profile.apps.length > 1) {
+      console.log(`Discovered Sub-Apps / Packages (${profile.apps.length}): ${pc.cyan(profile.apps.map(a => a.name).join(', '))}`);
+    }
     console.log(`Routes: ${profile.routes.length}`);
     console.log(`API Endpoints: ${profile.apiEndpoints.length}`);
     console.log(`Source Modules: ${profile.sourceFiles.length}`);
     console.log(`Existing Tests: ${profile.testFiles.length}`);
     console.log(`Discovered Requirements: ${pc.green(requirements.length)}`);
     console.log(`Feature Groups: ${pc.yellow(featureMap.features.length)}`);
+
+    ReportSummaryService.writeSummary({
+      projectRoot: cwd,
+      commandName: 'inspect',
+      title: `Project Inspection: ${profile.projectName}`,
+      verdict: 'INFO',
+      metrics: {
+        'Project Name': profile.projectName,
+        'Workspace': profile.workspaceType,
+        'Routes Count': profile.routes.length,
+        'API Endpoints': profile.apiEndpoints.length,
+        'Source Files': profile.sourceFiles.length,
+        'Existing Tests': profile.testFiles.length,
+        'PRD Requirements': requirements.length
+      },
+      details: [
+        `Frameworks: ${profile.frameworks.join(', ') || 'Node.js'}`,
+        `Languages: ${profile.languages.join(', ')}`,
+        `Apps / Packages: ${profile.apps.map(a => a.name).join(', ')}`
+      ]
+    });
   });
 
 // 2.1 agent-handshake
@@ -376,8 +467,12 @@ program
   .description('Run release verification check and calculate confidence score')
   .option('--ci', 'CI deterministic mode (exits 1 on failure)')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const cwd = process.cwd();
+    const engine = new QAForgeEngine(cwd);
+    renderCommandHeader('release', 'Release Confidence & Gatekeeper');
+    const spinner = createSpinner('Evaluating PRD coverage, test results, and release confidence...').start();
     const report = await engine.releaseCheck();
+    spinner.succeed(`Release assessment complete: ${report.verdict} (${report.confidenceScore}/100)`);
 
     const vColor = report.verdict === 'READY' ? pc.green : report.verdict === 'READY_WITH_WARNINGS' ? pc.yellow : pc.red;
     console.log(pc.bold(vColor(`\n=== Release Verdict: ${report.verdict} (Score: ${report.confidenceScore}/100) ===`)));
@@ -389,6 +484,24 @@ program
       console.log(pc.bold(pc.red('\nBlockers:')));
       for (const b of report.blockers) console.log(`  ✖ ${b}`);
     }
+
+    ReportSummaryService.writeSummary({
+      projectRoot: cwd,
+      commandName: 'release',
+      title: `Release Readiness Gate: ${report.verdict} (${report.confidenceScore}/100)`,
+      verdict: report.verdict === 'READY' ? 'PASSED' : report.verdict === 'READY_WITH_WARNINGS' ? 'WARNINGS' : 'FAILED',
+      metrics: {
+        'Confidence Score': `${report.confidenceScore}/100`,
+        'Verdict': report.verdict,
+        'Requirements Covered': `${report.summary.coveredRequirements}/${report.summary.totalRequirements}`,
+        'Tests Passed': `${report.summary.testsPassed}/${report.summary.testsTotal}`
+      },
+      details: [
+        `Release confidence evaluation completed with verdict: **${report.verdict}**`,
+        report.blockers.length > 0 ? `Detected ${report.blockers.length} blocker(s)` : `Zero release blockers detected`
+      ],
+      recommendations: report.blockers.length > 0 ? report.blockers.map(b => `Fix blocker: ${b}`) : ['Ready for production deployment and release tagging!']
+    });
 
     if (opts.ci && report.verdict === 'NOT_READY') {
       process.exit(1);

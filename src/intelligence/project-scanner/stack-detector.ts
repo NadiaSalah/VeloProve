@@ -57,10 +57,14 @@ export class StackDetector {
     let workspaceType: WorkspaceType = 'single';
     if (fs.existsSync(path.join(projectRoot, 'pnpm-workspace.yaml'))) {
       workspaceType = 'pnpm-workspaces';
-    } else if (pkg.workspaces) {
-      workspaceType = packageManager === 'yarn' ? 'yarn-workspaces' : 'npm-workspaces';
     } else if (fs.existsSync(path.join(projectRoot, 'turbo.json'))) {
       workspaceType = 'turborepo';
+    } else if (fs.existsSync(path.join(projectRoot, 'nx.json'))) {
+      workspaceType = 'nx';
+    } else if (fs.existsSync(path.join(projectRoot, 'lerna.json'))) {
+      workspaceType = 'lerna';
+    } else if (pkg.workspaces) {
+      workspaceType = packageManager === 'yarn' ? 'yarn-workspaces' : 'npm-workspaces';
     }
 
     // Languages

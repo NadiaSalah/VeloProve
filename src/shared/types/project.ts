@@ -1,5 +1,5 @@
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun' | 'unknown';
-export type WorkspaceType = 'npm-workspaces' | 'pnpm-workspaces' | 'yarn-workspaces' | 'turborepo' | 'single';
+export type WorkspaceType = 'npm-workspaces' | 'pnpm-workspaces' | 'yarn-workspaces' | 'turborepo' | 'lerna' | 'nx' | 'single';
 
 export type FrameworkType = 
   | 'react' 
