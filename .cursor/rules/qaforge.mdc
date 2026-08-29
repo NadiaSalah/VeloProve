@@ -1,12 +1,12 @@
 ---
-description: QAForge autonomous QA and testing workflow for Cursor Agent
+description: Universal autonomous QA and testing workflow for all AI Coding Agents
 globs: **/*
 alwaysApply: true
 ---
 
-# QAForge Integration Rules for Coding Agents
+# QAForge Universal Rules for AI Coding Agents
 
-When working on software verification, bug fixes, or new features in this repository, always follow the QAForge Autonomous QA workflow:
+When working on software verification, bug fixes, or new features in this repository, all AI coding agents should follow the QAForge Autonomous QA workflow:
 
 ## 1. Inspect Project & Requirements
 Before modifying or generating tests, call `qa.inspect` to load the active project profile, framework stack, routes, and discovered PRD requirements. Call `qa.doctor` to verify environment and installation readiness. For live app visual mapping, call `qa.explore`.
