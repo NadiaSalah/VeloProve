@@ -12,7 +12,6 @@ export class RequirementDiscovery {
 
     // 1. Scan for PRDs and Markdown specs
     const docCandidates = [
-      'QAFORGE_PRD.md',
       'PRD.md',
       'README.md',
       'SPEC.md',

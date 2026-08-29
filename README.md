@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/qaforge-logo.svg" alt="QAForge Logo" width="380" />
+  <img src="https://raw.githubusercontent.com/NadiaSalah/QAForge/main/docs/assets/qaforge-logo.svg" alt="QAForge Logo" width="380" />
 </p>
 
 <h1 align="center">QAForge</h1>

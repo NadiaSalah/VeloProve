@@ -1,0 +1,25 @@
+# Source and build configuration
+src/
+tests/
+fixtures/
+scripts/
+.github/
+.cursor/
+coverage/
+
+# Development configuration files
+tsconfig.json
+tsconfig.build.json
+vitest.config.ts
+.gitignore
+.npmignore
+.env
+.env.*
+
+# Temporary, cache, and local files
+.qaforge/
+*.log
+*.tmp
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
