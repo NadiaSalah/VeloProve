@@ -1,0 +1,66 @@
+---
+description: QAForge autonomous QA and testing workflow for Cursor Agent
+globs: **/*
+alwaysApply: true
+---
+
+# QAForge Integration Rules for Coding Agents
+
+When working on software verification, bug fixes, or new features in this repository, always follow the QAForge Autonomous QA workflow:
+
+## 1. Inspect Project & Requirements
+Before modifying or generating tests, call `qa.inspect` to load the active project profile, framework stack, routes, and discovered PRD requirements. Call `qa.doctor` to verify environment and installation readiness. For live app visual mapping, call `qa.explore`.
+
+## 2. Test Planning & Verification
+- When asked to test a feature or ensure coverage, run `qa.plan` to generate a risk-scored test plan.
+- Use `qa.generate` to materialize missing test files without overwriting developer-written tests.
+
+## 3. Verify Code Changes & Impact Analysis
+- After refactoring or writing new code, run `qa.changed` to identify only the impacted unit, integration, and E2E tests.
+- Execute affected tests using `qa.run({ scope: "changed" })` or `qa.run({ paths: [...] })`.
+
+## 4. Diagnostics, Safe Healing & Refinement
+- If a test fails, invoke `qa.diagnose` to retrieve evidence-based classification (`APPLICATION_BUG`, `TEST_BUG`, `FLAKY_TEST`, etc.).
+- If classified as `TEST_BUG` (e.g. stale locator), run `qa.heal` to repair test locators automatically via Visual-Aria rules.
+- If classified as `APPLICATION_BUG`, use `qa.suggestFix` to inspect root-cause recommendations and update application source code.
+- To adjust assertions or steps with natural language, call `qa.refine`.
+
+## 5. Security, Accessibility, Performance & Contract Checks
+- Run `qa.lint` to enforce static code quality and auto-fix formatting errors.
+- Run `qa.auditSec` to audit dependency CVEs and scan for hardcoded secrets.
+- Run `qa.perf` to profile Core Web Vitals across application routes.
+- Run `qa.mockNetwork` to generate MSW network mock handlers for decoupled testing.
+- Run `qa.quarantine` to isolate high-variance flaky tests.
+- Run `qa.coverage` to generate functional requirements coverage heatmaps.
+- Run `qa.accessibility` to audit WCAG 2.1 standards on UI components.
+- Run `qa.contractDrift` to ensure code routes match OpenAPI contracts.
+- Run `qa.fuzzApi` to generate security and boundary probes.
+- Run `qa.runCollection` to execute Postman v2.1 collection test suites with variable interpolation.
+- Run `qa.exportCollection` to export discovered APIs to Postman collection JSON.
+- Run `qa.visualDiff` to ensure no unexpected visual regressions occurred.
+- Run `qa.remoteInit`, `qa.remoteConnect`, `qa.remoteAudit` to connect local QAForge to any live website using a drop-in probe file.
+- Run `qa.recordScenario`, `qa.stabilizeFlaky`, `qa.dbSnapshot`, `qa.dbRestore`, `qa.autoBugFix`, `qa.exportReport`.
+- Run `qa.chaosTest` for chaos injection, `qa.dockerEnv` for isolated container setups, `qa.browserMatrix` for cross-browser matrices, `qa.bddFeatures` for BDD specs, and `qa.sendAlert` for Slack/Discord alerts.
+- Run `qa.featureParity` to audit UI-to-Backend parity and detect ghost features.
+- Run `qa.scanMalware` and `qa.remediateMalware` to audit project for backdoors & auto-neutralize malicious code.
+- Run `qa.aiEvaluate`, `qa.gitBisect`, `qa.networkThrottle`, `qa.smartContractAudit`, `qa.deadAssetPurge` for extended Phase 6 capabilities.
+- Run `qa.screenReaderSim`, `qa.dbQueryAudit`, `qa.envDriftAudit`, `qa.recordFailureReplay`, `qa.rateLimitAudit`, `qa.statefulMock`, `qa.architectureGraph` for Phase 7 Enterprise capabilities.
+- If working with custom or in-house frameworks, invoke `qa.learnFramework`.
+
+
+
+## 6. Release Readiness
+Before concluding complex tasks or PR preparation, run `qa.releaseCheck` to calculate the release confidence score and verify all requirements are covered.
+
+## 7. Mandatory Post-Modification Protocol
+On ANY code modification or feature enhancement, the agent MUST:
+1. **Test Immediately**: Run `qa.changed` / `qa.run` or `npm run test` after changes.
+2. **Synchronize All Interfaces**:
+   - Update CLI (`src/cli/index.ts`).
+   - Update MCP Server (`src/mcp/server.ts`).
+   - Update Dashboard (`src/application/dashboard-server.ts`) when applicable.
+   - Update all `.md` files in `docs/` and root (`README.md`, `AGENTS.md`, `CHANGELOG.md`).
+3. **Purge Old & Duplicate Code**: Clean up unused imports, dead functions, redundant logic, and obsolete documentation.
+4. **Interface Parity Validation**: Run parity and integrity tests (`tests/unit/interface-parity.test.ts`) to ensure zero drift.
+5. **Final Verification**: Run `npm run build` and `npm run test` to guarantee 0 errors.
+

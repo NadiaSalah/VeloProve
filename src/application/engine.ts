@@ -1,0 +1,613 @@
+import type { ProjectProfile } from '../shared/types/project.js';
+import type { DiscoveredRequirement, FeatureMap } from '../shared/types/requirements.js';
+import type { TestPlan, TestRunRequest, TestRunResult, GeneratedTestFile, OverwritePolicy } from '../shared/types/tests.js';
+import type { DiagnosticResult, HealResult, SourceFixSuggestion } from '../shared/types/diagnostics.js';
+import type { ReleaseConfidenceReport, FlakyTestReport } from '../shared/types/release.js';
+import type { ImpactAnalysisResult } from '../intelligence/change-impact/dependency-graph.js';
+
+import { WorkspaceGuard } from '../execution/workspace-guard.js';
+import { LocalStorage } from '../storage/local-store.js';
+import { ConfigLoader } from '../shared/config-loader.js';
+import { ProjectScanner } from '../intelligence/project-scanner/index.js';
+import { RequirementDiscovery } from '../intelligence/requirement-discovery/index.js';
+import { FeatureMapBuilder } from '../intelligence/feature-map/feature-builder.js';
+import { PlanTestsService, type PlanTestsOptions } from './plan-tests.js';
+import { GenerateTestsService } from './generate-tests.js';
+import { VitestAdapter } from '../adapters/vitest/vitest-adapter.js';
+import { JestAdapter } from '../adapters/jest/jest-adapter.js';
+import { PlaywrightAdapter } from '../adapters/playwright/playwright-adapter.js';
+import { DiagnoseFailureService } from './diagnose-failure.js';
+import { HealTestService } from './heal-test.js';
+import { VisualAutoHealService } from './visual-autoheal.js';
+import { SuggestFixService } from './suggest-fix.js';
+import { AnalyzeChangesService } from './analyze-changes.js';
+import { FlakyDetector } from '../domain/tests/flaky-detector.js';
+import { ReleaseCheckService } from './release-check.js';
+
+import { AgentAdaptationService, type AgentCapabilities, type AgentHandshakeResult } from './agent-handshake.js';
+import { AppExplorationService, type SiteExplorationResult } from './explore-app.js';
+
+import { ApiFuzzingService, type FuzzProbeResult } from './api-fuzzing.js';
+
+import { LocalDashboardServer } from './dashboard-server.js';
+
+import { CiGeneratorService } from './ci-generator.js';
+
+import { MutationScoreService, type MutationScoreResult } from './mutation-scorer.js';
+
+import { TestRefineService, type TestRefineRequest, type TestRefineResult } from './refine-test.js';
+import { A11yAuditorService, type A11yAuditResult } from './a11y-auditor.js';
+import { VisualDiffService, type VisualRegressionReport } from './visual-diff.js';
+import { ContractDriftService, type ContractDriftReport } from './contract-drift.js';
+import { WatchModeService } from './watch-mode.js';
+import { MockSandboxService, type SandboxEnvironment } from './mock-sandbox.js';
+import { LinterService, type LintOptions, type LintReport } from './linter-service.js';
+import { SecurityAuditService, type SecurityAuditReport } from './security-audit.js';
+import { PerformanceProfilerService, type PerformanceAuditReport } from './perf-profiler.js';
+import { MockNetworkGenerator, type MockNetworkResult } from './mock-network.js';
+import { QuarantineService, type QuarantineReport, type QuarantinedTestItem } from './quarantine-service.js';
+import { CoverageHeatmapService, type HeatmapReport } from './coverage-heatmap.js';
+import { TuiDashboardService } from './tui-dashboard.js';
+import { FrameworkLearnerService, type LearnFrameworkRequest, type LearnFrameworkResult } from './framework-learner.js';
+import {
+  PostmanRunnerService,
+  type PostmanCollection,
+  type PostmanRunResult,
+  type HttpRequestOptions,
+  type HttpResponseResult
+} from '../adapters/api/postman-runner.js';
+import { LoadTesterService, type LoadTestOptions, type LoadTestReport } from './load-tester.js';
+import { MockDataFactoryService, type MockDataOptions } from './mock-data-factory.js';
+import { OwaspScannerService, type OwaspScanReport } from './owasp-scanner.js';
+import {
+  RealtimeTesterService,
+  type GraphQLTestOptions,
+  type GraphQLTestResult,
+  type WebSocketTestOptions,
+  type WebSocketTestResult
+} from './realtime-tester.js';
+import {
+  RemoteBridgeService,
+  type ProbeType,
+  type RemoteProbeConfig,
+  type RemoteHandshakeResult,
+  type RemoteAuditReport
+} from './remote-bridge.js';
+import {
+  ScenarioRecorderService,
+  type ScenarioRecordingOptions,
+  type GeneratedScenarioResult
+} from './scenario-recorder.js';
+import {
+  FlakinessStabilizerService,
+  type FlakinessAuditResult
+} from './flakiness-stabilizer.js';
+import {
+  DatabaseSnapshotService,
+  type DatabaseSnapshotInfo
+} from './db-snapshot.js';
+import {
+  BugFixSynthesizerService,
+  type BugFixReport
+} from './bugfix-synthesizer.js';
+import {
+  StandaloneReportExporter,
+  type StandaloneReportOptions
+} from './report-exporter.js';
+import {
+  ChaosEngineService,
+  type ChaosTestOptions,
+  type ChaosReport
+} from './chaos-engine.js';
+import {
+  DockerOrchestratorService,
+  type DockerEnvironmentConfig,
+  type GeneratedDockerConfigResult
+} from './docker-orchestrator.js';
+import {
+  BrowserMatrixService,
+  type BrowserMatrixOptions,
+  type BrowserMatrixResult
+} from './browser-matrix.js';
+import {
+  BddGeneratorService,
+  type BddFeatureFile
+} from './bdd-generator.js';
+import {
+  WebhookAlertService,
+  type WebhookDispatchOptions,
+  type WebhookDispatchResult
+} from './webhook-alerts.js';
+import {
+  FeatureParityAuditorService,
+  type FeatureParityReport
+} from './feature-parity-auditor.js';
+import {
+  MalwareScannerService,
+  type MalwareScanReport,
+  type RemediationResult
+} from './malware-scanner.js';
+import {
+  AiHallucinationEvaluatorService,
+  type AiEvaluationPrompt,
+  type AiHallucinationReport
+} from './ai-hallucination-evaluator.js';
+import {
+  GitBisectHunterService,
+  type BisectHuntingResult
+} from './git-bisect-hunter.js';
+import {
+  NetworkThrottlerService,
+  type ThrottledRequestOptions,
+  type ThrottledResponseResult
+} from './network-throttler.js';
+import {
+  SmartContractAuditorService,
+  type SmartContractAuditReport
+} from './smart-contract-auditor.js';
+import {
+  DeadAssetPurgeService,
+  type DeadAssetReport
+} from './dead-asset-purge.js';
+import {
+  ScreenReaderSimulatorService,
+  type ScreenReaderSimulationReport
+} from './screen-reader-simulator.js';
+import {
+  DatabaseQueryAuditorService,
+  type DbQueryAuditReport
+} from './db-query-auditor.js';
+import {
+  EnvDriftAuditorService,
+  type EnvDriftReport
+} from './env-drift-auditor.js';
+import {
+  FailureReplayRecorderService,
+  type FailureReplayPackage
+} from './failure-replay-recorder.js';
+import {
+  RateLimitAuditorService,
+  type RateLimitProbeResult
+} from './rate-limit-auditor.js';
+import {
+  StatefulMockServerService,
+  type StatefulMockServerConfig
+} from './stateful-mock-server.js';
+import {
+  ArchitectureGraphService,
+  type ArchitectureGraphReport
+} from './architecture-graph.js';
+import {
+  DoctorService,
+  type DoctorReport
+} from './doctor-service.js';
+import fs from 'node:fs';
+
+
+
+
+
+
+export class QAForgeEngine {
+  public readonly guard: WorkspaceGuard;
+  public readonly storage: LocalStorage;
+  public readonly configLoader: ConfigLoader;
+
+  constructor(projectRoot: string = process.cwd()) {
+    this.guard = new WorkspaceGuard(projectRoot);
+    this.storage = new LocalStorage(this.guard);
+    this.configLoader = new ConfigLoader(this.guard);
+  }
+
+  public learnFramework(request: LearnFrameworkRequest = {}): LearnFrameworkResult {
+    return FrameworkLearnerService.learn(this.guard, request);
+  }
+
+  public auditSecurity(): SecurityAuditReport {
+    return SecurityAuditService.audit(this.guard);
+  }
+
+  public async profilePerf(): Promise<PerformanceAuditReport> {
+    const { profile } = await this.inspect();
+    return PerformanceProfilerService.profile(profile, this.guard);
+  }
+
+  public async generateMsw(): Promise<MockNetworkResult> {
+    const { profile, requirements } = await this.inspect();
+    return MockNetworkGenerator.generate(profile, requirements, this.guard);
+  }
+
+  public quarantineFlaky(threshold?: number): QuarantineReport {
+    return QuarantineService.quarantineFlakyTests(this.guard, this.storage, threshold);
+  }
+
+  public getQuarantined(): QuarantinedTestItem[] {
+    return QuarantineService.getQuarantined(this.guard);
+  }
+
+  public async getCoverageHeatmap(): Promise<HeatmapReport> {
+    const { profile, requirements } = await this.inspect();
+    const latestRun = this.storage.getLatestTestRun();
+    return CoverageHeatmapService.generateHeatmap(requirements, profile, latestRun);
+  }
+
+  public async renderTui(): Promise<void> {
+    return TuiDashboardService.renderTui(this);
+  }
+
+  public async lint(options: LintOptions = {}): Promise<LintReport> {
+    return LinterService.runLint(this.guard, options);
+  }
+
+  public async refineTest(request: TestRefineRequest): Promise<TestRefineResult> {
+    return TestRefineService.refine(this.guard, request);
+  }
+
+  public async auditA11y(): Promise<A11yAuditResult> {
+    const { profile } = await this.inspect();
+    return A11yAuditorService.audit(profile, this.guard);
+  }
+
+  public async compareVisuals(): Promise<VisualRegressionReport> {
+    return VisualDiffService.compareSnapshots(this.guard);
+  }
+
+  public async checkContractDrift(): Promise<ContractDriftReport> {
+    const { profile, requirements } = await this.inspect();
+    return ContractDriftService.detectDrift(profile, requirements);
+  }
+
+  public async runPostmanCollection(
+    collectionPathOrJson: string,
+    envPathOrJson?: string,
+    baseURL?: string
+  ): Promise<PostmanRunResult> {
+    const collection = PostmanRunnerService.loadCollection(this.guard, collectionPathOrJson);
+    const initialEnv = envPathOrJson ? PostmanRunnerService.loadEnvironment(this.guard, envPathOrJson) : undefined;
+    return PostmanRunnerService.runCollection(collection, { initialEnv, baseURL });
+  }
+
+  public async exportPostmanCollection(
+    outputPath = 'qaforge_postman_collection.json',
+    collectionName?: string
+  ): Promise<{ collection: PostmanCollection; savedPath: string }> {
+    const { profile, requirements } = await this.inspect();
+    const collection = PostmanRunnerService.exportToPostman(profile, requirements, collectionName);
+    const resolvedPath = this.guard.resolveSafePath(outputPath);
+    fs.writeFileSync(resolvedPath, JSON.stringify(collection, null, 2), 'utf8');
+    return { collection, savedPath: resolvedPath };
+  }
+
+  public async sendHttpRequest(options: HttpRequestOptions): Promise<HttpResponseResult> {
+    return PostmanRunnerService.sendRequest(options);
+  }
+
+  public async runLoadTest(options: LoadTestOptions): Promise<LoadTestReport> {
+    return LoadTesterService.runLoadTest(options);
+  }
+
+  public generateMockData(options: MockDataOptions = {}): unknown[] {
+    return MockDataFactoryService.generate(options);
+  }
+
+  public async scanOwasp(targetUrl: string): Promise<OwaspScanReport> {
+    return OwaspScannerService.scanEndpoint(targetUrl);
+  }
+
+  public async runGraphQL(options: GraphQLTestOptions): Promise<GraphQLTestResult> {
+    return RealtimeTesterService.runGraphQL(options);
+  }
+
+  public async testWebSocket(options: WebSocketTestOptions): Promise<WebSocketTestResult> {
+    return RealtimeTesterService.testWebSocket(options);
+  }
+
+  public generateRemoteProbe(type: ProbeType = 'standalone_js', config: RemoteProbeConfig = {}): { code: string; filename: string; instructions: string } {
+    return RemoteBridgeService.generateProbeSnippet(type, config);
+  }
+
+  public async connectRemoteSite(remoteUrl: string, bridgeSecret?: string): Promise<RemoteHandshakeResult> {
+    return RemoteBridgeService.connectAndHandshake(remoteUrl, bridgeSecret);
+  }
+
+  public async auditRemoteSite(
+    remoteUrl: string,
+    options: { includeLoadTest?: boolean; loadVus?: number; bridgeSecret?: string } = {}
+  ): Promise<RemoteAuditReport> {
+    return RemoteBridgeService.runRemoteAudit(remoteUrl, options);
+  }
+
+  public recordScenario(options: ScenarioRecordingOptions): GeneratedScenarioResult {
+    return ScenarioRecorderService.synthesizeScenario(this.guard, options);
+  }
+
+  public stabilizeTests(targetFileOrCode: string, saveFix = false): FlakinessAuditResult {
+    return FlakinessStabilizerService.stabilize(this.guard, targetFileOrCode, saveFix);
+  }
+
+  public createDbSnapshot(name: string, filePaths: string[]): DatabaseSnapshotInfo {
+    return DatabaseSnapshotService.createSnapshot(this.guard, name, filePaths);
+  }
+
+  public restoreDbSnapshot(snapshotId: string): { success: boolean; restoredFiles: string[]; error?: string } {
+    return DatabaseSnapshotService.restoreSnapshot(this.guard, snapshotId);
+  }
+
+  public listDbSnapshots(): DatabaseSnapshotInfo[] {
+    return DatabaseSnapshotService.listSnapshots(this.guard);
+  }
+
+  public async autoFixBugs(apply = false): Promise<BugFixReport> {
+    const diagnoses = await this.diagnose();
+    return BugFixSynthesizerService.synthesizePatches(this.guard, diagnoses, apply);
+  }
+
+  public exportReport(options: StandaloneReportOptions = {}): { filePath: string; format: string; sizeBytes: number } {
+    return StandaloneReportExporter.export(this.guard, this.storage, options);
+  }
+
+  public async runChaosTest(options: ChaosTestOptions): Promise<ChaosReport> {
+    return ChaosEngineService.runChaosTest(options);
+  }
+
+  public generateDockerEnv(config: DockerEnvironmentConfig): GeneratedDockerConfigResult {
+    return DockerOrchestratorService.generateTestEnvironment(this.guard, config);
+  }
+
+  public generateBrowserMatrix(options: BrowserMatrixOptions = {}): BrowserMatrixResult {
+    return BrowserMatrixService.generateMatrix(options);
+  }
+
+  public async generateBddFeatures(outputDir = 'features'): Promise<BddFeatureFile[]> {
+    const { requirements } = await this.inspect();
+    return BddGeneratorService.generateFromRequirements(this.guard, requirements, outputDir);
+  }
+
+  public async sendAlert(options: WebhookDispatchOptions): Promise<WebhookDispatchResult> {
+    return WebhookAlertService.sendAlert(options);
+  }
+
+  public auditFeatureParity(options: { generateE2ESuite?: boolean } = {}): FeatureParityReport {
+    return FeatureParityAuditorService.audit(this.guard, options);
+  }
+
+  public scanMalware(): MalwareScanReport {
+    return MalwareScannerService.scan(this.guard);
+  }
+
+  public remediateMalware(threatIds?: string[]): RemediationResult {
+    return MalwareScannerService.remediate(this.guard, threatIds);
+  }
+
+  public async evaluateAiOutputs(options: {
+    endpointUrl?: string;
+    modelResponses?: { promptId: string; prompt: string; response: string }[];
+    testCases: AiEvaluationPrompt[];
+  }): Promise<AiHallucinationReport> {
+    return AiHallucinationEvaluatorService.evaluate(options);
+  }
+
+  public async huntRegression(options: { testCommand?: string; goodCommit?: string; badCommit?: string; maxCommits?: number } = {}): Promise<BisectHuntingResult> {
+    return GitBisectHunterService.huntRegression(this.guard, options);
+  }
+
+  public async throttleRequest(options: ThrottledRequestOptions): Promise<ThrottledResponseResult> {
+    return NetworkThrottlerService.runThrottledRequest(options);
+  }
+
+  public auditSmartContracts(): SmartContractAuditReport {
+    return SmartContractAuditorService.auditContracts(this.guard);
+  }
+
+  public scanDeadAssets(): DeadAssetReport {
+    return DeadAssetPurgeService.scan(this.guard);
+  }
+
+  public purgeDeadAssets(items?: string[]): { success: boolean; deletedFiles: string[]; bytesFreed: number } {
+    return DeadAssetPurgeService.purge(this.guard, items);
+  }
+
+  public simulateScreenReader(options: { targetPaths?: string[]; rawHtml?: string } = {}): ScreenReaderSimulationReport {
+    return ScreenReaderSimulatorService.simulate(this.guard, options);
+  }
+
+  public auditDbQueries(options: { targetDir?: string; scanAllExtensions?: boolean } = {}): DbQueryAuditReport {
+    return DatabaseQueryAuditorService.audit(this.guard, options);
+  }
+
+  public auditEnvDrift(options: { generateExample?: boolean } = {}): EnvDriftReport {
+    return EnvDriftAuditorService.audit(this.guard, options);
+  }
+
+  public recordFailureReplay(params: {
+    testTitle: string;
+    testFile: string;
+    errorMessage: string;
+    steps?: { action: string; target?: string; value?: string; durationMs?: number; passed?: boolean }[];
+    saveToFile?: boolean;
+  }): FailureReplayPackage {
+    return FailureReplayRecorderService.recordFromFailure(this.guard, params);
+  }
+
+  public async auditRateLimit(options: {
+    targetUrl: string;
+    requestCount?: number;
+    concurrency?: number;
+    method?: string;
+    headers?: Record<string, string>;
+  }): Promise<RateLimitProbeResult> {
+    return RateLimitAuditorService.auditEndpoint(options);
+  }
+
+  public async startStatefulMock(config: StatefulMockServerConfig = {}): Promise<{ port: number; status: string; collections: string[] }> {
+    return StatefulMockServerService.startServer(config);
+  }
+
+  public stopStatefulMock(): { status: string } {
+    return StatefulMockServerService.stopServer();
+  }
+
+  public resetStatefulMock(): { collections: string[]; itemCount: number } {
+    return StatefulMockServerService.resetState();
+  }
+
+  public generateArchitectureGraph(): ArchitectureGraphReport {
+    return ArchitectureGraphService.generateGraph(this.guard);
+  }
+
+  public doctor(): DoctorReport {
+    return DoctorService.diagnose(this.guard);
+  }
+
+
+
+
+
+
+
+
+
+  public watch(onIteration?: (info: { changedFile: string; impactedTests: string[]; status: 'passed' | 'failed' }) => void): { close: () => void } {
+    return WatchModeService.startWatch(this, onIteration);
+  }
+
+  public async startSandbox(port = 8089): Promise<SandboxEnvironment> {
+    return MockSandboxService.createSandbox(port);
+  }
+
+  public async evaluateMutationScore(): Promise<MutationScoreResult> {
+    const { profile } = await this.inspect();
+    return MutationScoreService.evaluateQuality(profile, this.guard);
+  }
+
+  public setupCi(): string {
+    return CiGeneratorService.generateGitHubWorkflow(this.guard);
+  }
+
+  public async startUi(port = 4173): Promise<{ url: string; close: () => void }> {
+    await this.inspect();
+    return LocalDashboardServer.start(this.guard, this.storage, port, this);
+  }
+
+  public handshake(capabilities: AgentCapabilities = {}): AgentHandshakeResult {
+    return AgentAdaptationService.handshake(this.guard, capabilities);
+  }
+
+  public async explore(options: { baseURL?: string } = {}): Promise<SiteExplorationResult> {
+    const { profile } = await this.inspect();
+    return AppExplorationService.explore(profile, this.guard, options);
+  }
+
+  public async fuzzApi(): Promise<FuzzProbeResult[]> {
+    const { profile } = await this.inspect();
+    return ApiFuzzingService.generateFuzzProbes(profile.apiEndpoints);
+  }
+
+  public async inspect(): Promise<{ profile: ProjectProfile; requirements: DiscoveredRequirement[]; featureMap: FeatureMap }> {
+    const profile = ProjectScanner.scan(this.guard.getRoot());
+    const requirements = RequirementDiscovery.discover(profile);
+    const featureMap = FeatureMapBuilder.build(requirements, profile);
+
+    this.storage.saveProjectProfile(profile);
+    this.storage.saveRequirements(requirements);
+
+    return { profile, requirements, featureMap };
+  }
+
+  public async plan(options: PlanTestsOptions = {}): Promise<TestPlan> {
+    const { profile, requirements } = await this.inspect();
+    let impactedTestFiles = options.impactedTestFiles;
+    if (options.scope === 'changed' && (!impactedTestFiles || impactedTestFiles.length === 0)) {
+      try {
+        const impact = await this.changed();
+        impactedTestFiles = [...impact.impactedTestFiles, ...impact.changedFiles];
+      } catch {
+        impactedTestFiles = [];
+      }
+    }
+    const plan = PlanTestsService.createPlan(profile, requirements, { ...options, impactedTestFiles });
+    this.storage.saveTestPlan(plan);
+    return plan;
+  }
+
+  public async generate(options: { planId?: string; testCaseIds?: string[]; overwritePolicy?: OverwritePolicy } = {}): Promise<{ generatedFiles: GeneratedTestFile[]; skippedFiles: string[]; writtenCount: number }> {
+    const plan = options.planId
+      ? this.storage.getTestPlan(options.planId)
+      : this.storage.getLatestTestPlan() || (await this.plan());
+
+    if (!plan) {
+      throw new Error('No test plan found to generate tests from.');
+    }
+
+    return GenerateTestsService.generate(plan, this.guard, options);
+  }
+
+  public async run(request: TestRunRequest = {}): Promise<TestRunResult> {
+    const { profile } = await this.inspect();
+    const context = { projectRoot: this.guard.getRoot() };
+
+    let adapter;
+    if (profile.testFrameworks.includes('vitest')) {
+      adapter = new VitestAdapter();
+    } else if (profile.testFrameworks.includes('jest')) {
+      adapter = new JestAdapter();
+    } else if (profile.testFrameworks.includes('playwright')) {
+      adapter = new PlaywrightAdapter();
+    } else {
+      // Fallback adapter
+      adapter = new VitestAdapter();
+    }
+
+    const result = await adapter.run(request, context);
+    this.storage.saveTestRun(result);
+
+    // Update flaky analysis
+    const allRuns = this.storage.getAllTestRuns();
+    const flakyReports = FlakyDetector.analyzeHistory(allRuns);
+    this.storage.saveFlakyHistory(flakyReports);
+
+    return result;
+  }
+
+  public async diagnose(runId?: string): Promise<DiagnosticResult[]> {
+    const runResult = runId ? this.storage.getTestRun(runId) : this.storage.getLatestTestRun();
+    if (!runResult) {
+      throw new Error('No test run found to diagnose.');
+    }
+    return DiagnoseFailureService.diagnose(runResult);
+  }
+
+  public async heal(runId?: string): Promise<HealResult[]> {
+    const diagnoses = await this.diagnose(runId);
+    const standardHeals = await HealTestService.heal(diagnoses, this.guard);
+    const visualHeals = await VisualAutoHealService.healWithVisualAria(diagnoses, this.guard);
+    return [...standardHeals, ...visualHeals];
+  }
+
+  public suggestFix(diagnosis: DiagnosticResult): SourceFixSuggestion {
+    return SuggestFixService.suggest(diagnosis);
+  }
+
+  public async changed(): Promise<ImpactAnalysisResult> {
+    const { profile } = await this.inspect();
+    return AnalyzeChangesService.analyze(profile, this.guard);
+  }
+
+  public getFlaky(): FlakyTestReport[] {
+    return this.storage.getFlakyHistory();
+  }
+
+  public async releaseCheck(): Promise<ReleaseConfidenceReport> {
+    const { requirements } = await this.inspect();
+    const latestRun = this.storage.getLatestTestRun();
+    const diagnoses = latestRun ? DiagnoseFailureService.diagnose(latestRun) : [];
+    const flakyTests = this.getFlaky();
+
+    return ReleaseCheckService.evaluate({
+      requirements,
+      latestRun,
+      diagnoses,
+      flakyTests
+    });
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "name": "qaforge",
+  "version": "1.0.0",
+  "description": "Local-first agentic QA toolkit for AI-assisted test generation, automated testing, failure analysis, regression detection, and quality reporting.",
+  "keywords": [
+    "qa",
+    "testing",
+    "mcp",
+    "ai",
+    "cursor",
+    "windsurf",
+    "playwright",
+    "vitest",
+    "jest",
+    "autonomous-testing"
+  ],
+  "author": "NadiaSalah",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "qaforge": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NadiaSalah/qaforge.git"
+  },
+  "homepage": "https://github.com/NadiaSalah/qaforge#readme",
+  "bugs": {
+    "url": "https://github.com/NadiaSalah/qaforge/issues"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "node -e \"const fs=require('fs'); if(fs.existsSync('dist')) fs.rmSync('dist', { recursive: true, force: true });\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node dist/cli/index.js",
+    "mcp": "node dist/cli/index.js mcp",
+    "lint": "tsc --noEmit",
+    "prepack": "npm run build",
+    "release:check": "node scripts/release-check.js",
+    "release:pack": "npm pack"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
