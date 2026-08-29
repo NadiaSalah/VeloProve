@@ -1,5 +1,5 @@
 {
-  "name": "qaforge",
+  "name": "@engnadia/qaforge",
   "version": "1.0.0",
   "description": "Local-first agentic QA toolkit for AI-assisted test generation, automated testing, failure analysis, regression detection, and quality reporting.",
   "keywords": [

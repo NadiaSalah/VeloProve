@@ -77,17 +77,17 @@ End users and coding agents can run QAForge instantly without cloning the reposi
 
 ```bash
 # Initialize QAForge inside any existing project (scaffolds .qaforge/, scripts, and config)
-npx qaforge init
+npx @engnadia/qaforge init
 
 # Run environment & installation health diagnostics
-npx qaforge doctor
+npx @engnadia/qaforge doctor
 ```
 
 Alternatively, install as a project devDependency:
 
 ```bash
-npm install -D qaforge
-# or pnpm add -D qaforge / yarn add -D qaforge / bun add -D qaforge
+npm install -D @engnadia/qaforge
+# or pnpm add -D @engnadia/qaforge / yarn add -D @engnadia/qaforge / bun add -D @engnadia/qaforge
 ```
 
 ### Basic QA Workflow

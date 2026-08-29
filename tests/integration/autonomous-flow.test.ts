@@ -9,7 +9,7 @@ describe('Autonomous QA Engine Full Loop', () => {
   it('should complete full inspect -> plan -> releaseCheck cycle', async () => {
     // 1. Inspect
     const { profile, requirements, featureMap } = await engine.inspect();
-    expect(profile.projectName).toBe('qaforge');
+    expect(profile.projectName).toContain('qaforge');
     expect(requirements.length).toBeGreaterThan(0);
     expect(featureMap.features.length).toBeGreaterThan(0);
 

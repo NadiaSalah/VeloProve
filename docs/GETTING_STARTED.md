@@ -12,21 +12,21 @@ You can run QAForge directly via `npx` or install it globally / locally in your 
 
 ### Method 1: Using npx (Zero Install)
 ```bash
-npx qaforge inspect
+npx @engnadia/qaforge inspect
 ```
 
 ### Method 2: Local Project Dependency
 ```bash
-npm install --save-dev qaforge
+npm install --save-dev @engnadia/qaforge
 # or
-pnpm add -D qaforge
+pnpm add -D @engnadia/qaforge
 # or
-yarn add -D qaforge
+yarn add -D @engnadia/qaforge
 ```
 
 ### Method 3: Global CLI Tool
 ```bash
-npm install -g qaforge
+npm install -g @engnadia/qaforge
 ```
 
 ---

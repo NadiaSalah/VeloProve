@@ -11,7 +11,7 @@ describe('Project Scanner & Requirement Discovery', () => {
 
   it('should inspect and scan QAForge repository structure', () => {
     const profile = ProjectScanner.scan(root);
-    expect(profile.projectName).toBe('qaforge');
+    expect(profile.projectName).toContain('qaforge');
     expect(profile.languages).toContain('typescript');
     expect(profile.sourceFiles.length).toBeGreaterThan(0);
   });
