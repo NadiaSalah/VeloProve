@@ -34,7 +34,7 @@ Create or update `.cursor/mcp.json` in your project or global settings:
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["@engnadia/qaforge", "mcp"]
     }
   }
 }
@@ -54,7 +54,7 @@ In `~/.codeium/windsurf/mcp_config.json`:
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["@engnadia/qaforge", "mcp"]
     }
   }
 }
@@ -71,7 +71,7 @@ In your `claude_desktop_config.json`:
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["@engnadia/qaforge", "mcp"]
     }
   }
 }
@@ -88,7 +88,7 @@ In `cline_mcp_settings.json`:
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"],
+      "args": ["@engnadia/qaforge", "mcp"],
       "disabled": false,
       "autoApprove": [
         "qa.inspect",
@@ -120,7 +120,7 @@ GitHub Copilot in VS Code / CLI can interact directly with QAForge via terminal 
 For OpenAI Codex scripts, CI bots, or custom agents running LLM tool-calling APIs:
 
 ```typescript
-import { QAForgeEngine } from 'qaforge';
+import { QAForgeEngine } from '@engnadia/qaforge';
 
 const engine = new QAForgeEngine(process.cwd());
 

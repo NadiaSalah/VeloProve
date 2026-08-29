@@ -1539,14 +1539,6 @@ program
     console.log(`\n${pc.cyan(rep.mermaidDiagram)}`);
   });
 
-
-
-
-
-
-
-
-
 // 10. mcp
 program
   .command('mcp')

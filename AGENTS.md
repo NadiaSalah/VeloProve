@@ -66,10 +66,6 @@ This repository is equipped with **QAForge** (Local Autonomous QA Engine).
 - **Stateful Dynamic Mock Server**: Local zero-cloud in-memory stateful CRUD REST server (`qa.statefulMock` / `npx qaforge mock-server`).
 - **Architecture Dependency Graph**: Topology graph of UI, APIs, DBs & Cloud SDKs (`qa.architectureGraph` / `npx qaforge arch-graph`).
 - **Mutation Quality**: Call `qa.mutationScore` or run `npx qaforge mutation-score` to evaluate test sensitivity.
-
-
-
-
 - **Custom Framework Self-Teaching**: Call `qa.learnFramework` or run `npx qaforge learn-framework` to learn uncommon stacks.
 
 ### 6. Release Gate & Confidence Check

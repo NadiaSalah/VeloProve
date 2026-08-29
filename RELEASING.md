@@ -9,7 +9,7 @@ This document defines the release, packaging, and distribution architecture for 
 QAForge follows a clean separation of concerns between development and customer consumption:
 
 - **GitHub Repository (`https://github.com/NadiaSalah/qaforge`)**: Source code, unit/integration test suites, development fixtures, and CI automation.
-- **npm Package (`qaforge`)**: The official lightweight runtime artifact. It contains ONLY compiled JavaScript (`dist/`), runtime documentation (`docs/`), `README.md`, `CHANGELOG.md`, and `LICENSE`.
+- **npm Package (`@engnadia/qaforge`)**: The official lightweight runtime artifact. It contains ONLY compiled JavaScript (`dist/`), runtime documentation (`docs/`), `README.md`, `CHANGELOG.md`, and `LICENSE`.
 - **GitHub Release Artifacts**: Production `.tgz` npm tarballs attached to version tags for offline and standalone distribution.
 
 ### Customer Experience
@@ -18,13 +18,13 @@ End users consume QAForge without cloning the repository:
 
 ```bash
 # Initialize QAForge inside any customer project
-npx qaforge init
+npx @engnadia/qaforge init
 
 # Run health diagnostics
-npx qaforge doctor
+npx @engnadia/qaforge doctor
 
 # Launch local dashboard
-npx qaforge ui
+npx @engnadia/qaforge ui
 ```
 
 ---
@@ -48,7 +48,7 @@ The following directories and files are excluded from the npm package:
 - `tests/` (Test suites)
 - `fixtures/` (Test fixture mock apps)
 - `.github/` (Workflows and CI configs)
-- `.cursor/` (IDE rules and local configs)
+- `.cursor/`, `.agents/` (IDE rules and local configs)
 - `coverage/`, `.env*`, `*.tmp`, `*.log`
 
 ---

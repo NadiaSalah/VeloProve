@@ -73,8 +73,6 @@ The `qaforge` CLI provides a complete set of commands for inspecting, testing, d
 | `qaforge mock-server` | Start local in-memory CRUD stateful mock server | `npx qaforge mock-server --port 4040` |
 | `qaforge arch-graph` | Generate architecture topology & Mermaid graph | `npx qaforge arch-graph` |
 | `qaforge sandbox` | Launch ephemeral mock DB & sandbox server | `npx qaforge sandbox -p 8089` |
-
-
 | `qaforge watch` | Real-time interactive watch mode | `npx qaforge watch` |
 | `qaforge mcp` | Start QAForge MCP Server over stdio | `npx qaforge mcp` |
 

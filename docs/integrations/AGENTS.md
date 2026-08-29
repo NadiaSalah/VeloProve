@@ -13,7 +13,7 @@ Add QAForge to your Cursor MCP configuration (`.cursor/mcp.json` or Cursor Setti
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["@engnadia/qaforge", "mcp"]
     }
   }
 }
@@ -26,7 +26,7 @@ Add QAForge to your Cursor MCP configuration (`.cursor/mcp.json` or Cursor Setti
 Configure Claude Code using the MCP command:
 
 ```bash
-claude mcp add qaforge npx qaforge mcp
+claude mcp add qaforge npx @engnadia/qaforge mcp
 ```
 
 Or add to `~/.claude.json`:
@@ -36,7 +36,7 @@ Or add to `~/.claude.json`:
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["@engnadia/qaforge", "mcp"]
     }
   }
 }
@@ -53,7 +53,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["@engnadia/qaforge", "mcp"]
     }
   }
 }
@@ -70,7 +70,7 @@ In Cline MCP Settings (`cline_mcp_settings.json`):
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["@engnadia/qaforge", "mcp"]
     }
   }
 }

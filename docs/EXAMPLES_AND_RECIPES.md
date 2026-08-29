@@ -81,7 +81,7 @@ test.describe('Feature: Checkout Flow', () => {
 
 ### Native QAForge API Test Spec:
 ```typescript
-import { NativeApiRunner } from 'qaforge';
+import { NativeApiRunner } from '@engnadia/qaforge';
 
 const runner = new NativeApiRunner('http://localhost:3000');
 

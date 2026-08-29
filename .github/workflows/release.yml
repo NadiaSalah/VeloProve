@@ -42,7 +42,7 @@ jobs:
       - name: Pack Distribution Tarball
         run: |
           npm pack
-          echo "TARBALL=$(ls qaforge-*.tgz)" >> $GITHUB_ENV
+          echo "TARBALL=$(ls engnadia-qaforge-*.tgz)" >> $GITHUB_ENV
 
       - name: Create GitHub Release & Attach Tarball
         uses: softprops/action-gh-release@v2
