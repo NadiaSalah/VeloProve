@@ -43,6 +43,8 @@ All notable changes to QAForge will be documented in this file.
 - **Live Remote Companion Bridge & Probe Agent**: Connects local QAForge to any live production/staging website via lightweight companion probes (`qa.remoteInit`, `qa.remoteConnect`, `qa.remoteAudit` / `qaforge remote-init`, `qaforge remote-connect`, `qaforge remote-audit`).
 
 ### Security & Vulnerability Auditing
+- **Comprehensive Security Testing Expansion**: Autonomous non-destructive vulnerability testing for authentication, authorization (IDOR / privilege escalation), input injections (SQLi, NoSQLi, XSS, Command, Path Traversal), form tampering, JWT tokens, and file uploads (`qa.securityScan`, `qa.securityPlan`, `qa.securityRun`, `qa.securityReport` / `qaforge security`).
+- **Safe Security Testing Mode & Secret Redaction**: Non-destructive by default with automated secret sanitization for JWTs, passwords, cookies, and tokens across logs and reports.
 - **Dependency CVE & Secret Scanner**: Scans `package.json` dependencies for known vulnerabilities and detects hardcoded secrets (`qa.auditSec` / `qaforge audit`).
 - **OWASP Top 10 Security & Headers Audit**: Deep local penetration audit for CSP, X-Frame-Options, MIME sniffing, CORS, and stack trace leaks (`qa.owaspScan` / `qaforge owasp-scan`).
 - **Malware, Backdoor & Obfuscated Code Scanner with One-Click Remediation**: Detects dangerous obfuscated Base64 `eval()` backdoors, suspicious lifecycle scripts, raw IP data exfiltration, and exposed high-entropy secrets, with one-click automatic neutralization (`qa.scanMalware`, `qa.remediateMalware` / `qaforge scan-malware --fix`).
@@ -75,7 +77,7 @@ All notable changes to QAForge will be documented in this file.
 - **LLM & AI Output Hallucination & Accuracy Evaluator**: Evaluates AI model outputs against ground truth facts, forbidden toxic tokens, and validates JSON schema compliance (`qa.aiEvaluate` / `qaforge ai-eval`).
 
 ### CLI, MCP, Dashboard & Reporting
-- **Dual Interfaces**: High-ergonomics CLI (`npx qaforge`) + MCP Server (stdio) with 64 structured tools.
+- **Dual Interfaces**: High-ergonomics CLI (71 commands) + MCP Server (stdio) with 71 structured tools.
 - **Environment & Installation Doctor**: Built-in diagnostics command (`qa.doctor` / `qaforge doctor`) checking Node.js version, package manager, test framework detection, MCP configuration, and filesystem permissions with actionable remediations.
 - **Production Packaging & NPX Architecture**: Strict npm allowlist (`"files": ["dist", "docs", "README.md", "CHANGELOG.md", "LICENSE"]`), isolated from development sources and test fixtures.
 - **Idempotent Non-Destructive Project Initialization**: Enhanced `npx qaforge init` detecting package managers (npm, pnpm, yarn, bun), scaffolding `.qaforge/` directories, and adding non-destructive convenience scripts to `package.json`.

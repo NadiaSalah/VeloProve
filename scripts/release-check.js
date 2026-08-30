@@ -35,8 +35,8 @@ try {
 
   const files = packData.files.map(f => f.path);
   console.log(`   Packaged file count: ${files.length}`);
-  console.log(`   Unpacked size: ${(packData.size / 1024).toFixed(1)} KB`);
-  console.log(`   Tarball size: ${(packData.unpackedSize / 1024).toFixed(1)} KB\n`);
+  console.log(`   Tarball size: ${(packData.size / 1024).toFixed(1)} KB`);
+  console.log(`   Unpacked size: ${(packData.unpackedSize / 1024).toFixed(1)} KB\n`);
 
   // 5. Verify Forbidden Patterns
   const forbiddenPatterns = [

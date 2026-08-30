@@ -16,6 +16,7 @@ out/
 .nuxt/
 .output/
 .turbo/
+.prompt/
 
 # 3. Test Coverage & Diagnostic Reports
 coverage/

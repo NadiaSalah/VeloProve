@@ -1,0 +1,233 @@
+[
+  {
+    "id": "TEST-FUNC-001-01",
+    "featureId": "FEATURE-001",
+    "category": "functional",
+    "priority": "high",
+    "scenario": "Next.js App Router and Vite stack detection from config files",
+    "preconditions": ["Workspace contains next.config.js and vite.config.ts"],
+    "steps": ["Invoke ProjectScanner.scan() on workspace"],
+    "expected": ["profile.frameworks includes 'nextjs', 'react', 'vite'"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-001-02",
+    "featureId": "FEATURE-001",
+    "category": "functional",
+    "priority": "medium",
+    "scenario": "Monorepo workspace discovery with multiple sub-packages",
+    "preconditions": ["Workspace has packages/app1 and packages/app2"],
+    "steps": ["Invoke ProjectScanner.scan() on monorepo root"],
+    "expected": ["profile.applications contains 2 discovered sub-applications"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-002-01",
+    "featureId": "FEATURE-002",
+    "category": "functional",
+    "priority": "high",
+    "scenario": "Dynamic route translation from App Router brackets to parameter syntax",
+    "preconditions": ["Workspace has app/users/[id]/page.tsx"],
+    "steps": ["Invoke RouteScanner.scan()"],
+    "expected": ["Route path extracted as /users/:id with parameter 'id'"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-003-01",
+    "featureId": "FEATURE-003",
+    "category": "requirements",
+    "priority": "high",
+    "scenario": "OpenAPI 3.0 specification requirement discovery",
+    "preconditions": ["Workspace contains openapi.json with REST routes"],
+    "steps": ["Invoke OpenApiParser.parse() on spec file"],
+    "expected": ["DiscoveredRequirements list contains HTTP method, path, and schemas"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-004-01",
+    "featureId": "FEATURE-004",
+    "category": "functional",
+    "priority": "high",
+    "scenario": "Git change impact analysis isolates only affected test files",
+    "preconditions": ["Git repository with modified source file"],
+    "steps": ["Invoke AnalyzeChangesService.analyze()"],
+    "expected": ["impactedTestFiles contains strictly dependent test files"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-005-01",
+    "featureId": "FEATURE-005",
+    "category": "planning",
+    "priority": "high",
+    "scenario": "Risk scoring prioritizes dynamic routes and authentication requirements",
+    "preconditions": ["Discovered requirement has auth tags and dynamic parameters"],
+    "steps": ["Invoke RiskScorer.scoreRequirement()"],
+    "expected": ["Calculated risk score is >= 70 and priority tier is 'critical'"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-006-01",
+    "featureId": "FEATURE-006",
+    "category": "generation",
+    "priority": "high",
+    "scenario": "Playwright E2E test file synthesis with safe overwrite policy",
+    "preconditions": ["Valid test plan for /login route and generated-only policy"],
+    "steps": ["Invoke GenerateTestsService.generate()"],
+    "expected": ["Generates valid TypeScript test with web-first assertions"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-007-01",
+    "featureId": "FEATURE-007",
+    "category": "functional",
+    "priority": "high",
+    "scenario": "Playwright locator timeout diagnosed as TEST_BUG",
+    "preconditions": ["Failure artifact contains locator timeout stack"],
+    "steps": ["Invoke Classifier.classify(artifacts)"],
+    "expected": ["Classification is TEST_BUG with high confidence"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-008-01",
+    "featureId": "FEATURE-008",
+    "category": "healing",
+    "priority": "high",
+    "scenario": "Auto-heal stale CSS selector to Visual-Aria accessible role",
+    "preconditions": ["HTML snapshot has <button>Submit</button> and test failed on #btn-old"],
+    "steps": ["Invoke VisualAutoHealService.healLocator()"],
+    "expected": ["Returns page.getByRole('button', { name: 'Submit' }) with confidence > 0.8"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-SEC-001",
+    "featureId": "FEATURE-009",
+    "category": "security",
+    "priority": "critical",
+    "scenario": "Detect unparameterized SQL template literal concatenation",
+    "preconditions": ["Source file contains `SELECT * FROM users WHERE id = ${id}`"],
+    "steps": ["Invoke SecurityEngine.runTests()"],
+    "expected": ["Critical finding raised for SQL injection with exact line number"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-SEC-002",
+    "featureId": "FEATURE-009",
+    "category": "security",
+    "priority": "high",
+    "scenario": "Detect raw HTML injection via dangerouslySetInnerHTML",
+    "preconditions": ["Source file contains dangerouslySetInnerHTML={{ __html: userInput }}"],
+    "steps": ["Invoke SecurityEngine.runTests()"],
+    "expected": ["High finding raised for XSS vulnerability with remediation guidance"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-SEC-003",
+    "featureId": "FEATURE-009",
+    "category": "security",
+    "priority": "critical",
+    "scenario": "WorkspaceGuard blocks path traversal attempts outside workspace",
+    "preconditions": ["Attempt to access file with ../../../../etc/passwd path"],
+    "steps": ["Invoke WorkspaceGuard.assertSafePath()"],
+    "expected": ["Throws path containment violation error; denies file access"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-SEC-005",
+    "featureId": "FEATURE-009",
+    "category": "security",
+    "priority": "high",
+    "scenario": "Redact JWT and secret tokens in test logs and reports",
+    "preconditions": ["Log stream contains raw JWT and password strings"],
+    "steps": ["Pass payload through SecretRedactor.redact()"],
+    "expected": ["JWT replaced with [REDACTED_JWT] and password with ***REDACTED***"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-010-01",
+    "featureId": "FEATURE-010",
+    "category": "api_runner",
+    "priority": "high",
+    "scenario": "Postman collection variable chaining across multiple requests",
+    "preconditions": ["Collection defines {{jwtToken}} set by login response"],
+    "steps": ["Invoke PostmanRunnerService.runCollection()"],
+    "expected": ["Subsequent request auth header receives interpolated token value"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-SEC-007",
+    "featureId": "FEATURE-011",
+    "category": "security",
+    "priority": "high",
+    "scenario": "SARIF v2.1.0 output schema conformance for GitHub Security",
+    "preconditions": ["Security findings exist in SecurityReport"],
+    "steps": ["Invoke SarifExporterService.exportSecurityReport()"],
+    "expected": ["Valid SARIF log written with driver name '@engnadia/qaforge' and rules"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-SEC-008",
+    "featureId": "FEATURE-012",
+    "category": "security",
+    "priority": "medium",
+    "scenario": "Detect missing Subresource Integrity (SRI) on external scripts",
+    "preconditions": ["HTML file contains CDN script tag without integrity attribute"],
+    "steps": ["Invoke SriCsrfValidatorService.audit()"],
+    "expected": ["SRI finding reported with suggested hash remediation"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-SEC-009",
+    "featureId": "FEATURE-012",
+    "category": "security",
+    "priority": "medium",
+    "scenario": "Detect mutating HTML forms without CSRF tokens",
+    "preconditions": ["HTML/JSX contains <form method='POST'> without CSRF field"],
+    "steps": ["Invoke SriCsrfValidatorService.audit()"],
+    "expected": ["CSRF finding reported with remediation advice"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-SEC-010",
+    "featureId": "FEATURE-012",
+    "category": "security",
+    "priority": "high",
+    "scenario": "Detect insecure wildcard CORS credentials configuration",
+    "preconditions": ["Server config has Access-Control-Allow-Origin: * and credentials: true"],
+    "steps": ["Invoke SriCsrfValidatorService.audit()"],
+    "expected": ["CORS finding raised warning against wildcard credentials"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-013-01",
+    "featureId": "FEATURE-013",
+    "category": "optimization",
+    "priority": "medium",
+    "scenario": "Detect duplicate test suite titles and suggest parameterization",
+    "preconditions": ["Test file contains repeated it('validates input') blocks"],
+    "steps": ["Invoke TestDeduplicatorService.analyze()"],
+    "expected": ["Deduplication report lists duplicates and redundancy percentage"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-014-01",
+    "featureId": "FEATURE-014",
+    "category": "devops",
+    "priority": "medium",
+    "scenario": "Install and uninstall Git pre-commit hook idempotently",
+    "preconditions": ["Initialized git repository in workspace"],
+    "steps": ["Invoke GitHookInstallerService.installPreCommit() then uninstallPreCommit()"],
+    "expected": ["Hook file created with executable permissions and cleanly removed"],
+    "automationRecommended": true
+  },
+  {
+    "id": "TEST-FUNC-015-01",
+    "featureId": "FEATURE-015",
+    "category": "interface_parity",
+    "priority": "critical",
+    "scenario": "Verify exact 71 MCP tool and 71 CLI command parity and documentation integrity",
+    "preconditions": ["MCP server, CLI index, and documentation loaded"],
+    "steps": ["Run tests/unit/interface-parity.test.ts"],
+    "expected": ["71 unique MCP tools and 71 CLI commands registered with 0 drift"],
+    "automationRecommended": true
+  }
+]

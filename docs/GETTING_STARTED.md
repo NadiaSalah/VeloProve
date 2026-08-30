@@ -91,10 +91,11 @@ Add the QAForge MCP server to your editor settings:
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["-y", "@engnadia/qaforge", "mcp"]
     }
   }
 }
 ```
+*(If installed locally in your project dependencies, `["qaforge", "mcp"]` can also be used).*
 
 Now your AI assistant can run `qa.inspect`, `qa.plan`, `qa.run`, `qa.diagnose`, `qa.heal`, `qa.refine`, `qa.accessibility`, and `qa.releaseCheck` autonomously!

@@ -377,6 +377,7 @@ program
   .description('Execute test suites and collect structured results')
   .option('-s, --scope <scope>', 'Execution scope (all, changed, paths, critical)', 'all')
   .option('-p, --paths <paths...>', 'Specific test paths')
+  .option('--security', 'Also execute comprehensive security testing suite', false)
   .action(async (opts) => {
     const engine = new QAForgeEngine(process.cwd());
     console.log(pc.cyan('\nRunning QAForge test execution...'));
@@ -394,6 +395,15 @@ program
         if (f.error?.message) {
           console.log(pc.dim(`    ${f.error.message.slice(0, 150)}`));
         }
+      }
+    }
+
+    if (opts.security) {
+      console.log(pc.cyan('\nRunning QAForge Security Suite...'));
+      const secRep = await engine.runSecurityTests({ safeMode: true });
+      console.log(pc.bold(`Security Score: ${secRep.securityScore}/100 (Verdict: ${secRep.verdict})`));
+      if (secRep.findings.length > 0) {
+        console.log(pc.yellow(`Security Findings: ${secRep.findings.length} issues identified.`));
       }
     }
   });
@@ -1537,6 +1547,197 @@ program
     console.log(`Databases: ${rep.summary.databases.join(', ') || 'Local Store'}`);
     console.log(`External Integrations: ${rep.summary.externalIntegrations.join(', ') || 'None'}`);
     console.log(`\n${pc.cyan(rep.mermaidDiagram)}`);
+  });
+
+// 9.53 security
+program
+  .command('security')
+  .description('Execute comprehensive non-destructive security testing (Auth, AuthZ, Injections, Forms, Sessions, Uploads)')
+  .option('--auth', 'Run authentication tests (login, password reset, rate-limiting)', false)
+  .option('--authorization', 'Run authorization tests (IDOR, role escalation, protected routes)', false)
+  .option('--forms', 'Run forms and input security tests', false)
+  .option('--injection', 'Run injection tests (SQLi, NoSQLi, XSS, Command, Path Traversal)', false)
+  .option('--api', 'Run API security & error leakage tests', false)
+  .option('--uploads', 'Run file upload security tests', false)
+  .option('--sessions', 'Run session & JWT token security tests', false)
+  .option('--safe', 'Enforce safe mode non-destructive constraints (default: true)', true)
+  .option('--deep', 'Run deep security verification', false)
+  .option('-u, --url <url>', 'Target live application URL')
+  .option('-f, --format <format>', 'Output format (console, json, markdown)', 'console')
+  .option('--sarif <path>', 'Export findings in standard SARIF v2.1.0 format for GitHub Security tab')
+  .option('--ci', 'Exit with non-zero code if critical/high vulnerabilities exist', false)
+  .action(async (opts) => {
+    const engine = new QAForgeEngine(process.cwd());
+    renderCommandHeader('security', 'Autonomous Security & Vulnerability Auditor');
+
+    const categories: any[] = [];
+    if (opts.auth) categories.push('authentication');
+    if (opts.authorization) categories.push('authorization');
+    if (opts.forms) categories.push('forms_inputs');
+    if (opts.injection) categories.push('injection');
+    if (opts.api) categories.push('api_security');
+    if (opts.uploads) categories.push('file_uploads');
+    if (opts.sessions) categories.push('sessions_tokens');
+
+    const spinner = createSpinner('Scanning attack surface and executing security test suite...').start();
+    const report = await engine.runSecurityTests({
+      baseURL: opts.url,
+      categories: categories.length > 0 ? categories : undefined,
+      safeMode: opts.safe !== false,
+      deepMode: opts.deep === true,
+      environment: opts.url?.includes('prod') ? 'production' : 'test'
+    });
+
+    if (opts.sarif) {
+      const audit = engine.auditSecurity();
+      const sarifRes = engine.exportSarif(report, audit, opts.sarif);
+      console.log(pc.green(`✔ Exported SARIF v2.1.0 report: ${pc.bold(sarifRes.sarifPath)}`));
+    }
+
+    if (report.verdict === 'SECURE') {
+      spinner.succeed(`Security audit passed. Score: ${pc.bold(pc.green(`${report.securityScore}/100`))}`);
+    } else if (report.verdict === 'NEEDS_ATTENTION') {
+      spinner.warn(`Security audit finished with warnings. Score: ${pc.bold(pc.yellow(`${report.securityScore}/100`))}`);
+    } else {
+      spinner.fail(`Critical security vulnerabilities detected! Score: ${pc.bold(pc.red(`${report.securityScore}/100`))}`);
+    }
+
+    if (opts.format === 'json') {
+      console.log(JSON.stringify(report, null, 2));
+      return;
+    }
+
+    const summaryLines = [
+      `Security Score:  ${pc.bold(report.securityScore >= 80 ? pc.green(`${report.securityScore}/100`) : report.securityScore >= 50 ? pc.yellow(`${report.securityScore}/100`) : pc.red(`${report.securityScore}/100`))}`,
+      `Verdict:         ${pc.bold(report.verdict)}`,
+      `Tests Run:       ${report.summary.totalTests} (Passed: ${pc.green(report.summary.passed)}, Failed: ${report.summary.failed > 0 ? pc.red(report.summary.failed) : pc.green(0)}, Warnings: ${pc.yellow(report.summary.warnings)})`,
+      `Severity Counts: Critical: ${report.summary.severityCounts.critical > 0 ? pc.red(report.summary.severityCounts.critical) : pc.dim(0)} | High: ${report.summary.severityCounts.high > 0 ? pc.yellow(report.summary.severityCounts.high) : pc.dim(0)} | Medium: ${pc.dim(report.summary.severityCounts.medium)} | Low: ${pc.dim(report.summary.severityCounts.low)}`,
+      `Safe Mode:       ${report.safeMode ? pc.green('ENABLED (Non-destructive)') : pc.yellow('DISABLED')}`
+    ];
+
+    console.log(renderBox('QAForge Security Audit Summary', summaryLines, report.verdict === 'SECURE' ? pc.green : pc.red));
+
+    if (report.findings.length > 0) {
+      console.log(pc.bold('\n🔍 Findings & Vulnerabilities:'));
+      for (const f of report.findings) {
+        const sevColor = f.severity === 'CRITICAL' ? pc.bgRed(pc.white(` ${f.severity} `)) : f.severity === 'HIGH' ? pc.bgYellow(pc.black(` ${f.severity} `)) : pc.cyan(`[${f.severity}]`);
+        console.log(`\n  ${sevColor} ${pc.bold(f.title)} (${pc.dim(f.confidence)} confidence)`);
+        console.log(`    ${pc.dim('• Evidence:')} ${f.evidence}`);
+        console.log(`    ${pc.dim('• Impact:')} ${f.impact}`);
+        console.log(`    ${pc.dim('• Remediation:')} ${pc.green(f.remediation)}`);
+      }
+    } else {
+      console.log(pc.green('\n✔ No vulnerabilities or high-risk findings detected in inspected attack surfaces.'));
+    }
+
+    // Save report summary
+    ReportSummaryService.writeSummary({
+      projectRoot: process.cwd(),
+      commandName: 'security',
+      title: 'QAForge Security Test Summary',
+      verdict: report.verdict,
+      metrics: {
+        'Security Score': `${report.securityScore}/100`,
+        'Total Tests': report.summary.totalTests,
+        'Passed': report.summary.passed,
+        'Failed': report.summary.failed,
+        'Critical Findings': report.summary.severityCounts.critical,
+        'High Findings': report.summary.severityCounts.high
+      },
+      recommendations: report.remediationRoadmap.map(r => r.action)
+    });
+
+    if (opts.ci && (report.summary.severityCounts.critical > 0 || report.summary.severityCounts.high > 0)) {
+      process.exit(1);
+    }
+  });
+
+// 9.54 hook
+program
+  .command('hook [action]')
+  .description('Install or uninstall QAForge Git pre-commit hooks for automated change-impact testing')
+  .option('-c, --cmd <command>', 'Command to execute on pre-commit', 'npx qaforge changed')
+  .action((action, opts) => {
+    const engine = new QAForgeEngine(process.cwd());
+    if (action === 'uninstall') {
+      const res = engine.uninstallGitHook();
+      console.log(pc.bold(res.uninstalled ? pc.green(`✔ ${res.message}`) : pc.yellow(`ℹ ${res.message}`)));
+    } else {
+      const res = engine.installGitHook(opts.cmd);
+      if (res.installed) {
+        console.log(pc.bold(pc.green(`✔ ${res.message}`)));
+        console.log(`Hook path: ${pc.cyan(res.hookPath)} (${res.hookType})`);
+      } else {
+        console.log(pc.bold(pc.yellow(`⚠ ${res.message}`)));
+      }
+    }
+  });
+
+// 9.55 web-sec
+program
+  .command('web-sec')
+  .description('Audit Subresource Integrity (SRI), CSRF tokens, and CORS policies across web assets')
+  .action(() => {
+    const engine = new QAForgeEngine(process.cwd());
+    renderCommandHeader('web-sec', 'Web Security, SRI, CSRF & CORS Auditor');
+    const rep = engine.auditSriAndCsrf();
+
+    const vColor = rep.verdict === 'SECURE' ? pc.green : rep.verdict === 'NEEDS_ATTENTION' ? pc.yellow : pc.red;
+    console.log(pc.bold(vColor(`\n=== Web Security Audit: ${rep.verdict} (${rep.score}/100) ===`)));
+    console.log(`External Assets: ${rep.summary.totalExternalAssets} (Missing SRI: ${rep.summary.missingSriCount}) | Forms: ${rep.summary.totalFormsAudited} (Missing CSRF: ${rep.summary.missingCsrfCount}) | CORS Issues: ${rep.summary.corsIssuesCount}`);
+
+    if (rep.sriFindings.length > 0) {
+      console.log(pc.bold('\n🔍 Subresource Integrity (SRI) Findings:'));
+      for (const sri of rep.sriFindings) {
+        console.log(`  ${pc.yellow(`[${sri.risk}]`)} ${sri.file}:${sri.line} — ${pc.cyan(sri.sourceUrl)}`);
+        console.log(`    ${pc.dim('• Recommendation:')} ${sri.recommendation}`);
+      }
+    }
+
+    if (rep.csrfFindings.length > 0) {
+      console.log(pc.bold('\n🔍 CSRF Protection Findings:'));
+      for (const csrf of rep.csrfFindings) {
+        console.log(`  ${pc.yellow(`[${csrf.risk}]`)} ${csrf.file}:${csrf.line} — ${csrf.method} form`);
+        console.log(`    ${pc.dim('• Recommendation:')} ${csrf.recommendation}`);
+      }
+    }
+
+    if (rep.corsFindings.length > 0) {
+      console.log(pc.bold('\n🔍 CORS Policy Vulnerabilities:'));
+      for (const cors of rep.corsFindings) {
+        console.log(`  ${pc.red(`[${cors.risk}]`)} ${cors.file}:${cors.line} — Origin: ${cors.originPattern}`);
+        console.log(`    ${pc.dim('• Recommendation:')} ${cors.recommendation}`);
+      }
+    }
+  });
+
+// 9.56 dedup
+program
+  .command('dedup')
+  .description('Analyze test suites to identify duplicate and redundant test cases')
+  .action(() => {
+    const engine = new QAForgeEngine(process.cwd());
+    renderCommandHeader('dedup', 'Test Suite Redundancy & Deduplication Engine');
+    const rep = engine.deduplicateTests();
+
+    console.log(pc.bold(pc.cyan(`\n=== Test Suite Deduplication Analysis ===`)));
+    console.log(`Total Tests Scanned: ${rep.totalTestsScanned} | Unique Titles: ${rep.uniqueTestTitles} | Redundant Duplicates: ${rep.redundantCount > 0 ? pc.yellow(rep.redundantCount) : pc.green(0)} (${rep.redundancyPercentage}%)`);
+
+    if (rep.duplicates.length > 0) {
+      console.log(pc.bold('\n🔍 Identified Duplicate Tests:'));
+      for (const dup of rep.duplicates) {
+        console.log(`  • "${pc.bold(dup.testTitle)}"`);
+        console.log(`    First: ${pc.dim(`${dup.firstOccurrence.file}:${dup.firstOccurrence.line}`)}`);
+        for (const o of dup.duplicates) {
+          console.log(`    Duplicate: ${pc.yellow(`${o.file}:${o.line}`)}`);
+        }
+      }
+    }
+
+    console.log('\n💡 Recommendations:');
+    for (const rec of rep.recommendations) {
+      console.log(`  • ${rec}`);
+    }
   });
 
 // 10. mcp

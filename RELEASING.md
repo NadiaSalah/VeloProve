@@ -100,6 +100,6 @@ git push origin main --tags
 ### Step 4: Automated CI/CD Publishing
 The GitHub Actions workflow (`.github/workflows/release.yml`) will automatically:
 1. Run all tests and builds.
-2. Generate the npm distribution tarball (`qaforge-<version>.tgz`).
+2. Generate the npm distribution tarball (`engnadia-qaforge-<version>.tgz`).
 3. Create a GitHub Release with the tarball attached.
 4. Publish the package to npm with provenance.

@@ -31,6 +31,42 @@ export const DEFAULT_CONFIG: QAForgeConfig = {
     healthEndpoint: '/',
     timeoutMs: 30000,
     reuseExisting: true
+  },
+  security: {
+    enabled: true,
+    safeMode: true,
+    environment: 'test',
+    allowProduction: false,
+    auth: {
+      enabled: true,
+      testRateLimit: true,
+      testSessionExpiry: true,
+      testPasswordReset: true,
+      testJwt: true,
+      maxSafeAttempts: 5
+    },
+    authorization: {
+      enabled: true,
+      testIdor: true,
+      testRoles: true,
+      testProtectedRoutes: true
+    },
+    inputs: {
+      enabled: true,
+      sqlInjection: true,
+      noSqlInjection: true,
+      xss: true,
+      htmlInjection: true,
+      commandInjection: true,
+      pathTraversal: true,
+      templateInjection: true,
+      crlfInjection: true,
+      prototypePollution: true
+    },
+    uploads: {
+      enabled: true,
+      maxFixtureSizeMb: 2
+    }
   }
 };
 

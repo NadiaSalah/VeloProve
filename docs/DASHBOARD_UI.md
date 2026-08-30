@@ -26,8 +26,8 @@ npx qaforge ui -p 4000 -o
 
 ## 🎨 Architecture & Privacy Philosophy
 
-* **100% Local-First**: The dashboard server runs directly within your local Node.js process using native HTTP/WebSocket streaming.
-* **Zero Cloud Dependency**: No telemetry, analytics, or external API tracking. Your source code and secrets never leave `localhost`.
+* **Local-First Execution**: The dashboard server runs directly within your local Node.js process using native local HTTP endpoints with on-demand interactive execution.
+* **No Telemetry / Cloud Lock-in**: Zero third-party analytics or external API tracking. Core analysis executes locally, with network requests occurring only when explicitly invoking external features (e.g. live remote probes, webhooks, or external URLs).
 * **Synchronized with MCP & CLI**: Every action triggered in the UI shares the exact same underlying `QAForgeEngine` instances as the CLI and Model Context Protocol (MCP) server.
 
 ---
@@ -47,7 +47,7 @@ npx qaforge ui -p 4000 -o
 
 ### 3. 🧪 Live Test Runner & Impacted Tests
 * **Targeted Execution**: Run full suites, critical-only tests, or change-impacted tests via Git diff analysis.
-* **Real-Time Log Stream**: Inspect test stdout/stderr, assertion failures, and execution times in a terminal-like viewer.
+* **Execution Log Viewer**: Inspect test stdout/stderr, assertion failures, and execution duration in a terminal-like viewer.
 * **Failure Classification**: Automatic root-cause categorization (`APPLICATION_BUG`, `TEST_BUG`, `FLAKY_TEST`, `NETWORK_FAILURE`).
 
 ### 4. 🩺 Safe Test Self-Healing & Repair

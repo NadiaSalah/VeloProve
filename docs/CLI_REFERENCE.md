@@ -72,6 +72,10 @@ The `qaforge` CLI provides a complete set of commands for inspecting, testing, d
 | `qaforge rate-limit` | Audit API rate-limiting & DoS threshold | `npx qaforge rate-limit http://localhost:3000/api -n 30` |
 | `qaforge mock-server` | Start local in-memory CRUD stateful mock server | `npx qaforge mock-server --port 4040` |
 | `qaforge arch-graph` | Generate architecture topology & Mermaid graph | `npx qaforge arch-graph` |
+| `qaforge security` | Execute comprehensive non-destructive security testing | `npx qaforge security --safe` |
+| `qaforge hook` | Install or remove automated Git pre-commit hooks | `npx qaforge hook install` |
+| `qaforge web-sec` | Audit Subresource Integrity (SRI), CSRF & CORS policies | `npx qaforge web-sec` |
+| `qaforge dedup` | Analyze test suites and identify duplicate test cases | `npx qaforge dedup` |
 | `qaforge sandbox` | Launch ephemeral mock DB & sandbox server | `npx qaforge sandbox -p 8089` |
 | `qaforge watch` | Real-time interactive watch mode | `npx qaforge watch` |
 | `qaforge mcp` | Start QAForge MCP Server over stdio | `npx qaforge mcp` |
@@ -100,3 +104,29 @@ The `qaforge` CLI provides a complete set of commands for inspecting, testing, d
 
 ### `qaforge sandbox`
 - `-p, --port <port>`: Port to bind sandbox mock HTTP server (default: `8089`).
+
+### `qaforge security`
+- `--auth`: Test authentication (login, password reset, rate-limiting, enumeration).
+- `--authorization`: Test authorization (IDOR, role escalation, protected routes).
+- `--forms`: Test forms and input parameter tampering.
+- `--injection`: Test SQLi, NoSQLi, XSS, Command, and Path Traversal injections.
+- `--api`: Test API security and verbose error/stack trace leakage.
+- `--uploads`: Test file upload extension and MIME sanitization.
+- `--sessions`: Test session cookie flags (HttpOnly, Secure) and JWT integrity.
+- `--safe`: Enable safe mode non-destructive constraints (default: `true`).
+- `--deep`: Enable deep security testing mode.
+- `--sarif <path>`: Export findings in SARIF v2.1.0 format for GitHub Security.
+- `-u, --url <url>`: Target live application URL.
+- `-f, --format <format>`: Output format (`console`, `json`, `markdown`).
+- `--ci`: Exit with code 1 if CRITICAL or HIGH findings exist.
+
+### `qaforge hook`
+- `install`: Set up `.git/hooks/pre-commit` or Husky hook to run change-impact tests.
+- `uninstall`: Remove existing QAForge pre-commit hooks.
+- `-c, --cmd <command>`: Command to execute (default: `npx qaforge changed`).
+
+### `qaforge web-sec`
+- Audits Subresource Integrity (`integrity="sha384-..."`), mutating form CSRF tokens, and dangerous CORS credential wildcards.
+
+### `qaforge dedup`
+- Scans Vitest/Playwright/Jest test suites to identify duplicate test assertions and redundancy percentage.

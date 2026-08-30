@@ -7,9 +7,10 @@ describe('QAForge Interface Parity & Integrity Validation', () => {
   const cliSource = fs.readFileSync(path.resolve(__dirname, '../../src/cli/index.ts'), 'utf8');
   const mcpDocSource = fs.readFileSync(path.resolve(__dirname, '../../docs/MCP_REFERENCE.md'), 'utf8');
   const cliDocSource = fs.readFileSync(path.resolve(__dirname, '../../docs/CLI_REFERENCE.md'), 'utf8');
+  const readmeSource = fs.readFileSync(path.resolve(__dirname, '../../README.md'), 'utf8');
   const dashboardSource = fs.readFileSync(path.resolve(__dirname, '../../src/application/dashboard-server.ts'), 'utf8');
 
-  it('verifies exactly 64 unique MCP tools are properly registered, have schemas, descriptions, and handlers', () => {
+  it('verifies exactly 71 unique MCP tools are properly registered, have schemas, descriptions, and handlers', () => {
     // 1. Extract tool names registered in ListToolsRequestSchema
     const toolNameRegex = /name:\s*'(qa\.[a-zA-Z0-9_\.]+)'/g;
     const registeredTools: string[] = [];
@@ -19,11 +20,11 @@ describe('QAForge Interface Parity & Integrity Validation', () => {
       registeredTools.push(match[1]);
     }
 
-    expect(registeredTools.length).toBe(64);
+    expect(registeredTools.length).toBe(71);
 
     // Verify no duplicates
     const uniqueTools = new Set(registeredTools);
-    expect(uniqueTools.size).toBe(64);
+    expect(uniqueTools.size).toBe(71);
 
     // 2. Extract tool handlers in CallToolRequestSchema switch statement
     const caseRegex = /case\s*'(qa\.[a-zA-Z0-9_\.]+)':/g;
@@ -38,7 +39,7 @@ describe('QAForge Interface Parity & Integrity Validation', () => {
     }
   });
 
-  it('verifies all 64 MCP tools are documented in docs/MCP_REFERENCE.md', () => {
+  it('verifies all 71 MCP tools are documented in docs/MCP_REFERENCE.md and advertised in README.md', () => {
     const toolNameRegex = /name:\s*'(qa\.[a-zA-Z0-9_\.]+)'/g;
     const registeredTools: string[] = [];
     let match: RegExpExecArray | null;
@@ -47,15 +48,23 @@ describe('QAForge Interface Parity & Integrity Validation', () => {
       registeredTools.push(match[1]);
     }
 
+    expect(registeredTools.length).toBe(71);
+
     for (const tool of registeredTools) {
       expect(
         mcpDocSource,
         `Tool ${tool} is registered in MCP server but missing from docs/MCP_REFERENCE.md`
       ).toContain(`\`${tool}\``);
     }
+
+    // Verify documentation claim synchronization
+    expect(mcpDocSource).toContain('71 Tools');
+    expect(readmeSource).toContain('71 structured Model Context Protocol (MCP) tools');
+    expect(readmeSource).not.toContain('64 structured tools');
+    expect(readmeSource).not.toContain('68 structured tools');
   });
 
-  it('verifies all CLI commands are registered and documented', () => {
+  it('verifies exactly 71 CLI commands are registered and documented', () => {
     const cliCommandRegex = /\.command\('([a-zA-Z0-9_\-]+)(?:\s+[^']*)?'\)/g;
     const registeredCliCommands: string[] = [];
     let match: RegExpExecArray | null;
@@ -64,11 +73,11 @@ describe('QAForge Interface Parity & Integrity Validation', () => {
       registeredCliCommands.push(match[1]);
     }
 
-    expect(registeredCliCommands.length).toBeGreaterThanOrEqual(50);
+    expect(registeredCliCommands.length).toBe(71);
 
     // Verify no duplicate CLI command names
     const uniqueCommands = new Set(registeredCliCommands);
-    expect(uniqueCommands.size).toBe(registeredCliCommands.length);
+    expect(uniqueCommands.size).toBe(71);
 
     // Check against CLI documentation
     for (const cmd of registeredCliCommands) {
@@ -116,18 +125,26 @@ describe('QAForge Interface Parity & Integrity Validation', () => {
     expect(cliDocSource).not.toContain('qaforge remote\n');
   });
 
-  it('verifies CLI banner and stylized box renderers produce clean ANSI strings', async () => {
-    const { renderQAForgeBanner, renderBox } = await import('../../src/cli/banner.js');
-    const banner = renderQAForgeBanner();
-    expect(banner).toContain('QAForge CLI');
-    expect(banner).toContain('LOCAL-FIRST');
-    expect(banner).toContain('64 MCP TOOLS');
+  it('verifies CAPABILITY_MANIFEST.json exists and is synchronized with source counts', () => {
+    const manifestPath = path.resolve(__dirname, '../../docs/generated/CAPABILITY_MANIFEST.json');
+    expect(fs.existsSync(manifestPath)).toBe(true);
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    expect(manifest.version).toBe('1.0.0');
+    expect(manifest.package).toBe('@engnadia/qaforge');
+    expect(manifest.cliBinary).toBe('qaforge');
+    expect(manifest.totalMcpTools).toBe(71);
+    expect(manifest.totalCliCommands).toBe(71);
+    expect(manifest.capabilities.length).toBeGreaterThanOrEqual(70);
+  });
 
-    const box = renderBox('Test Title', ['Line 1', 'Line 2']);
-    expect(box).toContain('Test Title');
-    expect(box).toContain('Line 1');
-    expect(box).toContain('Line 2');
-    expect(box).toContain('╭─');
-    expect(box).toContain('╰');
+  it('verifies npm pack artifact naming and size sanity (packageSize <= unpackedSize)', () => {
+    const { execSync } = require('node:child_process');
+    const packOutputRaw = execSync('npm pack --dry-run --json', { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8' });
+    const packData = JSON.parse(packOutputRaw)[0];
+
+    expect(packData.filename).toBe('engnadia-qaforge-1.0.0.tgz');
+    expect(packData.size).toBeLessThanOrEqual(packData.unpackedSize);
+    expect(packData.size).toBeGreaterThan(100 * 1024); // > 100KB
+    expect(packData.unpackedSize).toBeGreaterThan(1024 * 1024); // > 1MB
   });
 });

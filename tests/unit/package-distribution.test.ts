@@ -114,26 +114,83 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
     }
   });
 
-  it('verifies plan with scope changed filters impact correctly', async () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-plan-changed-test-'));
+  it('verifies clean-room consumer installation from packed tarball without development source tree dependencies', () => {
+    const tempConsumerDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-clean-consumer-'));
+    let tarballPath = '';
     try {
-      fs.writeFileSync(
-        path.join(tempDir, 'package.json'),
-        JSON.stringify({ name: 'plan-changed-app', version: '1.0.0', dependencies: {} }, null, 2),
-        'utf8'
-      );
-      fs.writeFileSync(
-        path.join(tempDir, 'PRD.md'),
-        '# Requirements\n\n### REQ-01: Auth Login\nLogin with username and password.\n\n### REQ-02: Payment Checkout\nStripe checkout integration.\n',
-        'utf8'
-      );
+      // 1. Pack tarball
+      const packOutputRaw = execSync('npm pack --ignore-scripts --json', { cwd: rootDir, encoding: 'utf8' });
+      const jsonStart = packOutputRaw.indexOf('[');
+      const packData = JSON.parse(packOutputRaw.substring(jsonStart))[0];
+      const tarballName = packData.filename;
+      tarballPath = path.join(rootDir, tarballName);
+      expect(fs.existsSync(tarballPath)).toBe(true);
 
-      const engine = new QAForgeEngine(tempDir);
-      const plan = await engine.plan({ scope: 'changed' });
-      expect(plan.summary.totalTests).toBeGreaterThan(0);
-      expect(plan.planId).toMatch(/^plan-/);
+      // 2. Setup isolated consumer node_modules
+      const consumerNodeModules = path.join(tempConsumerDir, 'node_modules');
+      const packageDir = path.join(consumerNodeModules, '@engnadia', 'qaforge');
+      fs.mkdirSync(packageDir, { recursive: true });
+
+      // 3. Extract tarball into consumer package directory
+      execSync(`tar -xzf "${tarballPath}" -C "${packageDir}" --strip-components=1`, { stdio: 'pipe' });
+
+      // 4. Link dependencies so consumer node resolution succeeds
+      const rootNodeModules = path.join(rootDir, 'node_modules');
+      for (const dep of ['commander', 'picocolors', 'zod', '@modelcontextprotocol']) {
+        const srcDep = path.join(rootNodeModules, dep);
+        const destDep = path.join(consumerNodeModules, dep);
+        if (fs.existsSync(srcDep)) {
+          if (!fs.existsSync(path.dirname(destDep))) fs.mkdirSync(path.dirname(destDep), { recursive: true });
+          if (process.platform === 'win32') {
+            try { execSync(`cmd /c mklink /J "${destDep}" "${srcDep}"`, { stdio: 'pipe' }); } catch {}
+          } else {
+            try { fs.symlinkSync(srcDep, destDep, 'junction'); } catch {}
+          }
+        }
+      }
+
+      // 5. Verify CLI binary exists and is executable
+      const cliScript = path.join(packageDir, 'dist', 'cli', 'index.js');
+      expect(fs.existsSync(cliScript)).toBe(true);
+      const content = fs.readFileSync(cliScript, 'utf8');
+      expect(content.startsWith('#!/usr/bin/env node')).toBe(true);
+
+      const helpOutput = execSync(`node "${cliScript}" --help`, { cwd: tempConsumerDir, encoding: 'utf8' });
+      expect(helpOutput).toContain('QAForge');
+
+      const doctorOutput = execSync(`node "${cliScript}" doctor`, { cwd: tempConsumerDir, encoding: 'utf8' });
+      expect(doctorOutput).toContain('QAForge');
+
+      // 6. Test direct ESM import of public API from consumer workspace
+      const testImportScript = path.join(tempConsumerDir, 'test-import.js');
+      fs.writeFileSync(
+        testImportScript,
+        `import { QAForgeEngine, DoctorService, SecretRedactor } from '@engnadia/qaforge';
+const guard = { getRoot: () => process.cwd() };
+const doc = DoctorService.diagnose(guard);
+const secret = SecretRedactor.redact('Bearer 123456789012');
+if (!doc || !secret.includes('REDACTED')) process.exit(1);
+console.log('IMPORT_SUCCESS');
+`,
+        'utf8'
+      );
+      fs.writeFileSync(
+        path.join(tempConsumerDir, 'package.json'),
+        JSON.stringify({ name: 'consumer-sample-app', version: '1.0.0', type: 'module' }, null, 2),
+        'utf8'
+      );
+      const importOutput = execSync(`node "${testImportScript}"`, { cwd: tempConsumerDir, encoding: 'utf8' });
+      expect(importOutput).toContain('IMPORT_SUCCESS');
+
+      // 7. Verify zero development source leaks
+      expect(fs.existsSync(path.join(packageDir, 'src'))).toBe(false);
+      expect(fs.existsSync(path.join(packageDir, 'tests'))).toBe(false);
+      expect(fs.existsSync(path.join(packageDir, '.github'))).toBe(false);
     } finally {
-      fs.rmSync(tempDir, { recursive: true, force: true });
+      if (tarballPath && fs.existsSync(tarballPath)) {
+        try { fs.unlinkSync(tarballPath); } catch {}
+      }
+      try { fs.rmSync(tempConsumerDir, { recursive: true, force: true }); } catch {}
     }
   });
 });

@@ -718,6 +718,87 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
+          name: 'qa.securityScan',
+          description: 'Discover and inspect security attack surfaces (auth routes, protected routes, forms, file uploads, JWT, cookies, and database technologies).',
+          inputSchema: {
+            type: 'object',
+            properties: {}
+          }
+        },
+        {
+          name: 'qa.securityPlan',
+          description: 'Generate prioritized, risk-scored security test plan for authentication, authorization, injection, forms, sessions, and uploads.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              categories: {
+                type: 'array',
+                items: { type: 'string', enum: ['authentication', 'authorization', 'forms_inputs', 'injection', 'api_security', 'sessions_tokens', 'file_uploads'] },
+                description: 'Optional categories to target'
+              },
+              safeMode: { type: 'boolean', description: 'Enable safe non-destructive mode (default: true)' }
+            }
+          }
+        },
+        {
+          name: 'qa.securityRun',
+          description: 'Execute automated non-destructive security tests against live target or codebase, identifying vulnerabilities with severity and confidence.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              baseURL: { type: 'string', description: 'Target application URL' },
+              categories: {
+                type: 'array',
+                items: { type: 'string', enum: ['authentication', 'authorization', 'forms_inputs', 'injection', 'api_security', 'sessions_tokens', 'file_uploads'] }
+              },
+              safeMode: { type: 'boolean', description: 'Enforce safe mode restrictions (default: true)' },
+              deepMode: { type: 'boolean', description: 'Run deeper security checks (requires explicit opt-in)' },
+              environment: { type: 'string', enum: ['test', 'staging', 'production', 'local'] },
+              allowProduction: { type: 'boolean', description: 'Allow execution against production (default: false)' }
+            }
+          }
+        },
+        {
+          name: 'qa.securityReport',
+          description: 'Generate comprehensive security report with explainable score (0-100), findings, evidence, redacted logs, and remediation roadmap.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              baseURL: { type: 'string' },
+              safeMode: { type: 'boolean' },
+              format: { type: 'string', enum: ['json', 'markdown', 'console'] }
+            }
+          }
+        },
+        {
+          name: 'qa.exportSarif',
+          description: 'Export security findings and CVE vulnerabilities in standard SARIF v2.1.0 JSON format for GitHub Security integration.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              outputPath: { type: 'string', description: 'Optional relative path for SARIF output' }
+            }
+          }
+        },
+        {
+          name: 'qa.auditSriCsrf',
+          description: 'Audit Subresource Integrity (SRI) on external CDN assets, CSRF token protections on mutating forms, and CORS policy wildcards.',
+          inputSchema: {
+            type: 'object',
+            properties: {}
+          }
+        },
+        {
+          name: 'qa.dedupTests',
+          description: 'Analyze test suites to identify duplicate, redundant, and overlapping test cases across Vitest/Playwright suites.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              testFiles: { type: 'array', items: { type: 'string' } }
+            }
+          }
+        },
+        {
           name: 'qa.doctor',
           description: 'Run environmental, runtime, and project installation diagnostics to verify readiness.',
           inputSchema: {
@@ -1198,6 +1279,59 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
 
         case 'qa.architectureGraph': {
           const result = engine.generateArchitectureGraph();
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
+
+        case 'qa.securityScan': {
+          const result = await engine.scanSecuritySurface();
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
+
+        case 'qa.securityPlan': {
+          const result = await engine.planSecurityTests(args as any);
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
+
+        case 'qa.securityRun': {
+          const result = await engine.runSecurityTests(args as any);
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
+
+        case 'qa.securityReport': {
+          const result = await engine.generateSecurityReport(args as any);
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
+
+        case 'qa.exportSarif': {
+          const { outputPath } = (args || {}) as any;
+          const report = await engine.runSecurityTests({ safeMode: true });
+          const audit = engine.auditSecurity();
+          const result = engine.exportSarif(report, audit, outputPath);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ sarifPath: result.sarifPath, rulesCount: result.log.runs[0].tool.driver.rules.length, resultsCount: result.log.runs[0].results.length }, null, 2) }]
+          };
+        }
+
+        case 'qa.auditSriCsrf': {
+          const result = engine.auditSriAndCsrf();
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
+
+        case 'qa.dedupTests': {
+          const { testFiles } = (args || {}) as any;
+          const result = engine.deduplicateTests(testFiles);
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };

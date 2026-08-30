@@ -63,15 +63,32 @@ export class SafeProcessRunner {
       let timedOut = false;
 
       const isWindows = process.platform === 'win32';
-      // On Windows, running .cmd or .bat wrappers requires either full path or shell: true for cmd invocation
+      let execTarget = executable;
+      let useShell = isWindows;
+
+      // On Windows, resolve command wrappers (.cmd) or known executables (.exe) directly to avoid DEP0190 shell warning
+      if (isWindows && !executable.endsWith('.cmd') && !executable.endsWith('.exe') && !executable.includes('\\') && !executable.includes('/')) {
+        const cmdWrappers = ['npx', 'npm', 'yarn', 'pnpm', 'vitest', 'jest', 'playwright', 'eslint'];
+        const directExecs = ['git', 'node', 'docker', 'tar', 'curl', 'taskkill'];
+        const low = executable.toLowerCase();
+
+        if (cmdWrappers.includes(low)) {
+          execTarget = `${executable}.cmd`;
+          useShell = false;
+        } else if (directExecs.includes(low)) {
+          execTarget = executable;
+          useShell = false;
+        }
+      }
+
       const spawnOpts: SpawnOptions = {
         cwd,
         env: { ...process.env, ...options.env },
-        shell: isWindows,
+        shell: useShell,
         stdio: ['ignore', 'pipe', 'pipe']
       };
 
-      const child = spawn(executable, args, spawnOpts);
+      const child = spawn(execTarget, args, spawnOpts);
 
       const timer = setTimeout(() => {
         timedOut = true;

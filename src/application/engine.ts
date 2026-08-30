@@ -177,6 +177,17 @@ import {
   ArchitectureGraphService,
   type ArchitectureGraphReport
 } from './architecture-graph.js';
+import { SecurityEngine } from './security-engine.js';
+import { SarifExporterService, type SarifLog } from './sarif-exporter.js';
+import { SriCsrfValidatorService, type AdvancedWebSecurityReport } from './sri-csrf-validator.js';
+import { TestDeduplicatorService, type TestDeduplicationReport } from '../domain/tests/test-deduplicator.js';
+import { GitHookInstallerService, type HookInstallResult } from './git-hook-installer.js';
+import type {
+  SecurityAttackSurface,
+  SecurityTestPlan,
+  SecurityReport,
+  SecurityTestingOptions
+} from '../shared/types/security.js';
 import {
   DoctorService,
   type DoctorReport
@@ -453,6 +464,47 @@ export class QAForgeEngine {
 
   public generateArchitectureGraph(): ArchitectureGraphReport {
     return ArchitectureGraphService.generateGraph(this.guard);
+  }
+
+  public async scanSecuritySurface(): Promise<SecurityAttackSurface> {
+    const { profile } = await this.inspect();
+    return SecurityEngine.scanSurface(this.guard, profile);
+  }
+
+  public async planSecurityTests(options: SecurityTestingOptions = {}): Promise<SecurityTestPlan> {
+    const surface = await this.scanSecuritySurface();
+    return SecurityEngine.createPlan(surface, options);
+  }
+
+  public async runSecurityTests(options: SecurityTestingOptions = {}): Promise<SecurityReport> {
+    const { profile } = await this.inspect();
+    const surface = await SecurityEngine.scanSurface(this.guard, profile);
+    const plan = SecurityEngine.createPlan(surface, options);
+    return SecurityEngine.runTests(this.guard, plan, options, profile);
+  }
+
+  public async generateSecurityReport(options: SecurityTestingOptions = {}): Promise<SecurityReport> {
+    return this.runSecurityTests(options);
+  }
+
+  public exportSarif(report: SecurityReport, auditReport?: any, outputPath?: string): { sarifPath: string; log: SarifLog } {
+    return SarifExporterService.exportSecurityReport(this.guard, report, auditReport, outputPath);
+  }
+
+  public auditSriAndCsrf(): AdvancedWebSecurityReport {
+    return SriCsrfValidatorService.audit(this.guard);
+  }
+
+  public deduplicateTests(testFiles?: string[]): TestDeduplicationReport {
+    return TestDeduplicatorService.analyze(this.guard, testFiles);
+  }
+
+  public installGitHook(command = 'npx qaforge changed'): HookInstallResult {
+    return GitHookInstallerService.installPreCommit(this.guard, command);
+  }
+
+  public uninstallGitHook(): { uninstalled: boolean; message: string } {
+    return GitHookInstallerService.uninstallPreCommit(this.guard);
   }
 
   public doctor(): DoctorReport {

@@ -65,6 +65,11 @@ This repository is equipped with **QAForge** (Local Autonomous QA Engine).
 - **API Rate-Limiting & DoS Profiler**: Probe 429 throttling & burst resilience (`qa.rateLimitAudit` / `npx qaforge rate-limit <url>`).
 - **Stateful Dynamic Mock Server**: Local zero-cloud in-memory stateful CRUD REST server (`qa.statefulMock` / `npx qaforge mock-server`).
 - **Architecture Dependency Graph**: Topology graph of UI, APIs, DBs & Cloud SDKs (`qa.architectureGraph` / `npx qaforge arch-graph`).
+- **Comprehensive Security Testing (Auth, AuthZ, Injections, Forms, Sessions, Uploads)**: Discover attack surfaces (`qa.securityScan`), plan test cases (`qa.securityPlan`), and execute non-destructive tests with severity & confidence (`qa.securityRun`, `qa.securityReport` / `npx qaforge security --safe`).
+- **SARIF Security Report Export**: Export standard SARIF v2.1.0 for GitHub Code Scanning (`qa.exportSarif` / `npx qaforge security --sarif <path>`).
+- **Subresource Integrity (SRI), CSRF & CORS Validator**: Audit external CDN assets, mutating form CSRF protections, and wildcard CORS policies (`qa.auditSriCsrf` / `npx qaforge web-sec`).
+- **Test Suite Deduplication & Redundancy Engine**: Detect duplicate test assertions and redundancy percentages (`qa.dedupTests` / `npx qaforge dedup`).
+- **Automated Git Pre-Commit Hook**: Install or remove automated pre-commit change impact verification hooks (`npx qaforge hook install`, `npx qaforge hook uninstall`).
 - **Mutation Quality**: Call `qa.mutationScore` or run `npx qaforge mutation-score` to evaluate test sensitivity.
 - **Custom Framework Self-Teaching**: Call `qa.learnFramework` or run `npx qaforge learn-framework` to learn uncommon stacks.
 

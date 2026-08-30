@@ -21,7 +21,7 @@ Add to your editor's MCP configuration (`.cursor/mcp.json`, `~/.codeium/windsurf
 
 ---
 
-## Available MCP Tools (64 Tools)
+## Available MCP Tools (71 Tools)
 
 ### 1. `qa.inspect`
 Inspects workspace stack, routes, API endpoints, existing tests, and discovered PRD requirements.
@@ -596,7 +596,74 @@ Generates microservices & architecture dependency graph with Mermaid topology di
 {}
 ```
 
-### 64. `qa.doctor`
+### 64. `qa.securityScan`
+Discovers and inspects security attack surfaces (auth routes, protected routes, forms, file uploads, JWT, cookies, and database technologies).
+```json
+// Inputs:
+{}
+```
+
+### 65. `qa.securityPlan`
+Generates prioritized, risk-scored security test plan for authentication, authorization, injection, forms, sessions, and uploads.
+```json
+// Inputs:
+{
+  "categories": ["authentication", "authorization", "forms_inputs", "injection", "api_security", "sessions_tokens", "file_uploads"],
+  "safeMode": true
+}
+```
+
+### 66. `qa.securityRun`
+Executes automated non-destructive security tests against live target or codebase, identifying vulnerabilities with severity and confidence.
+```json
+// Inputs:
+{
+  "baseURL": "http://localhost:3000",
+  "categories": ["authentication", "injection"],
+  "safeMode": true,
+  "deepMode": false,
+  "environment": "test",
+  "allowProduction": false
+}
+```
+
+### 67. `qa.securityReport`
+Generates comprehensive security report with explainable score (0-100), findings, evidence, redacted logs, and remediation roadmap.
+```json
+// Inputs:
+{
+  "baseURL": "http://localhost:3000",
+  "safeMode": true,
+  "format": "json"
+}
+```
+
+### 68. `qa.exportSarif`
+Exports security findings and CVE vulnerabilities in standard SARIF v2.1.0 JSON format for GitHub Security integration.
+```json
+// Inputs:
+{
+  "outputPath": ".qaforge/reports/security.sarif"
+}
+```
+
+### 69. `qa.auditSriCsrf`
+Audits Subresource Integrity (SRI) on external CDN assets, CSRF token protections on mutating forms, and CORS policy wildcards.
+```json
+// Inputs:
+{}
+```
+
+### 70. `qa.dedupTests`
+Analyzes test suites to identify duplicate, redundant, and overlapping test cases across Vitest/Playwright suites.
+```json
+// Inputs:
+{
+  "testFiles": ["tests/unit/app.test.ts"]
+}
+```
+
+### 71. `qa.doctor`
 Runs environmental, runtime, and project installation diagnostics to verify readiness.
 ```json
 // Inputs:

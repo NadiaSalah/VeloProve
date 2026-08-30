@@ -35,4 +35,40 @@ export interface QAForgeConfig {
     timeoutMs?: number;
     reuseExisting?: boolean;
   };
+  security?: {
+    enabled?: boolean;
+    safeMode?: boolean;
+    environment?: 'test' | 'staging' | 'production' | 'local';
+    allowProduction?: boolean;
+    auth?: {
+      enabled?: boolean;
+      testRateLimit?: boolean;
+      testSessionExpiry?: boolean;
+      testPasswordReset?: boolean;
+      testJwt?: boolean;
+      maxSafeAttempts?: number;
+    };
+    authorization?: {
+      enabled?: boolean;
+      testIdor?: boolean;
+      testRoles?: boolean;
+      testProtectedRoutes?: boolean;
+    };
+    inputs?: {
+      enabled?: boolean;
+      sqlInjection?: boolean;
+      noSqlInjection?: boolean;
+      xss?: boolean;
+      htmlInjection?: boolean;
+      commandInjection?: boolean;
+      pathTraversal?: boolean;
+      templateInjection?: boolean;
+      crlfInjection?: boolean;
+      prototypePollution?: boolean;
+    };
+    uploads?: {
+      enabled?: boolean;
+      maxFixtureSizeMb?: number;
+    };
+  };
 }

@@ -45,6 +45,10 @@ Before modifying or generating tests, call `qa.inspect` to load the active proje
 - Run `qa.scanMalware` and `qa.remediateMalware` to audit project for backdoors & auto-neutralize malicious code.
 - Run `qa.aiEvaluate`, `qa.gitBisect`, `qa.networkThrottle`, `qa.smartContractAudit`, `qa.deadAssetPurge` for extended Phase 6 capabilities.
 - Run `qa.screenReaderSim`, `qa.dbQueryAudit`, `qa.envDriftAudit`, `qa.recordFailureReplay`, `qa.rateLimitAudit`, `qa.statefulMock`, `qa.architectureGraph` for Phase 7 Enterprise capabilities.
+- Run `qa.securityScan`, `qa.securityPlan`, `qa.securityRun`, `qa.securityReport` for comprehensive non-destructive security testing (Auth, AuthZ, Injections, Forms, Sessions, Uploads).
+- Run `qa.exportSarif` to generate GitHub Code Scanning SARIF v2.1.0 logs.
+- Run `qa.auditSriCsrf` to audit Subresource Integrity (SRI), CSRF tokens, and CORS wildcards.
+- Run `qa.dedupTests` to identify duplicate assertions and test suite redundancies.
 - If working with custom or in-house frameworks, invoke `qa.learnFramework`.
 
 ## 6. Release Readiness

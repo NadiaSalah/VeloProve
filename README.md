@@ -38,14 +38,25 @@ QAForge is a local, agentic QA and automated testing toolkit that helps AI codin
 
 **QAForge** is a local-first agentic QA and automated testing toolkit designed for developers and AI coding agents (**Cursor, Windsurf, Claude Code, Codex, Cline, VS Code Agent**). It integrates directly into your workspace to generate and run tests, analyze failure root causes, heal brittle locators, detect regressions, and produce actionable quality reports while keeping developers in full control of their testing workflows.
 
-Unlike proprietary cloud platforms that require uploading your private code and secrets to remote servers, QAForge operates 100% locally on your machine without forced telemetry or cloud lock-in.
+Unlike proprietary cloud platforms that require uploading private code and secrets to remote servers, QAForge operates locally-first on your machine without forced telemetry or cloud lock-in. Core analysis and orchestration execute locally. Network access occurs only when you explicitly invoke features that target remote endpoints, registries, webhooks, external services, or live applications.
+
+---
+
+## What does QAForge mean?
+
+**QAForge** stands for **Quality Assurance Forge**.
+
+- **QA** — Quality Assurance: testing, verification, security, reliability, and release confidence.
+- **Forge** — a place where something strong and dependable is shaped.
+
+Together, **QAForge** represents a local engineering workspace where software quality is continuously inspected, tested, strengthened, and forged before release.
 
 ---
 
 ## Why QAForge?
 
-- **Local-First & Private**: Core execution runs entirely on your local machine. Source code, secrets, and test results never leave your workspace.
-- **Agent-Native (MCP)**: Exposes 64 structured Model Context Protocol (MCP) tools for coding agents to inspect, plan, write, run, diagnose, and heal tests autonomously.
+- **Local-First & Private**: Core analysis and orchestration execute directly on your local machine without forced telemetry. Network access occurs only when explicitly targeting remote endpoints, registries, webhooks, or live applications requested by the user.
+- **Agent-Native (MCP)**: Exposes 71 structured Model Context Protocol (MCP) tools for coding agents to inspect, plan, write, run, diagnose, and heal tests autonomously.
 - **Deep Code & Framework Awareness**: Analyzes AST structures across Next.js, React, Vite, Express, Fastify, Vue, and Svelte to discover routes, API contracts, and requirements.
 - **Evidence-Based Diagnostics**: Classifies test failures with confidence scoring (`APPLICATION_BUG`, `TEST_BUG`, `FLAKY_TEST`, `NETWORK_FAILURE`) and provides recommended source code fixes.
 - **Smart Change Impact**: Analyzes `git diff` to identify and run only the tests affected by your recent code edits.
@@ -61,11 +72,12 @@ Unlike proprietary cloud platforms that require uploading your private code and 
 - 🔬 **Failure Root-Cause Analysis**: Evidence-based diagnostics separating application bugs from test bugs with actionable recommendations.
 - 🩺 **Safe Test Self-Healing**: Automatically repairs stale locators using Visual-Aria and accessibility hierarchies without breaking tests.
 - 🔍 **Autonomous Git Bisect**: Traverses commit history (`qaforge bisect`) to pinpoint bug-introducing commits automatically.
+- 🛡️ **Comprehensive Security Testing**: Autonomous non-destructive vulnerability testing for authentication, authorization (IDOR / privilege escalation), input injections (SQLi, NoSQLi, XSS, Command, Path Traversal), form tampering, JWT tokens, and file uploads.
 - 📬 **API Testing & Postman Runner**: Executes Postman v2.1 collections, interpolates chained variables, and tests OpenAPI boundary probes.
 - 🛡️ **Security & Secret Scanning**: Audits dependencies for CVEs, scans for leaked credentials, and runs OWASP Top 10 checks.
 - 🎙️ **Accessibility & Screen Reader Simulation**: Audits WCAG 2.1 A/AA/AAA guidelines and simulates NVDA/VoiceOver speech order.
 - 🎬 **Visual Failure Replay & Executive Reports**: Generates standalone animated SVG/HTML replay packages and single-file executive QA reports.
-- 🌐 **64 Model Context Protocol (MCP) Tools**: Native stdio MCP server for full AI coding agent interoperability.
+- 🌐 **71 Model Context Protocol (MCP) Tools**: Native stdio MCP server for full AI coding agent interoperability.
 
 ---
 
@@ -114,7 +126,7 @@ npx qaforge release
 
 ## 🖥️ Live Web Dashboard & Command Center
 
-QAForge includes a **zero-cloud, local-first interactive Web Dashboard UI** with dark mode, real-time testing controls, and rich visual diagnostics.
+QAForge includes a **zero-cloud, local-first interactive Web Dashboard UI** with dark mode, interactive testing controls, and rich visual diagnostics.
 
 ```bash
 # Start Dashboard on default port (http://localhost:3333)
@@ -227,15 +239,16 @@ Add to `.cursor/mcp.json`, `~/.codeium/windsurf/mcp_config.json`, or `cline_mcp_
   "mcpServers": {
     "qaforge": {
       "command": "npx",
-      "args": ["qaforge", "mcp"]
+      "args": ["-y", "@engnadia/qaforge", "mcp"]
     }
   }
 }
 ```
+*(Note: If `@engnadia/qaforge` is installed locally in your project dependencies, `["qaforge", "mcp"]` may also be used).*
 
 ### Core MCP Tools
 
-QAForge exposes 64 structured tools over stdio. The core tools for autonomous coding agent loops include:
+QAForge exposes 71 structured Model Context Protocol (MCP) tools over stdio. The core tools for autonomous coding agent loops include:
 
 - `qa.inspect`: Deep project scanning (frameworks, routes, APIs, PRD requirements).
 - `qa.doctor`: Run environment, runtime, and project diagnostics.
@@ -250,7 +263,7 @@ QAForge exposes 64 structured tools over stdio. The core tools for autonomous co
 - `qa.refine`: Modify test assertions in place via natural language commands.
 - `qa.releaseCheck`: Calculate release readiness verdict (`READY`, `READY_WITH_WARNINGS`, `NOT_READY`).
 
-👉 **[View the Complete MCP Reference & Schemas for all 64 tools](docs/MCP_REFERENCE.md)**
+👉 **[View the Complete MCP Reference & Schemas for all 71 tools](docs/MCP_REFERENCE.md)**
 
 ---
 

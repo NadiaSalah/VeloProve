@@ -1,17 +1,34 @@
 # 🚀 QAForge Future Roadmap & Next-Gen TODOs
 
-This document tracks planned features, architectural innovations, and upcoming improvements for future QAForge releases (**v1.1.0**, **v1.2.0**, and **v2.0.0+**).
+This document tracks planned features, architectural innovations, and upcoming improvements for QAForge across the current stability cycle (**v1.0.x**), upcoming feature releases (**v1.1.0**, **v1.2.0**), and the future platform vision (**v2.0.0+**).
+
+---
+
+## 📌 Milestone: QAForge v1.0.x — Stability, Developer Experience & Refinements
+
+### 1. ⚡ Live Telemetry & Real-Time Dashboard Feedback
+- [x] **SARIF Report Exporter**: Generate GitHub Code Scanning compatible SARIF (`.sarif`) files from `qaforge security` and `qaforge audit` for native security tab integration (`qa.exportSarif` / `qaforge security --sarif`).
+- [ ] **Server-Sent Events (SSE) / WebSocket Streaming**: Stream test run logs, terminal output, and security scan progression to the Dashboard UI in real-time without polling.
+- [ ] **Smart DevServer Auto-Launcher**: Automatically detect, spawn, and healthcheck the local application dev server (e.g. `npm run dev`) before running live E2E or security tests if `baseURL` is offline.
+
+### 2. 🛡️ Security Engine Enhancements
+- [x] **Subresource Integrity (SRI), CSRF & CORS Validator**: Audit external CDN assets, mutating form CSRF token presence, and wildcard CORS policies (`qa.auditSriCsrf` / `qaforge web-sec`).
+- [ ] **Interactive Security Policy Wizard (`qaforge security --init-policy`)**: CLI prompt to generate customized security configurations for specific compliance frameworks (OWASP ASVS, SOC2, HIPAA).
+
+### 3. 🎯 Test Suite Optimization & Deduplication
+- [x] **AST Test Deduplication Engine**: Detect redundant or overlapping assertions across generated and developer-written tests to keep test runs fast (`qa.dedupTests` / `qaforge dedup`).
+- [x] **Automated Git Pre-Commit Hook (`qaforge hook install`)**: One-command setup for `husky` / `.git/hooks/pre-commit` to execute fast change-impact tests (`qaforge changed`) before commits (`qaforge hook install`).
 
 ---
 
 ## 📌 Milestone: QAForge v1.1.0 — Smart Insights & Interactive Experience
 
 ### 1. 📊 QA Trends, Historical Metrics & Quality Analytics
-- [ ] **Historical Execution Persistence**: Automatically store structured test results and health metrics in `.qaforge/state/history.json` over time.
-- [ ] **Dashboard Trend Visualizer**: Add interactive charts (Recharts / Chart.js) in the Dashboard UI displaying pass rates, execution times, flakiness variance, and code coverage over time.
-- [ ] **Regression Velocity Alerts**: Highlight regressions that occurred across Git branches or recent pull requests.
+- [ ] **Historical Execution Persistence**: Automatically store structured test results, security findings, and health metrics in `.qaforge/state/history.json` over time.
+- [ ] **Dashboard Trend Visualizer**: Add interactive charts (Recharts / Chart.js) in the Dashboard UI displaying pass rates, execution duration, flakiness variance, and code coverage over time.
+- [ ] **Regression Velocity & Flakiness Alerts**: Highlight regressions that occurred across Git branches or recent pull requests with MTTR (Mean Time to Repair) metrics.
 
-### 2. 🎬 Visual Scenario Recorder Extension / Bookmarklet
+### 2. 🎬 Visual Scenario Recorder Extension & Bookmarklet
 - [ ] **Browser Event Interceptor**: Create a lightweight browser snippet / bookmarklet or Chrome extension that listens to user interactions (clicks, inputs, navigations).
 - [ ] **Direct Playwright Spec Generator**: Synthesize recorded browser actions into robust Playwright test files directly from the Live Dashboard UI with one click.
 - [ ] **Accessibility-First Selector Synthesizer**: Auto-map recorded DOM elements to ARIA roles (`getByRole`, `getByLabelText`) during recording.
@@ -41,9 +58,9 @@ This document tracks planned features, architectural innovations, and upcoming i
 - [ ] **SLO & Latency Gate Enforcement**: Fail CI pipelines if p95 latency exceeds user-defined service-level objectives (SLOs).
 
 ### 3. 🛡️ Advanced Dynamic Security & DAST Probing
-- [ ] **Interactive CSRF & XSS Probe Generator**: Generate automated headless browser tests probing input forms for stored and reflected XSS.
-- [ ] **JWT & Session Tampering Auditor**: Test backend route security against expired tokens, algorithm confusion (`none` alg), and permission elevation.
-- [ ] **Subresource Integrity (SRI) Validator**: Check third-party CDNs and script tags for missing integrity hashes.
+- [x] **Comprehensive Security Testing Suite**: Autonomous vulnerability testing for Authentication, Authorization (IDOR, role escalation), Forms & Inputs (parameter tampering), Injections (SQLi, NoSQLi, XSS, Command, Path Traversal), API Security, Sessions & JWT tampering, and File Upload sanitization (`qa.securityScan`, `qa.securityPlan`, `qa.securityRun`, `qa.securityReport` / `qaforge security`).
+- [ ] **Dynamic OIDC / OAuth2 Consent Flow Simulator**: Autonomous verification of PKCE and OAuth callback state validation.
+- [ ] **GraphQL Introspection & Depth-Limit Abuse Auditor**: Check GraphQL endpoints for unauthorized schema exposure and cyclic nested query vulnerabilities.
 
 ---
 
@@ -52,12 +69,13 @@ This document tracks planned features, architectural innovations, and upcoming i
 ### 1. 🔄 Continuous Background Autonomous Healing Daemon
 - [ ] **Zero-Intervention Watcher**: Run background daemon that automatically patches brittle locators upon detecting application DOM updates.
 - [ ] **AI Pull Request Bot**: Generate ready-to-merge GitHub pull requests with healed tests and bug fix patches.
-- [ ] **Git Hook Pre-Commit Integration**: Instant micro-evaluations on `git commit` to block commits with broken tests or security flaws.
+- [ ] **Interactive Visual Regression Canvas**: Visual side-by-side pixel diff slider in the Dashboard for reviewing UI changes with one-click baseline approvals.
 
 ### 2. 🌐 Multi-Language Engine Support (Beyond JS/TS)
 - [ ] **Python Ecosystem**: Native test generation and execution for `pytest` and `unittest` (FastAPI, Django, Flask).
 - [ ] **Java & Go Ecosystems**: Native adapters for JUnit 5 (Spring Boot) and `go test` (Gin, Fiber).
-- [ ] **Universal AST Parser Engine**: Tree-sitter powered multilingual route and requirement extraction.
+- [ ] **Rust & C# Ecosystems**: Native adapters for `cargo test` (Actix, Axum) and `xUnit / NUnit` (ASP.NET Core).
+- [ ] **Universal Tree-sitter AST Parser**: Tree-sitter powered multilingual route, type, and requirement extraction across all major programming languages.
 
 ### 3. 🧩 Plugin & Custom Adapter SDK
 - [ ] **Custom Adapter SDK**: Allow developers to write custom adapters for proprietary in-house test runners and private cloud infrastructures.

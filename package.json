@@ -35,7 +35,10 @@
   },
   "files": [
     "dist",
-    "docs",
+    "docs/*.md",
+    "docs/assets",
+    "docs/integrations",
+    "!docs/FINAL_RELEASE_CONSISTENCY_AUDIT.md",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"

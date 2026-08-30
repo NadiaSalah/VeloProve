@@ -20,9 +20,6 @@ import { BddGeneratorService } from './bdd-generator.js';
 import { WebhookAlertService } from './webhook-alerts.js';
 import { MalwareScannerService } from './malware-scanner.js';
 
-
-
-
 export class LocalDashboardServer {
   public static start(
     guard: WorkspaceGuard,
@@ -481,6 +478,33 @@ export class LocalDashboardServer {
 
               case 'arch-graph': {
                 const result = engine.generateArchitectureGraph();
+                return sendJson({ success: true, action, data: result });
+              }
+
+              case 'security-scan': {
+                const result = await engine.scanSecuritySurface();
+                return sendJson({ success: true, action, data: result });
+              }
+
+              case 'security-run': {
+                const result = await engine.runSecurityTests({ safeMode: true });
+                return sendJson({ success: true, action, data: result });
+              }
+
+              case 'sri-csrf-audit': {
+                const result = engine.auditSriAndCsrf();
+                return sendJson({ success: true, action, data: result });
+              }
+
+              case 'dedup-tests': {
+                const result = engine.deduplicateTests();
+                return sendJson({ success: true, action, data: result });
+              }
+
+              case 'export-sarif': {
+                const report = await engine.runSecurityTests({ safeMode: true });
+                const audit = engine.auditSecurity();
+                const result = engine.exportSarif(report, audit);
                 return sendJson({ success: true, action, data: result });
               }
 
@@ -1609,6 +1633,41 @@ export class LocalDashboardServer {
       <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Generates topology graph connecting UI, backend APIs, databases, caches, and third-party cloud SDKs.</p>
       <div class="code-block">npx qaforge arch-graph<button class="btn-copy" onclick="copyCode('npx qaforge arch-graph')">Copy</button></div>
     </div>
+
+    <!-- Section 19: Security Testing Engine -->
+    <div class="guide-section guide-item">
+      <div class="guide-title">🛡️ 19. Autonomous Security Testing Engine</div>
+      <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Discovers attack surfaces, plans non-destructive security tests (Auth, AuthZ, Injections, Forms, Sessions), and generates severity scores with automatic secret redaction.</p>
+      <div class="code-block">npx qaforge security --safe<button class="btn-copy" onclick="copyCode('npx qaforge security --safe')">Copy</button></div>
+    </div>
+
+    <!-- Section 20: Subresource Integrity, CSRF & CORS Validator -->
+    <div class="guide-section guide-item">
+      <div class="guide-title">🔒 20. Subresource Integrity (SRI), CSRF & CORS Validator</div>
+      <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Audits external CDN script assets for missing SRI integrity hashes, checks mutating forms for CSRF tokens, and flags wildcard CORS headers.</p>
+      <div class="code-block">npx qaforge web-sec<button class="btn-copy" onclick="copyCode('npx qaforge web-sec')">Copy</button></div>
+    </div>
+
+    <!-- Section 21: Test Deduplication Engine -->
+    <div class="guide-section guide-item">
+      <div class="guide-title">⚡ 21. Test Suite Deduplication & Redundancy Engine</div>
+      <p style="color: var(--text-muted); margin-bottom: 0.5rem;">AST static analysis identifies duplicate test assertions and high-redundancy test cases across test files.</p>
+      <div class="code-block">npx qaforge dedup<button class="btn-copy" onclick="copyCode('npx qaforge dedup')">Copy</button></div>
+    </div>
+
+    <!-- Section 22: Git Pre-Commit Hook -->
+    <div class="guide-section guide-item">
+      <div class="guide-title">🪝 22. Automated Git Pre-Commit Hook</div>
+      <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Installs an automated Git pre-commit hook to verify change impact and run affected tests before every commit.</p>
+      <div class="code-block">npx qaforge hook install<button class="btn-copy" onclick="copyCode('npx qaforge hook install')">Copy</button></div>
+    </div>
+
+    <!-- Section 23: SARIF Security Report Export -->
+    <div class="guide-section guide-item">
+      <div class="guide-title">📄 23. SARIF v2.1.0 Security Report Export</div>
+      <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Exports security vulnerability findings in OASIS SARIF v2.1.0 format for seamless GitHub Code Scanning integration.</p>
+      <div class="code-block">npx qaforge security --sarif security-report.sarif<button class="btn-copy" onclick="copyCode('npx qaforge security --sarif security-report.sarif')">Copy</button></div>
+    </div>
   </div>
 
   <!-- Tab: About QAForge -->
@@ -1622,43 +1681,50 @@ export class LocalDashboardServer {
       </div>
       <div>
         <h2 style="font-size: 1.6rem; font-weight: 800; color: #f8fafc; margin: 0 0 0.25rem 0;">QAForge — Build. Test. Trust.</h2>
-        <div style="color: var(--primary); font-size: 0.9rem; font-weight: 700;">Version 1.0.0 (Local-First Agentic QA Toolkit)</div>
+        <div style="color: var(--primary); font-size: 0.9rem; font-weight: 700;">Package: @engnadia/qaforge (v1.0.0) | CLI: qaforge</div>
       </div>
     </div>
 
     <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; line-height: 1.8;">
-      <h4 style="color: #38bdf8; margin-bottom: 0.5rem;">🌟 Mission & Vision</h4>
-      <p style="color: var(--text); font-size: 0.9rem;">
-        <strong>QAForge</strong> is a local-first agentic QA and automated testing toolkit designed for developers and AI coding agents (<strong>Cursor, Windsurf, Claude Code, Cline, Codex, VS Code Agent</strong>).
-        Unlike proprietary cloud-hosted platforms that require uploading source code, secrets, and database credentials to external servers, <strong>QAForge runs directly inside your local workspace without forced telemetry or cloud lock-in</strong>.
+      <h4 style="color: #38bdf8; margin-bottom: 0.5rem;">⚒️ What does QAForge mean?</h4>
+      <p style="color: var(--text); font-size: 0.9rem; margin-bottom: 0.5rem;">
+        <strong>QAForge</strong> stands for <strong>Quality Assurance Forge</strong>.
+      </p>
+      <ul style="color: var(--text-muted); font-size: 0.85rem; padding-left: 1.25rem; margin-bottom: 0.5rem;">
+        <li><strong>QA</strong> — Quality Assurance: comprehensive testing, security audits, resilience verification, and release confidence.</li>
+        <li><strong>Forge</strong> — A dedicated workshop where resilient, high-grade software is shaped and fortified.</li>
+      </ul>
+      <p style="color: var(--text-muted); font-size: 0.85rem;">
+        Together, <strong>QAForge</strong> represents a local engineering workspace where software quality is continuously inspected, tested, strengthened, and forged before release.
       </p>
     </div>
 
     <div class="guide-grid" style="margin-bottom: 1.5rem;">
       <div class="guide-card">
         <h4 style="color: #34d399;">🔒 Local-First Architecture</h4>
-        <p style="color: var(--text-muted); font-size: 0.85rem;">All tests, static audits, fuzzing probes, and failure healing algorithms execute directly on your machine or local container environments.</p>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Core AST analysis, test synthesis, and execution run locally on your host machine without forced telemetry or third-party cloud lock-in.</p>
       </div>
 
       <div class="guide-card">
-        <h4 style="color: #38bdf8;">🤖 Universal AI Agent Protocol</h4>
-        <p style="color: var(--text-muted); font-size: 0.85rem;">Full integration with Model Context Protocol (MCP) providing 64 structured tools so agents can inspect, plan, write, and heal tests autonomously.</p>
+        <h4 style="color: #38bdf8;">🤖 Agent-Native Protocol (MCP)</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Exposes 71 structured Model Context Protocol (MCP) tools over stdio for Cursor, Windsurf, Claude Code, Cline, and AI coding agents.</p>
       </div>
 
       <div class="guide-card">
-        <h4 style="color: #f87171;">🛡️ Malware & Security Armor</h4>
-        <p style="color: var(--text-muted); font-size: 0.85rem;">Integrated OWASP Top 10 web penetration auditing, CVE dependency scanning, and malicious code/backdoor detection with one-click neutralization.</p>
+        <h4 style="color: #f87171;">🛡️ Security & Quality Armor</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Integrated OWASP Top 10 web scans, dependency CVE checks, malware backdoor detection, SRI/CSRF verification, and SARIF export.</p>
       </div>
 
       <div class="guide-card">
-        <h4 style="color: #fbbf24;">⚡ High-Throughput Engines</h4>
-        <p style="color: var(--text-muted); font-size: 0.85rem;">Native Postman v2.1 runner, local load testing up to thousands of VUs, AI mock data generation, and live remote website auditing via companion probes.</p>
+        <h4 style="color: #fbbf24;">⚡ Dual Interface Ergonomics</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">71 command-line tools (<code>qaforge &lt;cmd&gt;</code>), interactive terminal TUI, and full-featured local web dashboard command center.</p>
       </div>
     </div>
 
     <div style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+      <span>Package: <code>@engnadia/qaforge</code></span>
+      <span>Binary: <code>qaforge</code></span>
       <span>Licensed under <strong>MIT License</strong></span>
-      <span>Created for Local-First Software Quality & AI Engineering</span>
       <span>Node.js >= 18.0.0</span>
     </div>
   </div>
@@ -1672,7 +1738,7 @@ export class LocalDashboardServer {
       <p><strong>Security Health Score:</strong> ${secAudit.score}/100 (${secAudit.totalVulnerabilities} vulnerabilities flagged)</p>
       <p><strong>Performance Rating:</strong> ${perfAudit.overallScore}/100 (${perfAudit.rating})</p>
       <p><strong>Framework Detection:</strong> ${profile?.frameworks?.join(', ') || 'Node.js'} (Test Runner: ${profile?.testFrameworks?.join(', ') || 'Vitest'})</p>
-      <p><strong>Engine Architecture:</strong> 100% Local-First Autonomous QA Engine (Zero Cloud Dependencies)</p>
+      <p><strong>Engine Architecture:</strong> Local-First Autonomous QA Engine (Core Analysis Local, No Telemetry)</p>
     </div>
   </div>
 

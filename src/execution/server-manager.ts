@@ -41,11 +41,9 @@ export class DevServerManager {
     const cmd = parts[0];
     const args = parts.slice(1);
 
-    this.serverProcess = spawn(cmd, args, {
-      cwd: this.workspaceGuard.getRoot(),
-      shell: isWindows,
-      stdio: 'ignore'
-    });
+    this.serverProcess = isWindows
+      ? spawn(options.command, [], { cwd: this.workspaceGuard.getRoot(), shell: true, stdio: 'ignore' })
+      : spawn(cmd, args, { cwd: this.workspaceGuard.getRoot(), shell: false, stdio: 'ignore' });
 
     // 3. Poll health check until ready
     const startTime = Date.now();
@@ -64,7 +62,7 @@ export class DevServerManager {
     if (this.serverProcess && this.serverProcess.pid) {
       try {
         if (process.platform === 'win32') {
-          spawn('taskkill', ['/pid', String(this.serverProcess.pid), '/f', '/t'], { shell: true });
+          spawn('taskkill', ['/pid', String(this.serverProcess.pid), '/f', '/t'], { shell: false });
         } else {
           this.serverProcess.kill('SIGTERM');
         }

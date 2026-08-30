@@ -219,3 +219,33 @@ QAForge provides an end-to-end, local-first autonomous QA engine. This guide org
 
 ## 55. Local HTML Dashboard & Command Center (`qaforge ui`, `qaforge tui`)
 - Interactive web dashboard and Terminal Command Center for triggering actions and visualizing metrics.
+
+---
+
+# Domain 10: Autonomous Security Testing & Vulnerability Auditor
+
+## 56. Attack Surface Discovery (`qa.securityScan` / `qaforge security`)
+- Automatically inspects project routes, controllers, middleware, guards, forms, and dependencies to map out security-sensitive surfaces:
+  - Auth endpoints (`/login`, `/register`, `/logout`, `/password-reset`, `/oauth/*`, `/profile`)
+  - Role-protected routes (`admin`, `authenticated`)
+  - HTML/JSX form inputs (`text`, `password`, `hidden`, `disabled`, `select`, `textarea`)
+  - File upload endpoints (`multer`, `formidable`, `multipart/form-data`)
+  - Session & Token mechanisms (JWT, session cookies, cookie flags `HttpOnly`, `Secure`, `SameSite`)
+  - Database technologies (SQL: PostgreSQL, MySQL, SQLite, Prisma, TypeORM; NoSQL: MongoDB, Mongoose)
+
+## 57. Security Test Plan Generation (`qa.securityPlan`)
+- Generates prioritized, risk-based test plans spanning 7 security domains without combinatorial explosion:
+  1. **Authentication**: Login validation, invalid password rejection without account enumeration, empty/malformed resilience, safe brute force rate-limiting.
+  2. **Authorization**: Unauthenticated access, vertical privilege escalation (user vs admin), and Insecure Direct Object References (IDOR).
+  3. **Forms & Inputs**: Parameter tampering on hidden/disabled fields (roles, prices), extreme boundary lengths, and unicode edge cases.
+  4. **Injections**: Safe SQL injection probes, NoSQL operator injections, reflected/stored XSS verification (distinguishing safe HTML entity encoding as PASS), OS command injection proof signals, and path traversal sanitization.
+  5. **API Security**: Verbose error leakage, stack trace exposure, and content-type mismatch hardening.
+  6. **Sessions & Tokens**: Cookie security attributes (`HttpOnly`, `Secure`, `SameSite`), logout session invalidation, and JWT signature tampering rejection.
+  7. **File Uploads**: Executable extension rejection (`.php`, `.exe`, `.sh`), MIME type validation, and filename traversal sanitization.
+
+## 58. Safe Non-Destructive Security Execution (`qa.securityRun`, `qa.securityReport` / `qaforge security --safe`)
+- **Safe Mode**: Enabled by default to prohibit destructive SQL (`DROP`, `DELETE *`, `TRUNCATE`), malware uploads, or aggressive DoS floods.
+- **Environment Protection**: Refuses intrusive tests on production targets unless explicitly overridden with `allowProduction: true`.
+- **Secret Redaction**: Automatically sanitizes JWTs, passwords, session cookies, auth headers, and API keys across all logs and reports.
+- **Explainable Scoring**: Calculates an explainable 0-100 Security Score with weighted severity deductions (Critical, High, Medium, Low, Info) and stack-aware remediation guidance.
+

@@ -20,7 +20,7 @@ export function renderQAForgeBanner(): string {
     qa('      ██          ') + '  ' + forge('                                                 '),
   ];
 
-  const badges = `  ${bold(white('QAForge CLI'))} ${dim('v1.0.0')}  ${pc.bgGreen(pc.black(' LOCAL-FIRST '))}  ${pc.bgCyan(pc.black(' 64 MCP TOOLS '))}  ${pc.bgBlue(white(' ZERO-CLOUD '))}`;
+  const badges = `  ${bold(white('QAForge CLI'))} ${dim('v1.0.0')}  ${pc.bgGreen(pc.black(' LOCAL-FIRST '))}  ${pc.bgCyan(pc.black(' 71 MCP TOOLS '))}  ${pc.bgBlue(white(' ZERO-CLOUD '))}`;
   const tagline = `  ${dim('Autonomous QA, Failure Healing, Stress Testing & API Quality Hub')}`;
   const motto = `  ${pc.cyan('⚡')} ${bold(white('Build. Test. Trust.'))} ${dim('•')} ${dim('https://github.com/NadiaSalah/QAForge')}`;
 

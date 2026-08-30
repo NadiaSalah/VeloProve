@@ -4,3 +4,4 @@ export * from './tests.js';
 export * from './diagnostics.js';
 export * from './release.js';
 export * from './config.js';
+export * from './security.js';

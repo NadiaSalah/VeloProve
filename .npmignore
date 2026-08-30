@@ -1,4 +1,4 @@
-# Source and build configuration
+# Source, tests, and build configurations (GitHub repo only)
 src/
 tests/
 fixtures/
@@ -6,7 +6,17 @@ scripts/
 .github/
 .cursor/
 .agents/
+.prompt/
 coverage/
+
+# Internal Audit & Contributor Guides (GitHub repo only)
+docs/ai-testing-handoff/
+docs/FINAL_RELEASE_CONSISTENCY_AUDIT.md
+docs/generated/
+TODO.md
+RELEASING.md
+CONTRIBUTING.md
+SECURITY.md
 
 # Development configuration files
 tsconfig.json
@@ -17,7 +27,7 @@ vitest.config.ts
 .env
 .env.*
 
-# Temporary, cache, and local files
+# Temporary, cache, and local state
 .qaforge/
 *.log
 *.tmp

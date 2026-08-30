@@ -1,0 +1,224 @@
+{
+  "project": {
+    "name": "QAForge",
+    "package": "@engnadia/qaforge",
+    "version": "1.0.0",
+    "description": "Local-first autonomous QA engine and testing orchestrator for AI coding agents",
+    "mcpToolsCount": 71,
+    "cliCommandsCount": 71,
+    "license": "MIT"
+  },
+  "features": [
+    {
+      "id": "FEATURE-001",
+      "name": "Project Stack & Monorepo Detector",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/intelligence/project-scanner/index.ts"],
+      "files": [
+        "src/intelligence/project-scanner/index.ts",
+        "src/intelligence/project-scanner/stack-detector.ts",
+        "src/intelligence/project-scanner/source-mapper.ts"
+      ],
+      "symbols": ["ProjectScanner", "StackDetector.detect()"],
+      "dependencies": ["node:fs", "node:path"],
+      "tests": ["tests/unit/scanner-requirements.test.ts"],
+      "securityTests": ["TEST-SEC-003"],
+      "performanceTests": ["Workload 1"]
+    },
+    {
+      "id": "FEATURE-002",
+      "name": "Route and API Endpoint AST Scanner",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/intelligence/project-scanner/route-scanner.ts"],
+      "files": ["src/intelligence/project-scanner/route-scanner.ts"],
+      "symbols": ["RouteScanner.scan()", "RouteScanner.scanAppRouter()"],
+      "dependencies": ["node:fs", "node:path"],
+      "tests": ["tests/unit/scanner-requirements.test.ts"],
+      "securityTests": [],
+      "performanceTests": ["Workload 1"]
+    },
+    {
+      "id": "FEATURE-003",
+      "name": "Requirement & Contract Discovery Parser",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/intelligence/requirement-discovery/index.ts"],
+      "files": [
+        "src/intelligence/requirement-discovery/index.ts",
+        "src/intelligence/requirement-discovery/prd-parser.ts",
+        "src/intelligence/requirement-discovery/openapi-parser.ts"
+      ],
+      "symbols": ["RequirementDiscovery.discover()", "PrdParser.parse()"],
+      "dependencies": ["node:fs", "node:path"],
+      "tests": ["tests/unit/scanner-requirements.test.ts"],
+      "securityTests": [],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-004",
+      "name": "Git Change Impact & Test Isolation Engine",
+      "status": "COMPLETE",
+      "risk": 2,
+      "entryPoints": ["src/application/analyze-changes.ts"],
+      "files": [
+        "src/application/analyze-changes.ts",
+        "src/intelligence/change-impact/git-diff-analyzer.ts"
+      ],
+      "symbols": ["AnalyzeChangesService.analyze()", "GitDiffAnalyzer.getChangedFiles()"],
+      "dependencies": ["node:child_process", "node:fs"],
+      "tests": ["tests/unit/change-impact.test.ts"],
+      "securityTests": ["TEST-SEC-004"],
+      "performanceTests": ["Workload 3"]
+    },
+    {
+      "id": "FEATURE-005",
+      "name": "Risk-Prioritized Test Planner",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/application/plan-tests.ts"],
+      "files": ["src/application/plan-tests.ts", "src/domain/risk/risk-scorer.ts"],
+      "symbols": ["PlanTestsService.createPlan()", "RiskScorer.scoreRequirement()"],
+      "dependencies": [],
+      "tests": ["tests/integration/autonomous-flow.test.ts"],
+      "securityTests": [],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-006",
+      "name": "Multi-Framework Test File Synthesizer",
+      "status": "COMPLETE",
+      "risk": 2,
+      "entryPoints": ["src/application/generate-tests.ts"],
+      "files": ["src/application/generate-tests.ts", "src/domain/tests/test-generator.ts"],
+      "symbols": ["GenerateTestsService.generate()", "TestGenerator.generateFile()"],
+      "dependencies": ["node:fs", "node:path"],
+      "tests": ["tests/integration/autonomous-flow.test.ts"],
+      "securityTests": ["TEST-SEC-003"],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-007",
+      "name": "Failure Root Cause Classifier",
+      "status": "COMPLETE",
+      "risk": 2,
+      "entryPoints": ["src/application/diagnose-failure.ts"],
+      "files": ["src/application/diagnose-failure.ts", "src/diagnostics/classifier.ts"],
+      "symbols": ["DiagnoseFailureService.diagnose()", "Classifier.classify()"],
+      "dependencies": [],
+      "tests": ["tests/unit/classifier-diagnostics.test.ts"],
+      "securityTests": [],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-008",
+      "name": "Visual-Aria Test Locator Auto-Healer",
+      "status": "COMPLETE",
+      "risk": 2,
+      "entryPoints": ["src/application/heal-test.ts"],
+      "files": ["src/application/heal-test.ts", "src/application/visual-autoheal.ts"],
+      "symbols": ["HealTestService.heal()", "VisualAutoHealService.healLocator()"],
+      "dependencies": ["node:fs"],
+      "tests": ["tests/unit/advanced-qa-services.test.ts"],
+      "securityTests": [],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-009",
+      "name": "Autonomous Security & Vulnerability Auditor",
+      "status": "COMPLETE",
+      "risk": 3,
+      "entryPoints": ["src/application/security-engine.ts"],
+      "files": [
+        "src/application/security-engine.ts",
+        "src/intelligence/security-scanner/surface-scanner.ts",
+        "src/intelligence/security-scanner/security-planner.ts",
+        "src/shared/secret-redactor.ts"
+      ],
+      "symbols": ["SecurityEngine.scanSurface()", "SecurityEngine.runTests()", "SecretRedactor.redact()"],
+      "dependencies": ["node:fs", "node:path", "node:http", "node:https"],
+      "tests": ["tests/unit/security-testing.test.ts"],
+      "securityTests": ["TEST-SEC-001", "TEST-SEC-002", "TEST-SEC-005", "TEST-SEC-006"],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-010",
+      "name": "Postman Collection Runner & Exporter",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/adapters/api/postman-runner.ts"],
+      "files": ["src/adapters/api/postman-runner.ts", "src/adapters/api/dynamic-variables.ts"],
+      "symbols": ["PostmanRunnerService.runCollection()", "PostmanRunnerService.exportCollection()"],
+      "dependencies": ["node:fs", "node:http", "node:https"],
+      "tests": ["tests/unit/postman-runner.test.ts", "tests/unit/dynamic-variables.test.ts"],
+      "securityTests": [],
+      "performanceTests": ["Workload 2"]
+    },
+    {
+      "id": "FEATURE-011",
+      "name": "SARIF v2.1.0 GitHub Security Exporter",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/application/sarif-exporter.ts"],
+      "files": ["src/application/sarif-exporter.ts"],
+      "symbols": ["SarifExporterService.exportSecurityReport()"],
+      "dependencies": ["node:fs", "node:path"],
+      "tests": ["tests/unit/v100-stability-dx-suite.test.ts"],
+      "securityTests": ["TEST-SEC-007"],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-012",
+      "name": "Web Asset Security, SRI, CSRF & CORS Auditor",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/application/sri-csrf-validator.ts"],
+      "files": ["src/application/sri-csrf-validator.ts"],
+      "symbols": ["SriCsrfValidatorService.audit()"],
+      "dependencies": ["node:fs", "node:path"],
+      "tests": ["tests/unit/v100-stability-dx-suite.test.ts"],
+      "securityTests": ["TEST-SEC-008", "TEST-SEC-009", "TEST-SEC-010"],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-013",
+      "name": "AST Test Deduplication Engine",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/domain/tests/test-deduplicator.ts"],
+      "files": ["src/domain/tests/test-deduplicator.ts"],
+      "symbols": ["TestDeduplicatorService.analyze()"],
+      "dependencies": ["node:fs", "node:path"],
+      "tests": ["tests/unit/v100-stability-dx-suite.test.ts"],
+      "securityTests": [],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-014",
+      "name": "Git Pre-Commit Hook Manager",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/application/git-hook-installer.ts"],
+      "files": ["src/application/git-hook-installer.ts"],
+      "symbols": ["GitHookInstallerService.installPreCommit()"],
+      "dependencies": ["node:fs", "node:path"],
+      "tests": ["tests/unit/v100-stability-dx-suite.test.ts"],
+      "securityTests": [],
+      "performanceTests": []
+    },
+    {
+      "id": "FEATURE-015",
+      "name": "Model Context Protocol Stdio Server (71 Tools)",
+      "status": "COMPLETE",
+      "risk": 1,
+      "entryPoints": ["src/mcp/server.ts"],
+      "files": ["src/mcp/server.ts"],
+      "symbols": ["runMcpServer()"],
+      "dependencies": ["@modelcontextprotocol/sdk"],
+      "tests": ["tests/unit/interface-parity.test.ts"],
+      "securityTests": ["TEST-SEC-003", "TEST-SEC-005"],
+      "performanceTests": []
+    }
+  ]
+}
