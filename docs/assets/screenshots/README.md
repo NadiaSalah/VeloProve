@@ -1,14 +1,11 @@
-# README / GitHub screenshots
+Committed PNGs for the GitHub README gallery (1440×900 desktop layout).
 
-Committed PNGs for the GitHub README gallery (and marketplace reuse).
+Each shot shows the **full Command Center**: sidebar + workspace + Results pane (JSON + console).
 
 | File | View |
 |------|------|
-| `01-dashboard-overview.png` | Command Center — Overview |
-| `02-dashboard-verify.png` | Verify presets |
-| `03-dashboard-docs-chat.png` | Docs Chat with a live answer |
+| `01-dashboard-overview.png` | Overview + Results |
+| `02-dashboard-verify.png` | Verify presets + Results |
+| `03-dashboard-docs-chat.png` | Docs Chat + Results |
 
-These live under `docs/assets/screenshots/` so GitHub renders them from the repo.
-They are **excluded from the npm tarball** via `.npmignore` (keep pack small).
-
-Recapture: start `npx veloprove ui -p 4177` on a sample app, then save fresh PNGs here.
+Excluded from the npm tarball via `.npmignore`.
