@@ -29,7 +29,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "veloprove": "./dist/cli/index.js"
+    "veloprove": "dist/cli/index.js"
   },
   "publishConfig": {
     "access": "public"
@@ -40,7 +40,9 @@
     "docs/AGENTS.md",
     "docs/guides",
     "docs/reference",
-    "docs/assets",
+    "docs/assets/veloprove-icon.svg",
+    "docs/assets/veloprove-logo.svg",
+    "docs/assets/marketplace",
     "extensions/recorder",
     "README.md",
     "CHANGELOG.md",
