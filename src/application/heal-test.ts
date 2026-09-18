@@ -1,7 +1,7 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import type { WorkspaceGuard } from '../execution/workspace-guard.js';
 import type { DiagnosticResult, HealResult } from '../shared/types/diagnostics.js';
+import { FixSafetyPolicy } from './fix-safety-policy.js';
 
 export class HealTestService {
   public static async heal(
@@ -15,6 +15,21 @@ export class HealTestService {
         continue;
       }
 
+      const policy = FixSafetyPolicy.classifyFileEdit(diag.evidence.testFile, 'test-heal');
+      if (!policy.mayAutoApply) {
+        healResults.push({
+          testFile: diag.evidence.testFile,
+          testId: diag.testId,
+          success: false,
+          beforeSnippet: '',
+          afterSnippet: '',
+          reason: `Heal blocked by safety policy (${policy.classification}): ${policy.reason}`,
+          confidence: 1,
+          evidenceUsed: [policy.reason]
+        });
+        continue;
+      }
+
       const testFilePath = guard.resolveSafePath(diag.evidence.testFile);
       if (!fs.existsSync(testFilePath)) {
         continue;
@@ -23,7 +38,7 @@ export class HealTestService {
       const content = fs.readFileSync(testFilePath, 'utf8');
 
       // Ensure we only auto-heal generated or explicitly marked tests
-      if (!content.includes('@qaforge-generated') && !content.includes('// @qaforge-healable')) {
+      if (!content.includes('@veloprove-generated') && !content.includes('// @veloprove-healable')) {
         continue;
       }
 
@@ -34,8 +49,7 @@ export class HealTestService {
       let healed = false;
 
       // 1. Repair stale CSS selectors with accessible locators
-      if (failedSelector && failedSelector.includes('#') || failedSelector?.includes('.')) {
-        // e.g. page.locator('#submit-btn') -> page.getByRole('button', { name: /submit/i })
+      if (failedSelector && (failedSelector.includes('#') || failedSelector.includes('.'))) {
         const rawClean = failedSelector.replace(/['"#.]/g, '');
         const replacement = `page.getByRole('button', { name: /${rawClean}/i })`;
 
@@ -69,9 +83,9 @@ export class HealTestService {
           success: true,
           beforeSnippet,
           afterSnippet,
-          reason: `Replaced fragile/stale selector with resilient locator for: ${diag.rootCause}`,
-          confidence: 0.90,
-          evidenceUsed: [diag.rootCause]
+          reason: `Replaced fragile/stale selector with resilient locator for: ${diag.rootCause} [${policy.classification}]`,
+          confidence: 0.9,
+          evidenceUsed: [diag.rootCause, policy.reason]
         });
       }
     }

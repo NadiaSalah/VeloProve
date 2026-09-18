@@ -186,7 +186,11 @@ export interface SecurityTestingOptions {
   deepMode?: boolean;
   environment?: 'test' | 'staging' | 'production' | 'local';
   allowProduction?: boolean;
+  /** Permit intrusive probes against remote hosts without clear env markers (default false). */
+  allowUnknownRemote?: boolean;
   maxSafeAttempts?: number;
   format?: 'console' | 'json' | 'markdown' | 'html';
   outputFile?: string;
+  /** Auto-start local app via Smart DevServer when target is offline. */
+  ensureDev?: boolean;
 }

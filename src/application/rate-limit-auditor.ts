@@ -62,7 +62,7 @@ export class RateLimitAuditorService {
             {
               method,
               headers: {
-                'User-Agent': 'QAForge-RateLimit-Probe/1.0',
+                'User-Agent': 'VeloProve-RateLimit-Probe/1.0',
                 ...customHeaders
               },
               timeout: 4000

@@ -4,15 +4,15 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { DoctorService } from '../../src/application/doctor-service.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
 
-describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
+describe('VeloProve Production Packaging & NPX Distribution Architecture', () => {
   const rootDir = path.resolve(__dirname, '../..');
 
   it('validates npm pack dry-run contains only allowlisted runtime files', () => {
-    // 1. Run npm pack --dry-run --json
-    const packJsonRaw = execSync('npm pack --dry-run --json', { cwd: rootDir, encoding: 'utf8' });
+    // 1. Run npm pack --dry-run --json (ignore-scripts avoids concurrent prepack races)
+    const packJsonRaw = execSync('npm pack --dry-run --json --ignore-scripts', { cwd: rootDir, encoding: 'utf8' });
     const packInfo = JSON.parse(packJsonRaw)[0];
     const packedFiles: string[] = packInfo.files.map((f: any) => f.path);
 
@@ -28,12 +28,25 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
     // 3. Must contain runtime explanatory docs and branding assets
     const docFiles = packedFiles.filter(f => f.startsWith('docs/'));
     expect(docFiles.length).toBeGreaterThanOrEqual(6);
-    expect(packedFiles).toContain('docs/GETTING_STARTED.md');
-    expect(packedFiles).toContain('docs/DASHBOARD_UI.md');
-    expect(packedFiles).toContain('docs/CLI_REFERENCE.md');
-    expect(packedFiles).toContain('docs/MCP_REFERENCE.md');
-    expect(packedFiles).toContain('docs/assets/qaforge-logo.svg');
-
+    expect(packedFiles).toContain('docs/AGENTS.md');
+    expect(packedFiles).toContain('docs/README.md');
+    expect(packedFiles).toContain('docs/guides/getting-started.md');
+    expect(packedFiles).toContain('docs/guides/faq.md');
+    expect(packedFiles).toContain('docs/guides/dashboard.md');
+    expect(packedFiles).toContain('docs/guides/features.md');
+    expect(packedFiles).toContain('docs/guides/ai-integrations.md');
+    expect(packedFiles).toContain('docs/reference/cli.md');
+    expect(packedFiles).toContain('docs/reference/mcp.md');
+    expect(packedFiles).toContain('docs/assets/veloprove-logo.svg');
+    expect(packedFiles).toContain('docs/assets/veloprove-icon.svg');
+    expect(packedFiles).toContain('docs/assets/marketplace/README.md');
+    expect(packedFiles).toContain('docs/assets/marketplace/no-api-key-badge.svg');
+    // Contributor root AGENTS.md must NOT ship (consumers use docs/AGENTS.md)
+    expect(packedFiles).not.toContain('AGENTS.md');
+    expect(packedFiles).not.toContain('docs/generated/CAPABILITY_MANIFEST.json');
+    expect(packedFiles.some((f) => f.startsWith('docs/internal/'))).toBe(false);
+    expect(packedFiles.some((f) => f.startsWith('docs/integrations/'))).toBe(false);
+    expect(packedFiles.some((f) => f.startsWith('docs/ai-testing-handoff/'))).toBe(false);
     // 4. Must NOT contain source files, test suites, or dev assets
     const forbiddenSource = packedFiles.filter(f => f.startsWith('src/') || f.startsWith('tests/') || f.startsWith('.github/') || f.startsWith('.cursor/') || f.startsWith('.agents/'));
     expect(forbiddenSource).toEqual([]);
@@ -50,7 +63,7 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
   });
 
   it('verifies DoctorService diagnoses clean projects and handles missing configurations gracefully', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-doctor-test-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-doctor-test-'));
     try {
       // Create minimal clean package.json
       fs.writeFileSync(
@@ -73,7 +86,7 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
   });
 
   it('verifies clean-room project initialization and idempotency', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-init-test-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-init-test-'));
     try {
       // Scaffold minimal customer project
       const initialPkg = {
@@ -88,10 +101,10 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
       };
       fs.writeFileSync(path.join(tempDir, 'package.json'), JSON.stringify(initialPkg, null, 2), 'utf8');
 
-      const engine = new QAForgeEngine(tempDir);
+      const engine = new VeloProveEngine(tempDir);
 
       // Verify directory structure creation
-      const qaDir = path.join(tempDir, '.qaforge');
+      const qaDir = path.join(tempDir, '.veloprove');
       fs.mkdirSync(qaDir, { recursive: true });
       fs.mkdirSync(path.join(qaDir, 'config'), { recursive: true });
       fs.mkdirSync(path.join(qaDir, 'reports'), { recursive: true });
@@ -99,15 +112,15 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
 
       const guard = new WorkspaceGuard(tempDir);
       const report1 = DoctorService.diagnose(guard);
-      expect(report1.checks.find(c => c.id === 'qaforge-storage')?.status).toBe('PASS');
+      expect(report1.checks.find(c => c.id === 'veloprove-storage')?.status).toBe('PASS');
       expect(report1.checks.find(c => c.id === 'test-runners')?.status).toBe('PASS');
 
       // Test idempotency: re-running initialization should preserve user files and scripts
       const customConfig = { project: 'custom-config-value' };
-      fs.writeFileSync(path.join(tempDir, 'qaforge.config.json'), JSON.stringify(customConfig, null, 2), 'utf8');
+      fs.writeFileSync(path.join(tempDir, 'veloprove.config.json'), JSON.stringify(customConfig, null, 2), 'utf8');
 
       // Verify custom config is preserved
-      const configAfter = JSON.parse(fs.readFileSync(path.join(tempDir, 'qaforge.config.json'), 'utf8'));
+      const configAfter = JSON.parse(fs.readFileSync(path.join(tempDir, 'veloprove.config.json'), 'utf8'));
       expect(configAfter.project).toBe('custom-config-value');
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
@@ -115,7 +128,7 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
   });
 
   it('verifies clean-room consumer installation from packed tarball without development source tree dependencies', () => {
-    const tempConsumerDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-clean-consumer-'));
+    const tempConsumerDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-clean-consumer-'));
     let tarballPath = '';
     try {
       // 1. Pack tarball
@@ -128,7 +141,7 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
 
       // 2. Setup isolated consumer node_modules
       const consumerNodeModules = path.join(tempConsumerDir, 'node_modules');
-      const packageDir = path.join(consumerNodeModules, '@engnadia', 'qaforge');
+      const packageDir = path.join(consumerNodeModules, '@engnadia', 'veloprove');
       fs.mkdirSync(packageDir, { recursive: true });
 
       // 3. Extract tarball into consumer package directory
@@ -156,16 +169,16 @@ describe('QAForge Production Packaging & NPX Distribution Architecture', () => {
       expect(content.startsWith('#!/usr/bin/env node')).toBe(true);
 
       const helpOutput = execSync(`node "${cliScript}" --help`, { cwd: tempConsumerDir, encoding: 'utf8' });
-      expect(helpOutput).toContain('QAForge');
+      expect(helpOutput).toContain('VeloProve');
 
       const doctorOutput = execSync(`node "${cliScript}" doctor`, { cwd: tempConsumerDir, encoding: 'utf8' });
-      expect(doctorOutput).toContain('QAForge');
+      expect(doctorOutput).toContain('VeloProve');
 
       // 6. Test direct ESM import of public API from consumer workspace
       const testImportScript = path.join(tempConsumerDir, 'test-import.js');
       fs.writeFileSync(
         testImportScript,
-        `import { QAForgeEngine, DoctorService, SecretRedactor } from '@engnadia/qaforge';
+        `import { VeloProveEngine, DoctorService, SecretRedactor } from '@engnadia/veloprove';
 const guard = { getRoot: () => process.cwd() };
 const doc = DoctorService.diagnose(guard);
 const secret = SecretRedactor.redact('Bearer 123456789012');

@@ -85,7 +85,7 @@ export class MockSandboxService {
 
         // Default mock response
         res.writeHead(200);
-        res.end(JSON.stringify({ message: 'QAForge Mock Sandbox Active', endpoint: url }));
+        res.end(JSON.stringify({ message: 'VeloProve Mock Sandbox Active', endpoint: url }));
       });
 
       server.listen(port, () => {

@@ -2,14 +2,14 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import path from 'node:path';
 import fs from 'node:fs';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 import { TestRefineService } from '../../src/application/refine-test.js';
 import { A11yAuditorService } from '../../src/application/a11y-auditor.js';
 import { VisualDiffService } from '../../src/application/visual-diff.js';
 import { ContractDriftService } from '../../src/application/contract-drift.js';
 import { MockSandboxService } from '../../src/application/mock-sandbox.js';
 
-describe('QAForge Advanced Features (Refinement, A11y, Visual Diff, Contract Drift, Mock Sandbox)', () => {
+describe('VeloProve Advanced Features (Refinement, A11y, Visual Diff, Contract Drift, Mock Sandbox)', () => {
   const fixtureDir = path.resolve(process.cwd(), 'fixtures/v120-project');
   let guard: WorkspaceGuard;
 
@@ -67,7 +67,7 @@ describe('QAForge Advanced Features (Refinement, A11y, Visual Diff, Contract Dri
   });
 
   it('VisualDiffService generates baseline snapshots and diff comparison', () => {
-    const artDir = path.join(fixtureDir, '.qaforge', 'artifacts', 'screenshots');
+    const artDir = path.join(fixtureDir, '.veloprove', 'artifacts', 'screenshots');
     fs.mkdirSync(artDir, { recursive: true });
     fs.writeFileSync(path.join(artDir, 'home.png'), Buffer.from('fake-image-bytes'));
 

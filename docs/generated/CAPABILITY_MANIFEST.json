@@ -1,16 +1,16 @@
 {
   "version": "1.0.0",
-  "package": "@engnadia/qaforge",
-  "cliBinary": "qaforge",
-  "totalCliCommands": 71,
-  "totalMcpTools": 71,
-  "totalDashboardActions": 46,
+  "package": "@engnadia/veloprove",
+  "cliBinary": "veloprove",
+  "totalCliCommands": 75,
+  "totalMcpTools": 75,
+  "totalDashboardActions": 54,
   "cliCommands": [
     "a11y",
-    "agent-handshake",
     "ai-eval",
     "alert",
     "arch-graph",
+    "ask",
     "audit",
     "audit-contracts",
     "auto-fix",
@@ -29,6 +29,7 @@
     "diagnose",
     "docker-env",
     "doctor",
+    "ensure-dev",
     "env-drift",
     "explore",
     "export-postman",
@@ -38,6 +39,7 @@
     "generate",
     "graphql",
     "heal",
+    "history",
     "hook",
     "init",
     "inspect",
@@ -69,92 +71,99 @@
     "security",
     "setup-ci",
     "stabilize",
+    "teach-ai",
     "test",
     "throttle",
     "tui",
     "ui",
+    "verify",
     "visual-diff",
     "watch",
     "web-sec",
     "ws-test"
   ],
   "mcpTools": [
-    "qa.accessibility",
-    "qa.aiEvaluate",
-    "qa.architectureGraph",
-    "qa.auditSec",
-    "qa.auditSriCsrf",
-    "qa.autoBugFix",
-    "qa.bddFeatures",
-    "qa.bootstrap",
-    "qa.browserMatrix",
-    "qa.changed",
-    "qa.chaosTest",
-    "qa.contractDrift",
-    "qa.coverage",
-    "qa.dbQueryAudit",
-    "qa.dbRestore",
-    "qa.dbSnapshot",
-    "qa.deadAssetPurge",
-    "qa.dedupTests",
-    "qa.diagnose",
-    "qa.dockerEnv",
-    "qa.doctor",
-    "qa.envDriftAudit",
-    "qa.explore",
-    "qa.exportCollection",
-    "qa.exportReport",
-    "qa.exportSarif",
-    "qa.featureParity",
-    "qa.flaky",
-    "qa.fuzzApi",
-    "qa.generate",
-    "qa.gitBisect",
-    "qa.graphqlTest",
-    "qa.heal",
-    "qa.inspect",
-    "qa.learnFramework",
-    "qa.lint",
-    "qa.loadTest",
-    "qa.mockData",
-    "qa.mockNetwork",
-    "qa.mutationScore",
-    "qa.networkThrottle",
-    "qa.owaspScan",
-    "qa.perf",
-    "qa.plan",
-    "qa.quarantine",
-    "qa.rateLimitAudit",
-    "qa.recordFailureReplay",
-    "qa.recordScenario",
-    "qa.refine",
-    "qa.releaseCheck",
-    "qa.remediateMalware",
-    "qa.remoteAudit",
-    "qa.remoteConnect",
-    "qa.remoteInit",
-    "qa.run",
-    "qa.run.get",
-    "qa.runCollection",
-    "qa.scanMalware",
-    "qa.screenReaderSim",
-    "qa.securityPlan",
-    "qa.securityReport",
-    "qa.securityRun",
-    "qa.securityScan",
-    "qa.sendAlert",
-    "qa.sendRequest",
-    "qa.smartContractAudit",
-    "qa.stabilizeFlaky",
-    "qa.statefulMock",
-    "qa.suggestFix",
-    "qa.visualDiff",
-    "qa.wsTest"
+    "vp.accessibility",
+    "vp.aiEvaluate",
+    "vp.architectureGraph",
+    "vp.ask",
+    "vp.auditSec",
+    "vp.auditSriCsrf",
+    "vp.autoBugFix",
+    "vp.bddFeatures",
+    "vp.bootstrap",
+    "vp.browserMatrix",
+    "vp.changed",
+    "vp.chaosTest",
+    "vp.contractDrift",
+    "vp.coverage",
+    "vp.dbQueryAudit",
+    "vp.dbRestore",
+    "vp.dbSnapshot",
+    "vp.deadAssetPurge",
+    "vp.dedupTests",
+    "vp.diagnose",
+    "vp.dockerEnv",
+    "vp.doctor",
+    "vp.ensureDev",
+    "vp.envDriftAudit",
+    "vp.explore",
+    "vp.exportCollection",
+    "vp.exportReport",
+    "vp.exportSarif",
+    "vp.featureParity",
+    "vp.flaky",
+    "vp.fuzzApi",
+    "vp.generate",
+    "vp.gitBisect",
+    "vp.graphqlTest",
+    "vp.heal",
+    "vp.history",
+    "vp.inspect",
+    "vp.learnFramework",
+    "vp.lint",
+    "vp.loadTest",
+    "vp.mockData",
+    "vp.mockNetwork",
+    "vp.mutationScore",
+    "vp.networkThrottle",
+    "vp.owaspScan",
+    "vp.perf",
+    "vp.plan",
+    "vp.quarantine",
+    "vp.rateLimitAudit",
+    "vp.recordFailureReplay",
+    "vp.recordScenario",
+    "vp.refine",
+    "vp.releaseCheck",
+    "vp.remediateMalware",
+    "vp.remoteAudit",
+    "vp.remoteConnect",
+    "vp.remoteInit",
+    "vp.run",
+    "vp.run.get",
+    "vp.runCollection",
+    "vp.scanMalware",
+    "vp.screenReaderSim",
+    "vp.securityPlan",
+    "vp.securityReport",
+    "vp.securityRun",
+    "vp.securityScan",
+    "vp.sendAlert",
+    "vp.sendRequest",
+    "vp.smartContractAudit",
+    "vp.stabilizeFlaky",
+    "vp.statefulMock",
+    "vp.suggestFix",
+    "vp.verify",
+    "vp.visualDiff",
+    "vp.wsTest"
   ],
   "dashboardActions": [
     "a11y",
     "ai-eval",
     "arch-graph",
+    "ask-docs",
     "audit",
     "audit-contracts",
     "auto-fix",
@@ -169,6 +178,7 @@
     "diagnose",
     "docker-env",
     "doctor",
+    "ensure-dev",
     "env-drift",
     "explore",
     "export-postman",
@@ -180,6 +190,8 @@
     "fuzz-api",
     "generate",
     "heal",
+    "history",
+    "init-security-policy",
     "inspect",
     "learn-framework",
     "lint",
@@ -189,6 +201,7 @@
     "perf",
     "plan",
     "quarantine",
+    "recorder-bookmarklet",
     "release",
     "run",
     "run-changed",
@@ -197,6 +210,9 @@
     "security-run",
     "security-scan",
     "sri-csrf-audit",
+    "teach-ai",
+    "throttle",
+    "verify",
     "visual-diff"
   ],
   "capabilities": [
@@ -207,7 +223,7 @@
       "api": [
         "ProjectScanner.scan()",
         "StackDetector.detect()",
-        "QAForgeEngine.inspect()"
+        "VeloProveEngine.inspect()"
       ],
       "cli": [
         "inspect",
@@ -215,17 +231,17 @@
         "doctor"
       ],
       "mcp": [
-        "qa.inspect",
-        "qa.doctor"
+        "vp.inspect",
+        "vp.doctor"
       ],
       "dashboard": [
         "inspect",
         "doctor"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md",
-        "docs/MCP_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md",
+        "docs/reference/mcp.md"
       ],
       "tests": [
         "tests/unit/scanner-requirements.test.ts",
@@ -241,21 +257,52 @@
         "AgentHandshakeService.run()"
       ],
       "cli": [
-        "agent-handshake"
+        "teach-ai"
       ],
       "mcp": [
-        "qa.bootstrap"
+        "vp.bootstrap"
       ],
       "dashboard": [
-        "bootstrap"
+        "teach-ai"
       ],
       "docs": [
-        "docs/AI_INTEGRATIONS.md",
-        "docs/CLI_REFERENCE.md",
-        "docs/MCP_REFERENCE.md"
+        "docs/AGENTS.md",
+        "docs/guides/ai-integrations.md",
+        "docs/guides/faq.md",
+        "docs/reference/cli.md",
+        "docs/reference/mcp.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts",
+        "tests/unit/docs-assistant-ai-link.test.ts"
+      ],
+      "status": "implemented"
+    },
+    {
+      "id": "CAP-ASK",
+      "title": "Docs-Grounded Local Q&A (no cloud LLM)",
+      "domain": "discovery",
+      "api": [
+        "DocsAssistantService.ask()",
+        "VeloProveEngine.askDocs()"
+      ],
+      "cli": [
+        "ask"
+      ],
+      "mcp": [
+        "vp.ask"
+      ],
+      "dashboard": [
+        "ask-docs"
+      ],
+      "docs": [
+        "docs/AGENTS.md",
+        "docs/guides/faq.md",
+        "docs/reference/cli.md",
+        "docs/reference/mcp.md"
+      ],
+      "tests": [
+        "tests/unit/docs-assistant-ai-link.test.ts"
       ],
       "status": "implemented"
     },
@@ -271,14 +318,14 @@
         "learn-framework"
       ],
       "mcp": [
-        "qa.learnFramework"
+        "vp.learnFramework"
       ],
       "dashboard": [
         "learn-framework"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/framework-learner.test.ts"
@@ -296,17 +343,17 @@
         "explore"
       ],
       "mcp": [
-        "qa.explore"
+        "vp.explore"
       ],
       "dashboard": [
         "explore"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -321,17 +368,17 @@
         "fuzz-api"
       ],
       "mcp": [
-        "qa.fuzzApi"
+        "vp.fuzzApi"
       ],
       "dashboard": [
         "fuzz-api"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -346,17 +393,17 @@
         "mutation-score"
       ],
       "mcp": [
-        "qa.mutationScore"
+        "vp.mutationScore"
       ],
       "dashboard": [
-        "mutation-score"
+        "mutation"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -371,17 +418,15 @@
         "refine"
       ],
       "mcp": [
-        "qa.refine"
+        "vp.refine"
       ],
-      "dashboard": [
-        "refine"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -396,17 +441,17 @@
         "a11y"
       ],
       "mcp": [
-        "qa.accessibility"
+        "vp.accessibility"
       ],
       "dashboard": [
-        "accessibility"
+        "a11y"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -421,17 +466,17 @@
         "visual-diff"
       ],
       "mcp": [
-        "qa.visualDiff"
+        "vp.visualDiff"
       ],
       "dashboard": [
         "visual-diff"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -446,14 +491,14 @@
         "lint"
       ],
       "mcp": [
-        "qa.lint"
+        "vp.lint"
       ],
       "dashboard": [
         "lint"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/linter-and-dashboard.test.ts"
@@ -471,17 +516,17 @@
         "contract-drift"
       ],
       "mcp": [
-        "qa.contractDrift"
+        "vp.contractDrift"
       ],
       "dashboard": [
         "contract-drift"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -496,17 +541,17 @@
         "audit"
       ],
       "mcp": [
-        "qa.auditSec"
+        "vp.auditSec"
       ],
       "dashboard": [
         "audit"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -521,17 +566,17 @@
         "perf"
       ],
       "mcp": [
-        "qa.perf"
+        "vp.perf"
       ],
       "dashboard": [
         "perf"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -546,17 +591,17 @@
         "mock-gen"
       ],
       "mcp": [
-        "qa.mockNetwork"
+        "vp.mockNetwork"
       ],
       "dashboard": [
-        "mock-network"
+        "mock-gen"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -571,17 +616,17 @@
         "quarantine"
       ],
       "mcp": [
-        "qa.quarantine"
+        "vp.quarantine"
       ],
       "dashboard": [
         "quarantine"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -596,17 +641,17 @@
         "coverage"
       ],
       "mcp": [
-        "qa.coverage"
+        "vp.coverage"
       ],
       "dashboard": [
         "coverage"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -622,14 +667,14 @@
         "plan"
       ],
       "mcp": [
-        "qa.plan"
+        "vp.plan"
       ],
       "dashboard": [
         "plan"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/integration/autonomous-flow.test.ts"
@@ -648,14 +693,14 @@
         "generate"
       ],
       "mcp": [
-        "qa.generate"
+        "vp.generate"
       ],
       "dashboard": [
         "generate"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/integration/autonomous-flow.test.ts"
@@ -674,15 +719,15 @@
         "test"
       ],
       "mcp": [
-        "qa.run",
-        "qa.run.get"
+        "vp.run",
+        "vp.run.get"
       ],
       "dashboard": [
         "run"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/integration/autonomous-flow.test.ts"
@@ -701,14 +746,14 @@
         "changed"
       ],
       "mcp": [
-        "qa.changed"
+        "vp.changed"
       ],
       "dashboard": [
-        "changed"
+        "run-changed"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/change-impact.test.ts"
@@ -727,14 +772,14 @@
         "diagnose"
       ],
       "mcp": [
-        "qa.diagnose"
+        "vp.diagnose"
       ],
       "dashboard": [
         "diagnose"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/classifier-diagnostics.test.ts"
@@ -753,17 +798,17 @@
         "heal"
       ],
       "mcp": [
-        "qa.heal"
+        "vp.heal"
       ],
       "dashboard": [
         "heal"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -779,15 +824,15 @@
         "auto-fix"
       ],
       "mcp": [
-        "qa.suggestFix",
-        "qa.autoBugFix"
+        "vp.suggestFix",
+        "vp.autoBugFix"
       ],
       "dashboard": [
         "auto-fix"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
@@ -805,15 +850,13 @@
         "stabilize"
       ],
       "mcp": [
-        "qa.flaky",
-        "qa.stabilizeFlaky"
+        "vp.flaky",
+        "vp.stabilizeFlaky"
       ],
-      "dashboard": [
-        "stabilize"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
@@ -831,14 +874,14 @@
         "release"
       ],
       "mcp": [
-        "qa.releaseCheck"
+        "vp.releaseCheck"
       ],
       "dashboard": [
         "release"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/integration/autonomous-flow.test.ts"
@@ -858,16 +901,13 @@
         "request"
       ],
       "mcp": [
-        "qa.runCollection",
-        "qa.sendRequest"
+        "vp.runCollection",
+        "vp.sendRequest"
       ],
-      "dashboard": [
-        "run-collection",
-        "request"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/postman-runner.test.ts",
@@ -886,14 +926,14 @@
         "export-postman"
       ],
       "mcp": [
-        "qa.exportCollection"
+        "vp.exportCollection"
       ],
       "dashboard": [
-        "export-collection"
+        "export-postman"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/postman-runner.test.ts"
@@ -911,14 +951,12 @@
         "load-test"
       ],
       "mcp": [
-        "qa.loadTest"
+        "vp.loadTest"
       ],
-      "dashboard": [
-        "load-test"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
@@ -936,14 +974,12 @@
         "mock-data"
       ],
       "mcp": [
-        "qa.mockData"
+        "vp.mockData"
       ],
-      "dashboard": [
-        "mock-data"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
@@ -961,14 +997,12 @@
         "owasp-scan"
       ],
       "mcp": [
-        "qa.owaspScan"
+        "vp.owaspScan"
       ],
-      "dashboard": [
-        "owasp-scan"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
@@ -986,14 +1020,12 @@
         "graphql"
       ],
       "mcp": [
-        "qa.graphqlTest"
+        "vp.graphqlTest"
       ],
-      "dashboard": [
-        "graphql"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
@@ -1011,14 +1043,12 @@
         "ws-test"
       ],
       "mcp": [
-        "qa.wsTest"
+        "vp.wsTest"
       ],
-      "dashboard": [
-        "ws-test"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
@@ -1036,14 +1066,12 @@
         "remote-init"
       ],
       "mcp": [
-        "qa.remoteInit"
+        "vp.remoteInit"
       ],
-      "dashboard": [
-        "remote-init"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/remote-bridge.test.ts"
@@ -1061,14 +1089,12 @@
         "remote-connect"
       ],
       "mcp": [
-        "qa.remoteConnect"
+        "vp.remoteConnect"
       ],
-      "dashboard": [
-        "remote-connect"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/remote-bridge.test.ts"
@@ -1086,14 +1112,12 @@
         "remote-audit"
       ],
       "mcp": [
-        "qa.remoteAudit"
+        "vp.remoteAudit"
       ],
-      "dashboard": [
-        "remote-audit"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/remote-bridge.test.ts"
@@ -1111,14 +1135,14 @@
         "record-scenario"
       ],
       "mcp": [
-        "qa.recordScenario"
+        "vp.recordScenario"
       ],
       "dashboard": [
-        "record-scenario"
+        "recorder-bookmarklet"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
@@ -1136,14 +1160,12 @@
         "db-snapshot"
       ],
       "mcp": [
-        "qa.dbSnapshot"
+        "vp.dbSnapshot"
       ],
-      "dashboard": [
-        "db-snapshot"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
@@ -1161,14 +1183,12 @@
         "db-restore"
       ],
       "mcp": [
-        "qa.dbRestore"
+        "vp.dbRestore"
       ],
-      "dashboard": [
-        "db-restore"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
@@ -1186,14 +1206,14 @@
         "export-report"
       ],
       "mcp": [
-        "qa.exportReport"
+        "vp.exportReport"
       ],
       "dashboard": [
         "export-report"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
@@ -1211,14 +1231,12 @@
         "chaos"
       ],
       "mcp": [
-        "qa.chaosTest"
+        "vp.chaosTest"
       ],
-      "dashboard": [
-        "chaos"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
@@ -1236,14 +1254,14 @@
         "docker-env"
       ],
       "mcp": [
-        "qa.dockerEnv"
+        "vp.dockerEnv"
       ],
       "dashboard": [
         "docker-env"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
@@ -1261,14 +1279,14 @@
         "browser-matrix"
       ],
       "mcp": [
-        "qa.browserMatrix"
+        "vp.browserMatrix"
       ],
       "dashboard": [
         "browser-matrix"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
@@ -1286,14 +1304,14 @@
         "bdd"
       ],
       "mcp": [
-        "qa.bddFeatures"
+        "vp.bddFeatures"
       ],
       "dashboard": [
         "bdd"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
@@ -1311,14 +1329,12 @@
         "alert"
       ],
       "mcp": [
-        "qa.sendAlert"
+        "vp.sendAlert"
       ],
-      "dashboard": [
-        "alert"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
@@ -1336,14 +1352,14 @@
         "feature-parity"
       ],
       "mcp": [
-        "qa.featureParity"
+        "vp.featureParity"
       ],
       "dashboard": [
         "feature-parity"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/feature-parity.test.ts"
@@ -1361,14 +1377,14 @@
         "scan-malware"
       ],
       "mcp": [
-        "qa.scanMalware"
+        "vp.scanMalware"
       ],
       "dashboard": [
         "scan-malware"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/malware-scanner.test.ts"
@@ -1386,14 +1402,14 @@
         "scan-malware --fix"
       ],
       "mcp": [
-        "qa.remediateMalware"
+        "vp.remediateMalware"
       ],
       "dashboard": [
-        "remediate-malware"
+        "fix-malware"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/malware-scanner.test.ts"
@@ -1411,14 +1427,14 @@
         "ai-eval"
       ],
       "mcp": [
-        "qa.aiEvaluate"
+        "vp.aiEvaluate"
       ],
       "dashboard": [
         "ai-eval"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
@@ -1436,14 +1452,14 @@
         "bisect"
       ],
       "mcp": [
-        "qa.gitBisect"
+        "vp.gitBisect"
       ],
       "dashboard": [
         "bisect"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
@@ -1461,14 +1477,14 @@
         "throttle"
       ],
       "mcp": [
-        "qa.networkThrottle"
+        "vp.networkThrottle"
       ],
       "dashboard": [
         "throttle"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
@@ -1486,14 +1502,14 @@
         "audit-contracts"
       ],
       "mcp": [
-        "qa.smartContractAudit"
+        "vp.smartContractAudit"
       ],
       "dashboard": [
         "audit-contracts"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
@@ -1512,14 +1528,14 @@
         "dead-assets"
       ],
       "mcp": [
-        "qa.deadAssetPurge"
+        "vp.deadAssetPurge"
       ],
       "dashboard": [
         "dead-assets"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
@@ -1537,14 +1553,14 @@
         "screen-reader"
       ],
       "mcp": [
-        "qa.screenReaderSim"
+        "vp.screenReaderSim"
       ],
       "dashboard": [
         "screen-reader"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
@@ -1562,14 +1578,14 @@
         "db-audit"
       ],
       "mcp": [
-        "qa.dbQueryAudit"
+        "vp.dbQueryAudit"
       ],
       "dashboard": [
         "db-audit"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
@@ -1587,14 +1603,14 @@
         "env-drift"
       ],
       "mcp": [
-        "qa.envDriftAudit"
+        "vp.envDriftAudit"
       ],
       "dashboard": [
         "env-drift"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
@@ -1612,14 +1628,14 @@
         "replay"
       ],
       "mcp": [
-        "qa.recordFailureReplay"
+        "vp.recordFailureReplay"
       ],
       "dashboard": [
-        "replay"
+        "failure-replay"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
@@ -1637,14 +1653,12 @@
         "rate-limit"
       ],
       "mcp": [
-        "qa.rateLimitAudit"
+        "vp.rateLimitAudit"
       ],
-      "dashboard": [
-        "rate-limit"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
@@ -1662,14 +1676,12 @@
         "mock-server"
       ],
       "mcp": [
-        "qa.statefulMock"
+        "vp.statefulMock"
       ],
-      "dashboard": [
-        "mock-server"
-      ],
+      "dashboard": [],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
@@ -1687,14 +1699,14 @@
         "arch-graph"
       ],
       "mcp": [
-        "qa.architectureGraph"
+        "vp.architectureGraph"
       ],
       "dashboard": [
         "arch-graph"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
@@ -1714,17 +1726,17 @@
         "security"
       ],
       "mcp": [
-        "qa.securityScan",
-        "qa.securityPlan",
-        "qa.securityRun",
-        "qa.securityReport"
+        "vp.securityScan",
+        "vp.securityPlan",
+        "vp.securityRun",
+        "vp.securityReport"
       ],
       "dashboard": [
-        "security"
+        "security-scan"
       ],
       "docs": [
-        "docs/FEATURES_GUIDE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/features.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/security-testing.test.ts"
@@ -1742,14 +1754,14 @@
         "security --sarif"
       ],
       "mcp": [
-        "qa.exportSarif"
+        "vp.exportSarif"
       ],
       "dashboard": [
         "export-sarif"
       ],
       "docs": [
-        "docs/CLI_REFERENCE.md",
-        "docs/MCP_REFERENCE.md"
+        "docs/reference/cli.md",
+        "docs/reference/mcp.md"
       ],
       "tests": [
         "tests/unit/v100-stability-dx-suite.test.ts"
@@ -1767,14 +1779,14 @@
         "web-sec"
       ],
       "mcp": [
-        "qa.auditSriCsrf"
+        "vp.auditSriCsrf"
       ],
       "dashboard": [
         "sri-csrf-audit"
       ],
       "docs": [
-        "docs/CLI_REFERENCE.md",
-        "docs/MCP_REFERENCE.md"
+        "docs/reference/cli.md",
+        "docs/reference/mcp.md"
       ],
       "tests": [
         "tests/unit/v100-stability-dx-suite.test.ts"
@@ -1792,14 +1804,14 @@
         "dedup"
       ],
       "mcp": [
-        "qa.dedupTests"
+        "vp.dedupTests"
       ],
       "dashboard": [
         "dedup-tests"
       ],
       "docs": [
-        "docs/CLI_REFERENCE.md",
-        "docs/MCP_REFERENCE.md"
+        "docs/reference/cli.md",
+        "docs/reference/mcp.md"
       ],
       "tests": [
         "tests/unit/v100-stability-dx-suite.test.ts"
@@ -1820,7 +1832,7 @@
       "mcp": [],
       "dashboard": [],
       "docs": [
-        "docs/CLI_REFERENCE.md"
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/v100-stability-dx-suite.test.ts"
@@ -1832,7 +1844,7 @@
       "title": "Local Live Dashboard HTTP Server",
       "domain": "ui",
       "api": [
-        "QAForgeEngine.startUi()"
+        "VeloProveEngine.startUi()"
       ],
       "cli": [
         "ui"
@@ -1840,8 +1852,8 @@
       "mcp": [],
       "dashboard": [],
       "docs": [
-        "docs/DASHBOARD_UI.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/guides/dashboard.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/linter-and-dashboard.test.ts"
@@ -1861,10 +1873,10 @@
       "mcp": [],
       "dashboard": [],
       "docs": [
-        "docs/CLI_REFERENCE.md"
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -1881,10 +1893,10 @@
       "mcp": [],
       "dashboard": [],
       "docs": [
-        "docs/CLI_REFERENCE.md"
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -1901,10 +1913,10 @@
       "mcp": [],
       "dashboard": [],
       "docs": [
-        "docs/CLI_REFERENCE.md"
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -1921,10 +1933,10 @@
       "mcp": [],
       "dashboard": [],
       "docs": [
-        "docs/CLI_REFERENCE.md"
+        "docs/reference/cli.md"
       ],
       "tests": [
-        "tests/unit/advanced-qa-services.test.ts"
+        "tests/unit/advanced-vp-services.test.ts"
       ],
       "status": "implemented"
     },
@@ -1941,8 +1953,8 @@
       "mcp": [],
       "dashboard": [],
       "docs": [
-        "docs/MCP_REFERENCE.md",
-        "docs/CLI_REFERENCE.md"
+        "docs/reference/mcp.md",
+        "docs/reference/cli.md"
       ],
       "tests": [
         "tests/unit/interface-parity.test.ts"
@@ -1960,14 +1972,14 @@
         "doctor"
       ],
       "mcp": [
-        "qa.doctor"
+        "vp.doctor"
       ],
       "dashboard": [
         "doctor"
       ],
       "docs": [
-        "docs/CLI_REFERENCE.md",
-        "docs/MCP_REFERENCE.md"
+        "docs/reference/cli.md",
+        "docs/reference/mcp.md"
       ],
       "tests": [
         "tests/unit/package-distribution.test.ts"

@@ -9,7 +9,7 @@ export class CiGeneratorService {
       fs.mkdirSync(workflowDir, { recursive: true });
     }
 
-    const workflowContent = `name: QAForge Autonomous Quality Gate
+    const workflowContent = `name: VeloProve Autonomous Quality Gate
 
 on:
   push:
@@ -18,8 +18,8 @@ on:
     branches: [ main, master ]
 
 jobs:
-  qaforge-verification:
-    name: Run QAForge Validation & Release Check
+  veloprove-verification:
+    name: Run VeloProve Validation & Release Check
     runs-on: ubuntu-latest
 
     steps:
@@ -37,17 +37,17 @@ jobs:
       - name: Install Dependencies
         run: npm ci || npm install
 
-      - name: Initialize & Inspect QAForge
-        run: npx qaforge inspect
+      - name: Initialize & Inspect VeloProve
+        run: npx veloprove inspect
 
       - name: Run Test Suites
-        run: npx qaforge test
+        run: npx veloprove test
 
       - name: Evaluate Release Confidence
-        run: npx qaforge release --ci
+        run: npx veloprove release --ci
 `;
 
-    const targetFile = path.join(workflowDir, 'qaforge-ci.yml');
+    const targetFile = path.join(workflowDir, 'veloprove-ci.yml');
     fs.writeFileSync(targetFile, workflowContent, 'utf8');
 
     return targetFile;

@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { QAForgeConfig } from '../shared/types/config.js';
+import type { VeloProveConfig } from '../shared/types/config.js';
 import type { WorkspaceGuard } from '../execution/workspace-guard.js';
 
-export const DEFAULT_CONFIG: QAForgeConfig = {
+export const DEFAULT_CONFIG: VeloProveConfig = {
   test: {
     unit: 'vitest',
     e2e: 'playwright',
@@ -26,6 +26,30 @@ export const DEFAULT_CONFIG: QAForgeConfig = {
     allowTestHealing: true,
     allowSourceWrites: false
   },
+  execution: {
+    timeouts: {
+      processMs: 120000,
+      browserMs: 60000,
+      networkMs: 15000,
+      aiMs: 60000,
+      scannerMs: 180000
+    },
+    retry: {
+      maxAttempts: 2,
+      baseDelayMs: 200,
+      maxDelayMs: 2000
+    },
+    concurrency: 4
+  },
+  cache: {
+    inspect: true
+  },
+  release: {
+    blockOn: ['critical-test-failure', 'high-security-finding'],
+    require: {
+      criticalFlowsPassing: true
+    }
+  },
   devServer: {
     port: 5173,
     healthEndpoint: '/',
@@ -37,6 +61,7 @@ export const DEFAULT_CONFIG: QAForgeConfig = {
     safeMode: true,
     environment: 'test',
     allowProduction: false,
+    allowUnknownRemote: false,
     auth: {
       enabled: true,
       testRateLimit: true,
@@ -77,9 +102,9 @@ export class ConfigLoader {
     this.workspaceGuard = workspaceGuard;
   }
 
-  public async loadConfig(): Promise<QAForgeConfig> {
+  public async loadConfig(): Promise<VeloProveConfig> {
     const root = this.workspaceGuard.getRoot();
-    const jsonPath = path.join(root, 'qaforge.config.json');
+    const jsonPath = path.join(root, 'veloprove.config.json');
 
     if (fs.existsSync(jsonPath)) {
       try {
@@ -87,14 +112,14 @@ export class ConfigLoader {
         const parsed = JSON.parse(raw);
         return this.mergeConfig(DEFAULT_CONFIG, parsed);
       } catch (err) {
-        console.warn(`[QAForge] Warning: Failed to parse ${jsonPath}, falling back to defaults`, err);
+        console.warn(`[VeloProve] Warning: Failed to parse ${jsonPath}, falling back to defaults`, err);
       }
     }
 
     return DEFAULT_CONFIG;
   }
 
-  private mergeConfig(defaults: QAForgeConfig, overrides: Partial<QAForgeConfig>): QAForgeConfig {
+  private mergeConfig(defaults: VeloProveConfig, overrides: Partial<VeloProveConfig>): VeloProveConfig {
     return {
       test: { ...defaults.test, ...overrides.test },
       browser: { ...defaults.browser, ...overrides.browser },

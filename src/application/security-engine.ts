@@ -16,6 +16,8 @@ import type {
 import { SecuritySurfaceScanner } from '../intelligence/security-scanner/surface-scanner.js';
 import { SecurityPlanner } from '../intelligence/security-scanner/security-planner.js';
 import { SecretRedactor } from '../shared/secret-redactor.js';
+import { EnvironmentGuard } from '../shared/environment-guard.js';
+import { SessionTheftAuditor, type SessionTheftStaticFinding } from './session-theft-auditor.js';
 
 export class SecurityEngine {
   public static async scanSurface(guard: WorkspaceGuard, profile?: ProjectProfile): Promise<SecurityAttackSurface> {
@@ -38,10 +40,13 @@ export class SecurityEngine {
     const environment = options.environment || 'test';
     const allowProduction = options.allowProduction === true;
 
-    // Environment Guard: If production target is detected without explicit override, refuse active execution
-    if ((environment === 'production' || options.baseURL?.includes('prod')) && !allowProduction) {
-      throw new Error('[QAForge Security] Target environment is production and allowProduction is false. Refusing intrusive security tests in accordance with Safe Security Mode.');
-    }
+    // Environment Guard: block production + unknown remotes unless explicitly allowed
+    EnvironmentGuard.assertIntrusiveAllowed({
+      configured: environment,
+      baseURL: options.baseURL,
+      allowProduction,
+      allowUnknownRemote: options.allowUnknownRemote === true
+    });
 
     const results: SecurityTestExecutionResult[] = [];
     const findings: SecurityFinding[] = [];
@@ -112,7 +117,7 @@ export class SecurityEngine {
           const res = await fetch(`${baseURL}${testCase.targetEndpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'qaforge_test_user', password: 'ValidPassword123!' })
+            body: JSON.stringify({ username: 'veloprove_test_user', password: 'ValidPassword123!' })
           });
           const text = await res.text();
           if (text.includes('password') && (text.includes('ValidPassword123') || text.includes('SELECT') || text.includes('hash'))) {
@@ -327,7 +332,7 @@ export class SecurityEngine {
         }
 
         try {
-          const probe = '<script>qaforge_xss_probe()</script>';
+          const probe = '<script>veloprove_xss_probe()</script>';
           const res = await fetch(`${baseURL}/search?q=${encodeURIComponent(probe)}`);
           const body = await res.text();
 
@@ -405,33 +410,98 @@ export class SecurityEngine {
       }
 
       case 'sec_session_cookie_flags': {
-        // Inspect cookie flags
-        const flags = testCase.targetEndpoint ? null : null;
-        if (!isLiveTarget) {
-          const sourceFiles = this.resolveSourceFiles(root, profile);
-          for (const relFile of sourceFiles) {
-            const fullPath = path.join(root, relFile);
-            if (!fs.existsSync(fullPath)) continue;
-            try {
-              const content = fs.readFileSync(fullPath, 'utf8');
-              if (content.includes('express-session') || content.includes('res.cookie(')) {
-                if (content.includes('httpOnly: false')) {
-                  return {
-                    status: 'WARN',
-                    finding: this.createFinding(testCase, 'MEDIUM', 'HIGH', 'WARN', {
-                      evidence: `Cookie configured with httpOnly: false in ${relFile}.`,
-                      expected: 'Session cookies should have httpOnly: true to mitigate XSS cookie theft.',
-                      actual: 'httpOnly flag explicitly disabled.',
-                      impact: 'Client-side scripts can access sensitive session identifiers.',
-                      remediation: 'Set httpOnly: true and sameSite: "lax" or "strict" on all authentication cookies.',
-                      sourceFile: relFile
-                    })
-                  };
-                }
-              }
-            } catch {}
+        if (isLiveTarget) {
+          const live = await SessionTheftAuditor.analyzeLiveCookies(baseURL);
+          const actionable = live.findings.filter((f) => f.severity !== 'LOW' || live.cookies.length > 0);
+          const hit = actionable.find((f) => f.kind === 'HTTPONLY_DISABLED' || f.kind === 'SECURE_MISSING' || f.kind === 'SAMESITE_MISSING');
+          if (hit && live.cookies.length > 0) {
+            return {
+              status: 'WARN',
+              finding: this.createFinding(testCase, hit.severity, 'HIGH', 'WARN', {
+                evidence: hit.evidence,
+                expected: hit.expected,
+                actual: hit.actual,
+                impact: hit.impact,
+                remediation: hit.remediation
+              })
+            };
+          }
+          if (live.cookies.length === 0 && live.findings.some((f) => f.evidence.includes('Unable to probe'))) {
+            return { status: 'INCONCLUSIVE', error: 'Live cookie probe failed' };
           }
           return { status: 'PASS' };
+        }
+
+        const findings = SessionTheftAuditor.scanSource(root, this.resolveSourceFiles(root, profile));
+        const hit = findings.find((f) => f.kind === 'HTTPONLY_DISABLED' || f.kind === 'SAMESITE_MISSING');
+        if (hit) {
+          return {
+            status: 'WARN',
+            finding: this.findingFromSessionTheft(testCase, hit)
+          };
+        }
+        return { status: 'PASS' };
+      }
+
+      case 'sec_session_id_url_exposure': {
+        const findings = SessionTheftAuditor.scanSource(root, this.resolveSourceFiles(root, profile));
+        const hit = findings.find((f) => f.kind === 'SESSION_ID_IN_URL');
+        if (hit) {
+          return { status: 'FAIL', finding: this.findingFromSessionTheft(testCase, hit) };
+        }
+        return { status: 'PASS' };
+      }
+
+      case 'sec_session_fixation': {
+        const findings = SessionTheftAuditor.scanSource(root, this.resolveSourceFiles(root, profile));
+        const hit = findings.find((f) => f.kind === 'SESSION_FIXATION');
+        if (hit) {
+          return { status: 'WARN', finding: this.findingFromSessionTheft(testCase, hit) };
+        }
+        return { status: 'PASS' };
+      }
+
+      case 'sec_session_client_storage_theft': {
+        const findings = SessionTheftAuditor.scanSource(root, this.resolveSourceFiles(root, profile));
+        const hit = findings.find((f) => f.kind === 'CLIENT_SIDE_SESSION_STORE');
+        if (hit) {
+          return { status: 'WARN', finding: this.findingFromSessionTheft(testCase, hit) };
+        }
+        return { status: 'PASS' };
+      }
+
+      case 'sec_session_logout_invalidation': {
+        const findings = SessionTheftAuditor.scanSource(root, this.resolveSourceFiles(root, profile));
+        const hit = findings.find((f) => f.kind === 'LOGOUT_NO_INVALIDATION');
+        if (hit) {
+          return { status: 'WARN', finding: this.findingFromSessionTheft(testCase, hit) };
+        }
+
+        // Live optional: if logout endpoint exists, ensure it does not leave a reusable Set-Cookie identity blindly
+        if (isLiveTarget && testCase.targetEndpoint) {
+          try {
+            const logoutUrl = new URL(testCase.targetEndpoint, baseURL).toString();
+            const res = await fetch(logoutUrl, {
+              method: testCase.targetMethod || 'POST',
+              redirect: 'manual',
+              headers: { 'User-Agent': 'VeloProve-SessionTheftAuditor/1.0' }
+            });
+            // Soft check only — without fixture auth we cannot prove reuse, but 404 on logout is a smell
+            if (res.status === 404) {
+              return {
+                status: 'WARN',
+                finding: this.createFinding(testCase, 'MEDIUM', 'MEDIUM', 'WARN', {
+                  evidence: `Logout endpoint ${logoutUrl} returned 404.`,
+                  expected: 'A logout endpoint that destroys server-side session state.',
+                  actual: `HTTP ${res.status}`,
+                  impact: 'Users (and stolen cookies) may have no reliable server-side invalidation path.',
+                  remediation: 'Implement logout that destroys/revokes sessions and clears auth cookies.'
+                })
+              };
+            }
+          } catch {
+            return { status: 'INCONCLUSIVE', error: 'Logout endpoint unreachable' };
+          }
         }
         return { status: 'PASS' };
       }
@@ -496,6 +566,20 @@ export class SecurityEngine {
       default:
         return { status: 'PASS' };
     }
+  }
+
+  private static findingFromSessionTheft(
+    testCase: SecurityTestCase,
+    hit: SessionTheftStaticFinding
+  ): SecurityFinding {
+    return this.createFinding(testCase, hit.severity, 'HIGH', hit.kind === 'SESSION_ID_IN_URL' ? 'FAIL' : 'WARN', {
+      evidence: hit.evidence,
+      expected: hit.expected,
+      actual: hit.actual,
+      impact: hit.impact,
+      remediation: hit.remediation,
+      sourceFile: hit.sourceFile
+    });
   }
 
   private static createFinding(
@@ -610,7 +694,7 @@ export class SecurityEngine {
     return {
       reportId: `sec_rep_${Date.now()}`,
       timestamp: new Date().toISOString(),
-      target: path.basename(root) || 'qaforge-project',
+      target: path.basename(root) || 'veloprove-project',
       environment: (ctx.environment as any) || 'test',
       safeMode: ctx.safeMode,
       deepMode: ctx.deepMode,

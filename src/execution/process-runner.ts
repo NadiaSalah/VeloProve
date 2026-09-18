@@ -1,10 +1,13 @@
-import { spawn, type SpawnOptions } from 'node:child_process';
+import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
 import { WorkspaceGuard } from './workspace-guard.js';
 
 export interface ProcessRunOptions {
   cwd?: string;
   env?: Record<string, string>;
   timeoutMs?: number;
+  /** Soft cap on combined stdout+stderr retained in memory (default 8MB). */
+  maxOutputBytes?: number;
+  signal?: AbortSignal;
   onStdout?: (data: string) => void;
   onStderr?: (data: string) => void;
 }
@@ -15,6 +18,8 @@ export interface ProcessRunResult {
   stderr: string;
   durationMs: number;
   timedOut: boolean;
+  cancelled: boolean;
+  truncated: boolean;
 }
 
 const SENSITIVE_PATTERNS = [
@@ -38,6 +43,36 @@ export function redactSecrets(text: string): string {
   return redacted;
 }
 
+function killProcessTree(child: ChildProcess): void {
+  if (!child.pid) {
+    try {
+      child.kill('SIGKILL');
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+
+  if (process.platform === 'win32') {
+    try {
+      spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+        stdio: 'ignore',
+        windowsHide: true,
+        shell: false
+      });
+      return;
+    } catch {
+      /* fall through */
+    }
+  }
+
+  try {
+    child.kill('SIGKILL');
+  } catch {
+    /* ignore */
+  }
+}
+
 export class SafeProcessRunner {
   private workspaceGuard: WorkspaceGuard;
 
@@ -56,28 +91,46 @@ export class SafeProcessRunner {
 
     const startTime = Date.now();
     const timeoutMs = options.timeoutMs ?? 120_000;
+    const maxOutputBytes = options.maxOutputBytes ?? 8 * 1024 * 1024;
+
+    if (options.signal?.aborted) {
+      return {
+        exitCode: null,
+        stdout: '',
+        stderr: 'Process cancelled before start',
+        durationMs: 0,
+        timedOut: false,
+        cancelled: true,
+        truncated: false
+      };
+    }
 
     return new Promise<ProcessRunResult>((resolve) => {
       let stdout = '';
       let stderr = '';
       let timedOut = false;
+      let cancelled = false;
+      let truncated = false;
+      let settled = false;
 
       const isWindows = process.platform === 'win32';
       let execTarget = executable;
-      let useShell = isWindows;
+      // Default: never use shell for absolute/.exe paths (spaces in "Program Files").
+      let useShell = false;
 
-      // On Windows, resolve command wrappers (.cmd) or known executables (.exe) directly to avoid DEP0190 shell warning
-      if (isWindows && !executable.endsWith('.cmd') && !executable.endsWith('.exe') && !executable.includes('\\') && !executable.includes('/')) {
-        const cmdWrappers = ['npx', 'npm', 'yarn', 'pnpm', 'vitest', 'jest', 'playwright', 'eslint'];
-        const directExecs = ['git', 'node', 'docker', 'tar', 'curl', 'taskkill'];
+      // Bare npm ecosystem shims need shell on Windows (.cmd resolution).
+      if (
+        isWindows &&
+        !executable.endsWith('.cmd') &&
+        !executable.endsWith('.exe') &&
+        !executable.includes('\\') &&
+        !executable.includes('/')
+      ) {
+        const cmdWrappers = ['npx', 'npm', 'yarn', 'pnpm', 'vitest', 'jest', 'playwright', 'eslint', 'bun'];
         const low = executable.toLowerCase();
-
         if (cmdWrappers.includes(low)) {
-          execTarget = `${executable}.cmd`;
-          useShell = false;
-        } else if (directExecs.includes(low)) {
           execTarget = executable;
-          useShell = false;
+          useShell = true;
         }
       }
 
@@ -85,49 +138,86 @@ export class SafeProcessRunner {
         cwd,
         env: { ...process.env, ...options.env },
         shell: useShell,
-        stdio: ['ignore', 'pipe', 'pipe']
+        stdio: ['ignore', 'pipe', 'pipe'],
+        windowsHide: true
       };
 
-      const child = spawn(execTarget, args, spawnOpts);
+      let child: ChildProcess;
+      try {
+        child = spawn(execTarget, args, spawnOpts);
+      } catch (err) {
+        resolve({
+          exitCode: 1,
+          stdout: '',
+          stderr: redactSecrets(err instanceof Error ? err.message : String(err)),
+          durationMs: Date.now() - startTime,
+          timedOut: false,
+          cancelled: false,
+          truncated: false
+        });
+        return;
+      }
+
+      const finish = (exitCode: number | null) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        options.signal?.removeEventListener('abort', onAbort);
+        resolve({
+          exitCode,
+          stdout: redactSecrets(stdout),
+          stderr: redactSecrets(stderr),
+          durationMs: Date.now() - startTime,
+          timedOut,
+          cancelled,
+          truncated
+        });
+      };
+
+      const appendBounded = (target: 'stdout' | 'stderr', text: string) => {
+        const current = stdout.length + stderr.length;
+        if (current >= maxOutputBytes) {
+          truncated = true;
+          return;
+        }
+        const room = maxOutputBytes - current;
+        const chunk = text.length > room ? text.slice(0, room) : text;
+        if (chunk.length < text.length) truncated = true;
+        if (target === 'stdout') stdout += chunk;
+        else stderr += chunk;
+      };
+
+      const onAbort = () => {
+        cancelled = true;
+        killProcessTree(child);
+      };
 
       const timer = setTimeout(() => {
         timedOut = true;
-        child.kill('SIGKILL');
+        killProcessTree(child);
       }, timeoutMs);
+
+      options.signal?.addEventListener('abort', onAbort, { once: true });
 
       child.stdout?.on('data', (chunk) => {
         const text = chunk.toString();
-        stdout += text;
+        appendBounded('stdout', text);
         options.onStdout?.(text);
       });
 
       child.stderr?.on('data', (chunk) => {
         const text = chunk.toString();
-        stderr += text;
+        appendBounded('stderr', text);
         options.onStderr?.(text);
       });
 
       child.on('error', (err) => {
-        clearTimeout(timer);
-        stderr += `\nProcess execution error: ${err.message}`;
-        resolve({
-          exitCode: 1,
-          stdout: redactSecrets(stdout),
-          stderr: redactSecrets(stderr),
-          durationMs: Date.now() - startTime,
-          timedOut
-        });
+        appendBounded('stderr', `\nProcess execution error: ${err.message}`);
+        finish(1);
       });
 
       child.on('close', (code) => {
-        clearTimeout(timer);
-        resolve({
-          exitCode: code,
-          stdout: redactSecrets(stdout),
-          stderr: redactSecrets(stderr),
-          durationMs: Date.now() - startTime,
-          timedOut
-        });
+        finish(code);
       });
     });
   }

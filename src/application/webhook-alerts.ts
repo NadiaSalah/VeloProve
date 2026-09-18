@@ -10,6 +10,13 @@ export interface WebhookAlertPayload {
   securityIssuesCount?: number;
   detailsUrl?: string;
   authorOrCommit?: string;
+  /** Git branch for cross-branch regression alerts */
+  branch?: string;
+  /** Mean time to recover in hours (when available) */
+  mttrHours?: number | null;
+  /** Pass-rate delta vs previous run on the same branch */
+  velocityDelta?: number | null;
+  regressionAlert?: boolean;
 }
 
 export interface WebhookDispatchOptions {
@@ -43,7 +50,7 @@ export class WebhookAlertService {
     switch (provider) {
       case 'slack':
         bodyPayload = {
-          text: `${emoji} *QAForge Test Run Verdict: ${p.verdict}* for *${p.projectName}*`,
+          text: `${emoji} *VeloProve Test Run Verdict: ${p.verdict}* for *${p.projectName}*`,
           attachments: [
             {
               color: colorHex,
@@ -51,9 +58,16 @@ export class WebhookAlertService {
                 { title: 'Passed Tests', value: `${p.passedCount} / ${p.totalTests}`, short: true },
                 { title: 'Failed Tests', value: `${p.failedCount}`, short: true },
                 { title: 'Quality Score', value: `${p.score !== undefined ? p.score + '/100' : 'N/A'}`, short: true },
-                { title: 'Security Issues', value: `${p.securityIssuesCount || 0}`, short: true }
+                { title: 'Security Issues', value: `${p.securityIssuesCount || 0}`, short: true },
+                ...(p.branch ? [{ title: 'Branch', value: p.branch, short: true }] : []),
+                ...(p.mttrHours != null
+                  ? [{ title: 'MTTR (h)', value: String(p.mttrHours), short: true }]
+                  : []),
+                ...(p.regressionAlert
+                  ? [{ title: 'Regression', value: `Pass-rate Δ ${p.velocityDelta ?? '?'} pp`, short: true }]
+                  : [])
               ],
-              footer: 'QAForge Autonomous QA Engine'
+              footer: 'VeloProve Autonomous QA Engine'
             }
           ]
         };
@@ -61,7 +75,7 @@ export class WebhookAlertService {
 
       case 'discord':
         bodyPayload = {
-          content: `${emoji} **QAForge QA Alert**: \`${p.projectName}\` verdict is **${p.verdict}**`,
+          content: `${emoji} **VeloProve QA Alert**: \`${p.projectName}\` verdict is **${p.verdict}**`,
           embeds: [
             {
               title: `Execution Summary (${p.passedCount}/${p.totalTests} Passed)`,
@@ -79,9 +93,9 @@ export class WebhookAlertService {
       case 'teams':
         bodyPayload = {
           '@type': 'MessageCard',
-          summary: `QAForge ${p.verdict} for ${p.projectName}`,
+          summary: `VeloProve ${p.verdict} for ${p.projectName}`,
           themeColor: isSuccess ? '34D399' : 'F87171',
-          title: `${emoji} QAForge Verdict: ${p.verdict} (${p.projectName})`,
+          title: `${emoji} VeloProve Verdict: ${p.verdict} (${p.projectName})`,
           text: `Passed: ${p.passedCount}/${p.totalTests} | Failed: ${p.failedCount} | Score: ${p.score || 100}/100`
         };
         break;
@@ -89,7 +103,7 @@ export class WebhookAlertService {
       case 'generic':
       default:
         bodyPayload = {
-          event: 'qaforge.run.completed',
+          event: 'veloprove.run.completed',
           timestamp: new Date().toISOString(),
           ...p
         };

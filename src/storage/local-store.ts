@@ -12,7 +12,7 @@ export class LocalStorage {
 
   constructor(workspaceGuard: WorkspaceGuard) {
     this.workspaceGuard = workspaceGuard;
-    this.baseDir = path.join(this.workspaceGuard.getRoot(), '.qaforge');
+    this.baseDir = path.join(this.workspaceGuard.getRoot(), '.veloprove');
     this.initDirectories();
   }
 

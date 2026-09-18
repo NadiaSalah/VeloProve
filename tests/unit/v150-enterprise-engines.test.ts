@@ -7,9 +7,9 @@ import { DockerOrchestratorService } from '../../src/application/docker-orchestr
 import { BrowserMatrixService } from '../../src/application/browser-matrix.js';
 import { BddGeneratorService } from '../../src/application/bdd-generator.js';
 import { WebhookAlertService } from '../../src/application/webhook-alerts.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 
-describe('QAForge v1.5.0 Enterprise Engines Suite', () => {
+describe('VeloProve v1.5.0 Enterprise Engines Suite', () => {
   const testRoot = path.resolve(process.cwd(), 'fixtures/test-project');
   let guard: WorkspaceGuard;
 
@@ -68,7 +68,7 @@ describe('QAForge v1.5.0 Enterprise Engines Suite', () => {
     it('generates docker-compose.test.yml with postgres and redis', () => {
       const res = DockerOrchestratorService.generateTestEnvironment(guard, {
         services: ['postgres', 'redis'],
-        projectName: 'qaforge-ci'
+        projectName: 'veloprove-ci'
       });
 
       expect(res.composeFile).toContain('postgres:16-alpine');
@@ -146,9 +146,9 @@ describe('QAForge v1.5.0 Enterprise Engines Suite', () => {
     });
   });
 
-  describe('QAForgeEngine Integration Methods', () => {
+  describe('VeloProveEngine Integration Methods', () => {
     it('exposes all v1.5.0 enterprise engine methods', async () => {
-      const engine = new QAForgeEngine(testRoot);
+      const engine = new VeloProveEngine(testRoot);
 
       const docker = engine.generateDockerEnv({ services: ['postgres'] });
       expect(docker.composeFile).toBeDefined();

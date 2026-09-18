@@ -423,7 +423,7 @@ export class PostmanRunnerService {
     }
 
     return {
-      collectionName: collection.info.name || 'QAForge API Collection',
+      collectionName: collection.info.name || 'VeloProve API Collection',
       totalRequests: flatRequests.length,
       passedCount,
       failedCount,
@@ -441,7 +441,7 @@ export class PostmanRunnerService {
     requirements: DiscoveredRequirement[] = [],
     collectionName?: string
   ): PostmanCollection {
-    const name = collectionName || `${profile.projectName || 'QAForge'} API Collection`;
+    const name = collectionName || `${profile.projectName || 'VeloProve'} API Collection`;
 
     const items: PostmanItem[] = [];
 
@@ -507,8 +507,8 @@ export class PostmanRunnerService {
     return {
       info: {
         name,
-        _postman_id: `qaforge-col-${Date.now()}`,
-        description: `Generated autonomously by QAForge for ${profile.projectName}`,
+        _postman_id: `veloprove-col-${Date.now()}`,
+        description: `Generated autonomously by VeloProve for ${profile.projectName}`,
         schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
         version: '1.0.0'
       },

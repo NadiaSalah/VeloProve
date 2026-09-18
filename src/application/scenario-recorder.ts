@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { WorkspaceGuard } from '../execution/workspace-guard.js';
 
+import { getRecorderProbeSource } from './recorder-probe.js';
+
 export type RecordedActionType =
   | 'navigate'
   | 'click'
@@ -210,5 +212,26 @@ ${generatedSteps.join('\n')}
     }
 
     return `page.locator('body')`;
+  }
+
+  /**
+   * Compact bookmarklet that captures clicks/fills/navigations into window.__vpSteps
+   * and copies a JSON payload to the clipboard for pasting into the Dashboard recorder.
+   */
+  public static generateBookmarklet(dashboardHint = 'VeloProve Dashboard → Recorder'): string {
+    return `javascript:${encodeURIComponent(getRecorderProbeSource(dashboardHint))}`;
+  }
+
+  public static synthesizeFromPayload(
+    guard: WorkspaceGuard,
+    payload: { title?: string; startUrl?: string; steps?: RecordedUserStep[]; outputFile?: string; framework?: 'playwright' | 'vitest' }
+  ): GeneratedScenarioResult {
+    return ScenarioRecorderService.synthesizeScenario(guard, {
+      title: payload.title || 'Recorded scenario',
+      startUrl: payload.startUrl || 'http://localhost:3000',
+      framework: payload.framework || 'playwright',
+      steps: Array.isArray(payload.steps) ? payload.steps : [],
+      outputFile: payload.outputFile || `tests/e2e/${(payload.title || 'recorded').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.spec.ts`
+    });
   }
 }

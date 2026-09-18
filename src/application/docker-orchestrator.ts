@@ -31,7 +31,7 @@ export class DockerOrchestratorService {
   ): GeneratedDockerConfigResult {
     const services = config.services && config.services.length > 0 ? config.services : ['postgres', 'redis'];
     const appPort = config.appPort || 3000;
-    const projectName = config.projectName || 'qaforge-test-env';
+    const projectName = config.projectName || 'veloprove-test-env';
 
     const composeServices: string[] = [];
     const envEntries: string[] = [`NODE_ENV=test`, `PORT=${appPort}`];
@@ -101,14 +101,14 @@ export class DockerOrchestratorService {
 
     const composeFile = `version: '3.8'
 
-# QAForge Autonomous Isolated Test Environment
+# VeloProve Autonomous Isolated Test Environment
 # Generated automatically for zero-leak local & CI testing
 
 services:
 ${composeServices.join('\n\n')}
 `;
 
-    const dockerfile = `# QAForge Containerized Test Runner
+    const dockerfile = `# VeloProve Containerized Test Runner
 FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
@@ -118,7 +118,7 @@ ENV NODE_ENV=test
 CMD ["npm", "run", "test"]
 `;
 
-    const envFile = `# QAForge Automated Test Environment Variables\n${envEntries.join('\n')}\n`;
+    const envFile = `# VeloProve Automated Test Environment Variables\n${envEntries.join('\n')}\n`;
 
     let savedComposePath: string | undefined;
     if (config.outputPath) {

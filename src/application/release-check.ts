@@ -64,7 +64,7 @@ export class ReleaseCheckService {
 
     if (uncoveredReqs > 0) {
       reasons.push(`${uncoveredReqs} requirement(s) lack automated test coverage.`);
-      recommendations.push('Run `qaforge plan` and `qaforge generate` to add missing tests.');
+      recommendations.push('Run `veloprove plan` and `veloprove generate` to add missing tests.');
     }
 
     if (flakyTests.length > 0) {

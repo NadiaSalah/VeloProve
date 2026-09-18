@@ -19,4 +19,12 @@ describe('WorkspaceGuard', () => {
 
     expect(guard.isWithinWorkspace('../../../outside-file.txt')).toBe(false);
   });
+
+  it('should reject null-byte paths', () => {
+    expect(() => guard.resolveSafePath('src/in\0dex.ts')).toThrow(/null byte/);
+  });
+
+  it('should reject empty paths', () => {
+    expect(() => guard.resolveSafePath('')).toThrow(/Empty path/);
+  });
 });

@@ -1,0 +1,68 @@
+---
+description: Universal autonomous QA and testing workflow for all AI Coding Agents
+globs: **/*
+alwaysApply: true
+---
+
+# VeloProve Universal Rules for AI Coding Agents
+
+When working on software verification, bug fixes, or new features in this repository, all AI coding agents should follow the VeloProve Autonomous QA workflow:
+
+## 1. Inspect Project & Requirements
+Before modifying or generating tests, call `vp.inspect` to load the active project profile, framework stack, routes, and discovered PRD requirements. Call `vp.doctor` to verify environment and installation readiness. Call `vp.bootstrap` / `npx veloprove teach-ai` for the agent handshake. For live app visual mapping, call `vp.explore`.
+
+## 2. Test Planning & Verification
+- When asked to test a feature or ensure coverage, run `vp.plan` to generate a risk-scored test plan.
+- Use `vp.generate` to materialize missing test files without overwriting developer-written tests.
+
+## 3. Verify Code Changes & Impact Analysis
+- After refactoring or writing new code, run `vp.changed` to identify only the impacted unit, integration, and E2E tests.
+- Execute affected tests using `vp.run({ scope: "changed" })` or `vp.run({ paths: [...] })`. Poll long runs with `vp.run.get`.
+
+## 4. Diagnostics, Safe Healing & Refinement
+- If a test fails, invoke `vp.diagnose` to retrieve evidence-based classification (`APPLICATION_BUG`, `TEST_BUG`, `FLAKY_TEST`, etc.).
+- If classified as `TEST_BUG` (e.g. stale locator), run `vp.heal` to repair test locators automatically via Visual-Aria rules.
+- If classified as `APPLICATION_BUG`, use `vp.suggestFix` (MCP-only) to inspect root-cause recommendations and update application source code.
+- Use `vp.flaky` for flaky history; `vp.quarantine` / `vp.stabilizeFlaky` to isolate or harden.
+- To adjust assertions or steps with natural language, call `vp.refine`.
+
+## 5. Security, Accessibility, Performance & Contract Checks
+- Run `vp.lint` to enforce static code quality and auto-fix formatting errors.
+- Run `vp.auditSec` to audit dependency CVEs and scan for hardcoded secrets.
+- Run `vp.perf` to profile Core Web Vitals across application routes.
+- Run `vp.mockNetwork` to generate MSW network mock handlers for decoupled testing.
+- Run `vp.quarantine` to isolate high-variance flaky tests.
+- Run `vp.coverage` to generate functional requirements coverage heatmaps.
+- Run `vp.accessibility` to audit WCAG 2.1 standards on UI components.
+- Run `vp.contractDrift` to ensure code routes match OpenAPI contracts.
+- Run `vp.fuzzApi` to generate security and boundary probes.
+- Run `vp.runCollection` to execute Postman v2.1 collection test suites with variable interpolation.
+- Run `vp.exportCollection` to export discovered APIs to Postman collection JSON.
+- Run `vp.visualDiff` to ensure no unexpected visual regressions occurred.
+- Run `vp.remoteInit`, `vp.remoteConnect`, `vp.remoteAudit` to connect local VeloProve to any live website using a drop-in probe file.
+- Run `vp.recordScenario`, `vp.stabilizeFlaky`, `vp.dbSnapshot`, `vp.dbRestore`, `vp.autoBugFix`, `vp.exportReport`.
+- Run `vp.chaosTest` for chaos injection, `vp.dockerEnv` for isolated container setups, `vp.browserMatrix` for cross-browser matrices, `vp.bddFeatures` for BDD specs, and `vp.sendAlert` for Slack/Discord alerts.
+- Run `vp.featureParity` to audit UI-to-Backend parity and detect ghost features.
+- Run `vp.scanMalware` and `vp.remediateMalware` to audit project for backdoors & auto-neutralize malicious code.
+- Run `vp.aiEvaluate`, `vp.gitBisect`, `vp.networkThrottle`, `vp.smartContractAudit`, `vp.deadAssetPurge` for advanced analysis engines.
+- Run `vp.screenReaderSim`, `vp.dbQueryAudit`, `vp.envDriftAudit`, `vp.recordFailureReplay`, `vp.rateLimitAudit`, `vp.statefulMock`, `vp.architectureGraph` for enterprise diagnostics.
+- Run `vp.securityScan`, `vp.securityPlan`, `vp.securityRun`, `vp.securityReport` for comprehensive non-destructive security testing (Auth, AuthZ, Injections, Forms, Sessions, Uploads).
+- Run `vp.exportSarif` to generate GitHub Code Scanning SARIF v2.1.0 logs.
+- Run `vp.auditSriCsrf` to audit Subresource Integrity (SRI), CSRF tokens, and CORS wildcards.
+- Run `vp.dedupTests` to identify duplicate assertions and test suite redundancies.
+- If working with custom or in-house frameworks, invoke `vp.learnFramework`.
+
+## 6. Release Readiness
+Before concluding complex tasks or PR preparation, run `vp.verify` for change-aware autonomous QA, or `vp.releaseCheck` for the release confidence score alone. Use `vp.history` to review local pass-rate trends.
+
+## 7. Mandatory Post-Modification Protocol
+On ANY code modification or feature enhancement, the agent MUST:
+1. **Test Immediately**: Run `vp.changed` / `vp.run` or `npm run test` after changes.
+2. **Synchronize All Interfaces**:
+   - Update CLI (`src/cli/index.ts`).
+   - Update MCP Server (`src/mcp/server.ts`).
+   - Update Dashboard (`src/application/dashboard-server.ts`) when applicable.
+   - Update all `.md` files in `docs/` and root (`README.md`, `AGENTS.md`, `CHANGELOG.md`).
+3. **Purge Old & Duplicate Code**: Clean up unused imports, dead functions, redundant logic, and obsolete documentation.
+4. **Interface Parity Validation**: Run parity and integrity tests (`tests/unit/interface-parity.test.ts`) to ensure zero drift.
+5. **Final Verification**: Run `npm run build` and `npm run test` to guarantee 0 errors.

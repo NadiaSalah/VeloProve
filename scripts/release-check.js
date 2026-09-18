@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-console.log('\n🔍 QAForge Pre-Release Package Integrity Validation\n');
+console.log('\n🔍 VeloProve Pre-Release Package Integrity Validation\n');
 
 try {
   // 1. Build TypeScript first
@@ -44,7 +44,7 @@ try {
     /^tests\//,
     /^\.github\//,
     /^\.cursor\//,
-    /^\.qaforge\//,
+    /^\.veloprove\//,
     /^coverage\//,
     /^\.env/,
     /\.ts$/, // raw TypeScript files (except .d.ts)
@@ -69,7 +69,7 @@ try {
     process.exit(1);
   }
 
-  // 6. Verify Required Files
+  // 6. Verify Required Files (runtime + AI teach + Docs Chat corpus)
   const requiredFiles = [
     'package.json',
     'README.md',
@@ -79,14 +79,25 @@ try {
     'dist/index.d.ts',
     'dist/cli/index.js',
     'dist/mcp/server.js',
-    'docs/GETTING_STARTED.md',
-    'docs/DASHBOARD_UI.md',
-    'docs/CLI_REFERENCE.md',
-    'docs/MCP_REFERENCE.md',
-    'docs/FEATURES_GUIDE.md',
-    'docs/AI_INTEGRATIONS.md',
-    'docs/EXAMPLES_AND_RECIPES.md',
-    'docs/assets/qaforge-logo.svg'
+    // Consumer AI teach (post-install playbook — NOT root AGENTS.md)
+    'docs/AGENTS.md',
+    'docs/README.md',
+    // Docs Chat / vp.ask corpus
+    'docs/guides/getting-started.md',
+    'docs/guides/faq.md',
+    'docs/guides/dashboard.md',
+    'docs/guides/features.md',
+    'docs/guides/ai-integrations.md',
+    'docs/guides/examples.md',
+    'docs/reference/cli.md',
+    'docs/reference/mcp.md',
+    'docs/reference/architecture.md',
+    'docs/reference/surface-matrix.md',
+    // Brand + marketplace listing assets (ship in npm for badge/copy)
+    'docs/assets/veloprove-logo.svg',
+    'docs/assets/veloprove-icon.svg',
+    'docs/assets/marketplace/README.md',
+    'docs/assets/marketplace/no-api-key-badge.svg'
   ];
 
   const missingFiles = [];
@@ -119,7 +130,7 @@ try {
 
   // 9. Consumer Project Clean-Room Smoke Test
   console.log('5. Running clean-room consumer smoke test...');
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-smoke-test-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-smoke-test-'));
   try {
     // Initialize clean consumer project
     fs.writeFileSync(
@@ -134,7 +145,7 @@ try {
       throw new Error(`Unexpected CLI version output: ${binOutput}`);
     }
 
-    // Run qaforge doctor in consumer project
+    // Run veloprove doctor in consumer project
     execSync(`node "${cliPath}" doctor`, { cwd: tempDir, encoding: 'utf8' });
 
     console.log('   ✔ Consumer smoke test passed (compiled CLI binary + doctor).\n');
@@ -142,11 +153,17 @@ try {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 
+  // 10. Full consumer pack smoke (pack → install → init --teach → ask → doctor → verify)
+  console.log('6. Running consumer pack smoke gate (npm pack → fixture)…');
+  execSync('node scripts/pack-smoke.js', { cwd: rootDir, stdio: 'inherit' });
+  console.log('   ✔ Pack smoke gate passed.\n');
+
   console.log('🎉 ALL RELEASE INTEGRITY CHECKS PASSED!\n');
   console.log('✔ No development files or test fixtures in package.');
   console.log('✔ Complete runtime documentation included in docs/');
   console.log('✔ CLI executable shebang verified.');
   console.log('✔ Consumer installation and binary execution verified.');
+  console.log('✔ Pack smoke (init/ask/doctor/verify) verified.');
   console.log('✔ Package is ready for npm publish and GitHub Release.\n');
   process.exit(0);
 

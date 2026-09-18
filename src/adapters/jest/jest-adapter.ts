@@ -4,6 +4,7 @@ import type { TestAdapter, AdapterContext, TestDiscoveryResult } from '../base.j
 import type { TestRunRequest, TestRunResult, TestCaseResult } from '../../shared/types/tests.js';
 import { SafeProcessRunner } from '../../execution/process-runner.js';
 import { WorkspaceGuard } from '../../execution/workspace-guard.js';
+import { DEFAULT_EXECUTION_POLICY } from '../../shared/execution-policy.js';
 
 export class JestAdapter implements TestAdapter {
   public readonly runner = 'jest';
@@ -27,7 +28,7 @@ export class JestAdapter implements TestAdapter {
       for (const entry of entries) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) {
-          if (!['node_modules', 'dist', '.git', '.qaforge'].includes(entry.name)) {
+          if (!['node_modules', 'dist', '.git', '.veloprove'].includes(entry.name)) {
             walk(full);
           }
         } else if (/\.(test|spec)\.(ts|js|jsx|tsx)$/.test(entry.name)) {
@@ -49,12 +50,12 @@ export class JestAdapter implements TestAdapter {
       args.push(...request.paths);
     }
 
-    const outputFile = path.join(guard.getQAForgeDirectory(), 'cache', 'jest-output.json');
+    const outputFile = path.join(guard.getVeloProveDirectory(), 'cache', 'jest-output.json');
     args.push(`--outputFile=${outputFile}`);
 
     const res = await runner.run('npx', args, {
       cwd: context.projectRoot,
-      timeoutMs: request.timeoutMs || 60000
+      timeoutMs: request.timeoutMs || DEFAULT_EXECUTION_POLICY.timeouts.processMs
     });
 
     const runId = `run-${Date.now()}`;

@@ -21,7 +21,7 @@ export interface VisualRegressionReport {
 
 export class VisualDiffService {
   public static compareSnapshots(guard: WorkspaceGuard): VisualRegressionReport {
-    const qaDir = guard.getQAForgeDirectory();
+    const qaDir = guard.getVeloProveDirectory();
     const baselineDir = path.join(qaDir, 'artifacts', 'baselines');
     const currentDir = path.join(qaDir, 'artifacts', 'screenshots');
 

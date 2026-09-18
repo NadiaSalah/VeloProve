@@ -25,7 +25,7 @@ export class QuarantineService {
     storage: LocalStorage,
     threshold = 0.25 // >= 25% failure variance is flaky
   ): QuarantineReport {
-    const qaDir = guard.getQAForgeDirectory();
+    const qaDir = guard.getVeloProveDirectory();
     const quarantineFilePath = path.join(qaDir, 'quarantine.json');
 
     const flakyReports: FlakyTestReport[] = storage.getFlakyHistory();
@@ -53,7 +53,7 @@ export class QuarantineService {
   }
 
   public static getQuarantined(guard: WorkspaceGuard): QuarantinedTestItem[] {
-    const quarantineFilePath = path.join(guard.getQAForgeDirectory(), 'quarantine.json');
+    const quarantineFilePath = path.join(guard.getVeloProveDirectory(), 'quarantine.json');
     if (!fs.existsSync(quarantineFilePath)) return [];
     try {
       return JSON.parse(fs.readFileSync(quarantineFilePath, 'utf8'));

@@ -101,7 +101,7 @@ export class SecurityAuditService {
       for (const e of entries) {
         const full = path.join(dir, e.name);
         if (e.isDirectory()) {
-          if (!['node_modules', '.git', '.qaforge', 'dist', '.next'].includes(e.name)) {
+          if (!['node_modules', '.git', '.veloprove', 'dist', '.next'].includes(e.name)) {
             walk(full);
           }
         } else if (/\.(ts|js|json|env|tsx|jsx)$/.test(e.name) && !e.name.includes('.test.')) {

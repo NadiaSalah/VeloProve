@@ -12,7 +12,7 @@ const cliSource = fs.readFileSync(path.join(rootDir, 'src/cli/index.ts'), 'utf8'
 const dashboardSource = fs.readFileSync(path.join(rootDir, 'src/application/dashboard-server.ts'), 'utf8');
 
 // Extract MCP tool names
-const toolRegex = /name:\s*'(qa\.[a-zA-Z0-9_\.]+)'/g;
+const toolRegex = /name:\s*'(vp\.[a-zA-Z0-9_\.]+)'/g;
 const mcpTools = [];
 let m;
 while ((m = toolRegex.exec(mcpSource)) !== null) {
@@ -37,8 +37,8 @@ console.log(`Found ${mcpTools.length} MCP tools, ${cliCommands.length} CLI comma
 
 const manifest = {
   version: "1.0.0",
-  package: "@engnadia/qaforge",
-  cliBinary: "qaforge",
+  package: "@engnadia/veloprove",
+  cliBinary: "veloprove",
   totalCliCommands: cliCommands.length,
   totalMcpTools: mcpTools.length,
   totalDashboardActions: dashboardActions.length,
@@ -50,11 +50,11 @@ const manifest = {
       id: "CAP-001",
       title: "Project Stack & Monorepo Scanner",
       domain: "discovery",
-      api: ["ProjectScanner.scan()", "StackDetector.detect()", "QAForgeEngine.inspect()"],
+      api: ["ProjectScanner.scan()", "StackDetector.detect()", "VeloProveEngine.inspect()"],
       cli: ["inspect", "init", "doctor"],
-      mcp: ["qa.inspect", "qa.doctor"],
+      mcp: ["vp.inspect", "vp.doctor"],
       dashboard: ["inspect", "doctor"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md", "docs/MCP_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md", "docs/reference/mcp.md"],
       tests: ["tests/unit/scanner-requirements.test.ts", "tests/unit/v100-stability-enhancements.test.ts"],
       status: "implemented"
     },
@@ -63,11 +63,23 @@ const manifest = {
       title: "Universal AI Agent Handshake Protocol",
       domain: "discovery",
       api: ["AgentHandshakeService.run()"],
-      cli: ["agent-handshake"],
-      mcp: ["qa.bootstrap"],
+      cli: ["teach-ai"],
+      mcp: ["vp.bootstrap"],
       dashboard: ["bootstrap"],
-      docs: ["docs/AI_INTEGRATIONS.md", "docs/CLI_REFERENCE.md", "docs/MCP_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/AGENTS.md", "docs/guides/ai-integrations.md", "docs/guides/faq.md", "docs/reference/cli.md", "docs/reference/mcp.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts", "tests/unit/docs-assistant-ai-link.test.ts"],
+      status: "implemented"
+    },
+    {
+      id: "CAP-ASK",
+      title: "Docs-Grounded Local Q&A (no cloud LLM)",
+      domain: "discovery",
+      api: ["DocsAssistantService.ask()", "VeloProveEngine.askDocs()"],
+      cli: ["ask"],
+      mcp: ["vp.ask"],
+      dashboard: ["ask-docs"],
+      docs: ["docs/AGENTS.md", "docs/guides/faq.md", "docs/reference/cli.md", "docs/reference/mcp.md"],
+      tests: ["tests/unit/docs-assistant-ai-link.test.ts"],
       status: "implemented"
     },
     {
@@ -76,9 +88,9 @@ const manifest = {
       domain: "discovery",
       api: ["FrameworkLearnerService.learn()", "FrameworkLearnerService.ingestAgentDoc()"],
       cli: ["learn-framework"],
-      mcp: ["qa.learnFramework"],
+      mcp: ["vp.learnFramework"],
       dashboard: ["learn-framework"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/framework-learner.test.ts"],
       status: "implemented"
     },
@@ -88,10 +100,10 @@ const manifest = {
       domain: "discovery",
       api: ["ExploreAppService.explore()"],
       cli: ["explore"],
-      mcp: ["qa.explore"],
+      mcp: ["vp.explore"],
       dashboard: ["explore"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -100,10 +112,10 @@ const manifest = {
       domain: "api_testing",
       api: ["ApiFuzzingService.fuzzEndpoint()"],
       cli: ["fuzz-api"],
-      mcp: ["qa.fuzzApi"],
+      mcp: ["vp.fuzzApi"],
       dashboard: ["fuzz-api"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -112,10 +124,10 @@ const manifest = {
       domain: "quality",
       api: ["MutationScorerService.score()"],
       cli: ["mutation-score"],
-      mcp: ["qa.mutationScore"],
+      mcp: ["vp.mutationScore"],
       dashboard: ["mutation-score"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -124,10 +136,10 @@ const manifest = {
       domain: "test_generation",
       api: ["RefineTestService.refine()"],
       cli: ["refine"],
-      mcp: ["qa.refine"],
+      mcp: ["vp.refine"],
       dashboard: ["refine"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -136,10 +148,10 @@ const manifest = {
       domain: "accessibility",
       api: ["A11yAuditorService.audit()"],
       cli: ["a11y"],
-      mcp: ["qa.accessibility"],
+      mcp: ["vp.accessibility"],
       dashboard: ["accessibility"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -148,10 +160,10 @@ const manifest = {
       domain: "visual",
       api: ["VisualDiffService.compare()"],
       cli: ["visual-diff"],
-      mcp: ["qa.visualDiff"],
+      mcp: ["vp.visualDiff"],
       dashboard: ["visual-diff"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -160,9 +172,9 @@ const manifest = {
       domain: "quality",
       api: ["LinterService.lint()"],
       cli: ["lint"],
-      mcp: ["qa.lint"],
+      mcp: ["vp.lint"],
       dashboard: ["lint"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/linter-and-dashboard.test.ts"],
       status: "implemented"
     },
@@ -172,10 +184,10 @@ const manifest = {
       domain: "api_testing",
       api: ["ContractDriftService.checkDrift()"],
       cli: ["contract-drift"],
-      mcp: ["qa.contractDrift"],
+      mcp: ["vp.contractDrift"],
       dashboard: ["contract-drift"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -184,10 +196,10 @@ const manifest = {
       domain: "security",
       api: ["SecurityAuditService.audit()"],
       cli: ["audit"],
-      mcp: ["qa.auditSec"],
+      mcp: ["vp.auditSec"],
       dashboard: ["audit"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -196,10 +208,10 @@ const manifest = {
       domain: "performance",
       api: ["PerfProfilerService.profile()"],
       cli: ["perf"],
-      mcp: ["qa.perf"],
+      mcp: ["vp.perf"],
       dashboard: ["perf"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -208,10 +220,10 @@ const manifest = {
       domain: "mocking",
       api: ["MockNetworkService.generateHandlers()"],
       cli: ["mock-gen"],
-      mcp: ["qa.mockNetwork"],
+      mcp: ["vp.mockNetwork"],
       dashboard: ["mock-network"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -220,10 +232,10 @@ const manifest = {
       domain: "quality",
       api: ["QuarantineService.quarantine()"],
       cli: ["quarantine"],
-      mcp: ["qa.quarantine"],
+      mcp: ["vp.quarantine"],
       dashboard: ["quarantine"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -232,10 +244,10 @@ const manifest = {
       domain: "quality",
       api: ["CoverageHeatmapService.generateHeatmap()"],
       cli: ["coverage"],
-      mcp: ["qa.coverage"],
+      mcp: ["vp.coverage"],
       dashboard: ["coverage"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -244,9 +256,9 @@ const manifest = {
       domain: "test_planning",
       api: ["PlanTestsService.createPlan()", "RiskScorer.scoreRequirement()"],
       cli: ["plan"],
-      mcp: ["qa.plan"],
+      mcp: ["vp.plan"],
       dashboard: ["plan"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/integration/autonomous-flow.test.ts"],
       status: "implemented"
     },
@@ -256,9 +268,9 @@ const manifest = {
       domain: "test_generation",
       api: ["GenerateTestsService.generate()", "TestGenerator.generateFile()"],
       cli: ["generate"],
-      mcp: ["qa.generate"],
+      mcp: ["vp.generate"],
       dashboard: ["generate"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/integration/autonomous-flow.test.ts"],
       status: "implemented"
     },
@@ -268,9 +280,9 @@ const manifest = {
       domain: "execution",
       api: ["RunTestsService.run()", "ProcessRunner.run()"],
       cli: ["test"],
-      mcp: ["qa.run", "qa.run.get"],
+      mcp: ["vp.run", "vp.run.get"],
       dashboard: ["run"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/integration/autonomous-flow.test.ts"],
       status: "implemented"
     },
@@ -280,9 +292,9 @@ const manifest = {
       domain: "execution",
       api: ["AnalyzeChangesService.analyze()", "GitDiffAnalyzer.getChangedFiles()"],
       cli: ["changed"],
-      mcp: ["qa.changed"],
+      mcp: ["vp.changed"],
       dashboard: ["changed"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/change-impact.test.ts"],
       status: "implemented"
     },
@@ -292,9 +304,9 @@ const manifest = {
       domain: "diagnostics",
       api: ["DiagnoseFailureService.diagnose()", "Classifier.classify()"],
       cli: ["diagnose"],
-      mcp: ["qa.diagnose"],
+      mcp: ["vp.diagnose"],
       dashboard: ["diagnose"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/classifier-diagnostics.test.ts"],
       status: "implemented"
     },
@@ -304,10 +316,10 @@ const manifest = {
       domain: "healing",
       api: ["HealTestService.heal()", "VisualAutoHealService.healLocator()"],
       cli: ["heal"],
-      mcp: ["qa.heal"],
+      mcp: ["vp.heal"],
       dashboard: ["heal"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -316,9 +328,9 @@ const manifest = {
       domain: "healing",
       api: ["SuggestFixService.suggest()", "BugfixSynthesizerService.synthesize()"],
       cli: ["auto-fix"],
-      mcp: ["qa.suggestFix", "qa.autoBugFix"],
+      mcp: ["vp.suggestFix", "vp.autoBugFix"],
       dashboard: ["auto-fix"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v120-advanced-features.test.ts"],
       status: "implemented"
     },
@@ -328,9 +340,9 @@ const manifest = {
       domain: "healing",
       api: ["FlakinessStabilizerService.stabilizeFile()"],
       cli: ["stabilize"],
-      mcp: ["qa.flaky", "qa.stabilizeFlaky"],
+      mcp: ["vp.flaky", "vp.stabilizeFlaky"],
       dashboard: ["stabilize"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v120-advanced-features.test.ts"],
       status: "implemented"
     },
@@ -340,9 +352,9 @@ const manifest = {
       domain: "quality",
       api: ["ReleaseCheckService.evaluate()"],
       cli: ["release"],
-      mcp: ["qa.releaseCheck"],
+      mcp: ["vp.releaseCheck"],
       dashboard: ["release"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/integration/autonomous-flow.test.ts"],
       status: "implemented"
     },
@@ -352,9 +364,9 @@ const manifest = {
       domain: "api_testing",
       api: ["PostmanRunnerService.runCollection()", "DynamicVariablesService.interpolate()"],
       cli: ["run-collection", "request"],
-      mcp: ["qa.runCollection", "qa.sendRequest"],
+      mcp: ["vp.runCollection", "vp.sendRequest"],
       dashboard: ["run-collection", "request"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/postman-runner.test.ts", "tests/unit/dynamic-variables.test.ts"],
       status: "implemented"
     },
@@ -364,9 +376,9 @@ const manifest = {
       domain: "api_testing",
       api: ["PostmanRunnerService.exportCollection()"],
       cli: ["export-postman"],
-      mcp: ["qa.exportCollection"],
+      mcp: ["vp.exportCollection"],
       dashboard: ["export-collection"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/postman-runner.test.ts"],
       status: "implemented"
     },
@@ -376,9 +388,9 @@ const manifest = {
       domain: "performance",
       api: ["LoadTesterService.runLoadTest()"],
       cli: ["load-test"],
-      mcp: ["qa.loadTest"],
+      mcp: ["vp.loadTest"],
       dashboard: ["load-test"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/advanced-v130-engines.test.ts"],
       status: "implemented"
     },
@@ -388,9 +400,9 @@ const manifest = {
       domain: "mocking",
       api: ["MockDataFactoryService.generateFixture()"],
       cli: ["mock-data"],
-      mcp: ["qa.mockData"],
+      mcp: ["vp.mockData"],
       dashboard: ["mock-data"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/advanced-v130-engines.test.ts"],
       status: "implemented"
     },
@@ -400,9 +412,9 @@ const manifest = {
       domain: "security",
       api: ["OwaspScannerService.scan()"],
       cli: ["owasp-scan"],
-      mcp: ["qa.owaspScan"],
+      mcp: ["vp.owaspScan"],
       dashboard: ["owasp-scan"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/advanced-v130-engines.test.ts"],
       status: "implemented"
     },
@@ -412,9 +424,9 @@ const manifest = {
       domain: "api_testing",
       api: ["RealtimeTesterService.testGraphQL()"],
       cli: ["graphql"],
-      mcp: ["qa.graphqlTest"],
+      mcp: ["vp.graphqlTest"],
       dashboard: ["graphql"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/advanced-v130-engines.test.ts"],
       status: "implemented"
     },
@@ -424,9 +436,9 @@ const manifest = {
       domain: "api_testing",
       api: ["RealtimeTesterService.testWebSocket()"],
       cli: ["ws-test"],
-      mcp: ["qa.wsTest"],
+      mcp: ["vp.wsTest"],
       dashboard: ["ws-test"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/advanced-v130-engines.test.ts"],
       status: "implemented"
     },
@@ -436,9 +448,9 @@ const manifest = {
       domain: "remote_bridge",
       api: ["RemoteBridgeService.generateProbe()"],
       cli: ["remote-init"],
-      mcp: ["qa.remoteInit"],
+      mcp: ["vp.remoteInit"],
       dashboard: ["remote-init"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/remote-bridge.test.ts"],
       status: "implemented"
     },
@@ -448,9 +460,9 @@ const manifest = {
       domain: "remote_bridge",
       api: ["RemoteBridgeService.connect()"],
       cli: ["remote-connect"],
-      mcp: ["qa.remoteConnect"],
+      mcp: ["vp.remoteConnect"],
       dashboard: ["remote-connect"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/remote-bridge.test.ts"],
       status: "implemented"
     },
@@ -460,9 +472,9 @@ const manifest = {
       domain: "remote_bridge",
       api: ["RemoteBridgeService.runRemoteAudit()"],
       cli: ["remote-audit"],
-      mcp: ["qa.remoteAudit"],
+      mcp: ["vp.remoteAudit"],
       dashboard: ["remote-audit"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/remote-bridge.test.ts"],
       status: "implemented"
     },
@@ -472,9 +484,9 @@ const manifest = {
       domain: "test_generation",
       api: ["ScenarioRecorderService.synthesizePlaywrightTest()"],
       cli: ["record-scenario"],
-      mcp: ["qa.recordScenario"],
+      mcp: ["vp.recordScenario"],
       dashboard: ["record-scenario"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v120-advanced-features.test.ts"],
       status: "implemented"
     },
@@ -484,9 +496,9 @@ const manifest = {
       domain: "database",
       api: ["DbSnapshotService.createSnapshot()"],
       cli: ["db-snapshot"],
-      mcp: ["qa.dbSnapshot"],
+      mcp: ["vp.dbSnapshot"],
       dashboard: ["db-snapshot"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v120-advanced-features.test.ts"],
       status: "implemented"
     },
@@ -496,9 +508,9 @@ const manifest = {
       domain: "database",
       api: ["DbSnapshotService.restoreSnapshot()"],
       cli: ["db-restore"],
-      mcp: ["qa.dbRestore"],
+      mcp: ["vp.dbRestore"],
       dashboard: ["db-restore"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v120-advanced-features.test.ts"],
       status: "implemented"
     },
@@ -508,9 +520,9 @@ const manifest = {
       domain: "reporting",
       api: ["ReportExporterService.exportReport()"],
       cli: ["export-report"],
-      mcp: ["qa.exportReport"],
+      mcp: ["vp.exportReport"],
       dashboard: ["export-report"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v120-advanced-features.test.ts"],
       status: "implemented"
     },
@@ -520,9 +532,9 @@ const manifest = {
       domain: "resilience",
       api: ["ChaosEngineService.runChaos()"],
       cli: ["chaos"],
-      mcp: ["qa.chaosTest"],
+      mcp: ["vp.chaosTest"],
       dashboard: ["chaos"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v150-enterprise-engines.test.ts"],
       status: "implemented"
     },
@@ -532,9 +544,9 @@ const manifest = {
       domain: "devops",
       api: ["DockerOrchestratorService.generateCompose()"],
       cli: ["docker-env"],
-      mcp: ["qa.dockerEnv"],
+      mcp: ["vp.dockerEnv"],
       dashboard: ["docker-env"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v150-enterprise-engines.test.ts"],
       status: "implemented"
     },
@@ -544,9 +556,9 @@ const manifest = {
       domain: "test_generation",
       api: ["BrowserMatrixService.generateMatrixConfig()"],
       cli: ["browser-matrix"],
-      mcp: ["qa.browserMatrix"],
+      mcp: ["vp.browserMatrix"],
       dashboard: ["browser-matrix"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v150-enterprise-engines.test.ts"],
       status: "implemented"
     },
@@ -556,9 +568,9 @@ const manifest = {
       domain: "test_generation",
       api: ["BddGeneratorService.generateFeatures()"],
       cli: ["bdd"],
-      mcp: ["qa.bddFeatures"],
+      mcp: ["vp.bddFeatures"],
       dashboard: ["bdd"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v150-enterprise-engines.test.ts"],
       status: "implemented"
     },
@@ -568,9 +580,9 @@ const manifest = {
       domain: "devops",
       api: ["WebhookAlertsService.sendAlert()"],
       cli: ["alert"],
-      mcp: ["qa.sendAlert"],
+      mcp: ["vp.sendAlert"],
       dashboard: ["alert"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/v150-enterprise-engines.test.ts"],
       status: "implemented"
     },
@@ -580,9 +592,9 @@ const manifest = {
       domain: "quality",
       api: ["FeatureParityAuditorService.auditParity()"],
       cli: ["feature-parity"],
-      mcp: ["qa.featureParity"],
+      mcp: ["vp.featureParity"],
       dashboard: ["feature-parity"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/feature-parity.test.ts"],
       status: "implemented"
     },
@@ -592,9 +604,9 @@ const manifest = {
       domain: "security",
       api: ["MalwareScannerService.scan()"],
       cli: ["scan-malware"],
-      mcp: ["qa.scanMalware"],
+      mcp: ["vp.scanMalware"],
       dashboard: ["scan-malware"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/malware-scanner.test.ts"],
       status: "implemented"
     },
@@ -604,9 +616,9 @@ const manifest = {
       domain: "security",
       api: ["MalwareScannerService.remediate()"],
       cli: ["scan-malware --fix"],
-      mcp: ["qa.remediateMalware"],
+      mcp: ["vp.remediateMalware"],
       dashboard: ["remediate-malware"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/malware-scanner.test.ts"],
       status: "implemented"
     },
@@ -616,9 +628,9 @@ const manifest = {
       domain: "ai_evaluation",
       api: ["AiHallucinationEvaluatorService.evaluate()"],
       cli: ["ai-eval"],
-      mcp: ["qa.aiEvaluate"],
+      mcp: ["vp.aiEvaluate"],
       dashboard: ["ai-eval"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase6-advanced-engines.test.ts"],
       status: "implemented"
     },
@@ -628,9 +640,9 @@ const manifest = {
       domain: "execution",
       api: ["GitBisectHunterService.bisect()"],
       cli: ["bisect"],
-      mcp: ["qa.gitBisect"],
+      mcp: ["vp.gitBisect"],
       dashboard: ["bisect"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase6-advanced-engines.test.ts"],
       status: "implemented"
     },
@@ -640,9 +652,9 @@ const manifest = {
       domain: "resilience",
       api: ["NetworkThrottlerService.throttle()"],
       cli: ["throttle"],
-      mcp: ["qa.networkThrottle"],
+      mcp: ["vp.networkThrottle"],
       dashboard: ["throttle"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase6-advanced-engines.test.ts"],
       status: "implemented"
     },
@@ -652,9 +664,9 @@ const manifest = {
       domain: "security",
       api: ["SmartContractAuditorService.auditContracts()"],
       cli: ["audit-contracts"],
-      mcp: ["qa.smartContractAudit"],
+      mcp: ["vp.smartContractAudit"],
       dashboard: ["audit-contracts"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase6-advanced-engines.test.ts"],
       status: "implemented"
     },
@@ -664,9 +676,9 @@ const manifest = {
       domain: "quality",
       api: ["DeadAssetPurgeService.scan()", "DeadAssetPurgeService.purge()"],
       cli: ["dead-assets"],
-      mcp: ["qa.deadAssetPurge"],
+      mcp: ["vp.deadAssetPurge"],
       dashboard: ["dead-assets"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase6-advanced-engines.test.ts"],
       status: "implemented"
     },
@@ -676,9 +688,9 @@ const manifest = {
       domain: "accessibility",
       api: ["ScreenReaderSimulatorService.simulate()"],
       cli: ["screen-reader"],
-      mcp: ["qa.screenReaderSim"],
+      mcp: ["vp.screenReaderSim"],
       dashboard: ["screen-reader"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase7-enterprise-suite.test.ts"],
       status: "implemented"
     },
@@ -688,9 +700,9 @@ const manifest = {
       domain: "database",
       api: ["DbQueryAuditorService.audit()"],
       cli: ["db-audit"],
-      mcp: ["qa.dbQueryAudit"],
+      mcp: ["vp.dbQueryAudit"],
       dashboard: ["db-audit"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase7-enterprise-suite.test.ts"],
       status: "implemented"
     },
@@ -700,9 +712,9 @@ const manifest = {
       domain: "security",
       api: ["EnvDriftAuditorService.audit()"],
       cli: ["env-drift"],
-      mcp: ["qa.envDriftAudit"],
+      mcp: ["vp.envDriftAudit"],
       dashboard: ["env-drift"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase7-enterprise-suite.test.ts"],
       status: "implemented"
     },
@@ -712,9 +724,9 @@ const manifest = {
       domain: "diagnostics",
       api: ["FailureReplayRecorderService.recordReplay()"],
       cli: ["replay"],
-      mcp: ["qa.recordFailureReplay"],
+      mcp: ["vp.recordFailureReplay"],
       dashboard: ["replay"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase7-enterprise-suite.test.ts"],
       status: "implemented"
     },
@@ -724,9 +736,9 @@ const manifest = {
       domain: "security",
       api: ["RateLimitAuditorService.profile()"],
       cli: ["rate-limit"],
-      mcp: ["qa.rateLimitAudit"],
+      mcp: ["vp.rateLimitAudit"],
       dashboard: ["rate-limit"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase7-enterprise-suite.test.ts"],
       status: "implemented"
     },
@@ -736,9 +748,9 @@ const manifest = {
       domain: "mocking",
       api: ["StatefulMockServerService.start()"],
       cli: ["mock-server"],
-      mcp: ["qa.statefulMock"],
+      mcp: ["vp.statefulMock"],
       dashboard: ["mock-server"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase7-enterprise-suite.test.ts"],
       status: "implemented"
     },
@@ -748,9 +760,9 @@ const manifest = {
       domain: "discovery",
       api: ["ArchitectureGraphService.generateGraph()"],
       cli: ["arch-graph"],
-      mcp: ["qa.architectureGraph"],
+      mcp: ["vp.architectureGraph"],
       dashboard: ["arch-graph"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/phase7-enterprise-suite.test.ts"],
       status: "implemented"
     },
@@ -760,9 +772,9 @@ const manifest = {
       domain: "security",
       api: ["SecurityEngine.scanSurface()", "SecurityEngine.runTests()", "SecretRedactor.redact()"],
       cli: ["security"],
-      mcp: ["qa.securityScan", "qa.securityPlan", "qa.securityRun", "qa.securityReport"],
+      mcp: ["vp.securityScan", "vp.securityPlan", "vp.securityRun", "vp.securityReport"],
       dashboard: ["security"],
-      docs: ["docs/FEATURES_GUIDE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/features.md", "docs/reference/cli.md"],
       tests: ["tests/unit/security-testing.test.ts"],
       status: "implemented"
     },
@@ -772,9 +784,9 @@ const manifest = {
       domain: "security",
       api: ["SarifExporterService.exportSecurityReport()"],
       cli: ["security --sarif"],
-      mcp: ["qa.exportSarif"],
+      mcp: ["vp.exportSarif"],
       dashboard: ["export-sarif"],
-      docs: ["docs/CLI_REFERENCE.md", "docs/MCP_REFERENCE.md"],
+      docs: ["docs/reference/cli.md", "docs/reference/mcp.md"],
       tests: ["tests/unit/v100-stability-dx-suite.test.ts"],
       status: "implemented"
     },
@@ -784,9 +796,9 @@ const manifest = {
       domain: "security",
       api: ["SriCsrfValidatorService.audit()"],
       cli: ["web-sec"],
-      mcp: ["qa.auditSriCsrf"],
+      mcp: ["vp.auditSriCsrf"],
       dashboard: ["sri-csrf-audit"],
-      docs: ["docs/CLI_REFERENCE.md", "docs/MCP_REFERENCE.md"],
+      docs: ["docs/reference/cli.md", "docs/reference/mcp.md"],
       tests: ["tests/unit/v100-stability-dx-suite.test.ts"],
       status: "implemented"
     },
@@ -796,9 +808,9 @@ const manifest = {
       domain: "quality",
       api: ["TestDeduplicatorService.analyze()"],
       cli: ["dedup"],
-      mcp: ["qa.dedupTests"],
+      mcp: ["vp.dedupTests"],
       dashboard: ["dedup-tests"],
-      docs: ["docs/CLI_REFERENCE.md", "docs/MCP_REFERENCE.md"],
+      docs: ["docs/reference/cli.md", "docs/reference/mcp.md"],
       tests: ["tests/unit/v100-stability-dx-suite.test.ts"],
       status: "implemented"
     },
@@ -810,7 +822,7 @@ const manifest = {
       cli: ["hook"],
       mcp: [],
       dashboard: [],
-      docs: ["docs/CLI_REFERENCE.md"],
+      docs: ["docs/reference/cli.md"],
       tests: ["tests/unit/v100-stability-dx-suite.test.ts"],
       status: "implemented"
     },
@@ -818,11 +830,11 @@ const manifest = {
       id: "CAP-065",
       title: "Local Live Dashboard HTTP Server",
       domain: "ui",
-      api: ["QAForgeEngine.startUi()"],
+      api: ["VeloProveEngine.startUi()"],
       cli: ["ui"],
       mcp: [],
       dashboard: [],
-      docs: ["docs/DASHBOARD_UI.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/guides/dashboard.md", "docs/reference/cli.md"],
       tests: ["tests/unit/linter-and-dashboard.test.ts"],
       status: "implemented"
     },
@@ -834,8 +846,8 @@ const manifest = {
       cli: ["tui"],
       mcp: [],
       dashboard: [],
-      docs: ["docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -846,8 +858,8 @@ const manifest = {
       cli: ["sandbox"],
       mcp: [],
       dashboard: [],
-      docs: ["docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -858,8 +870,8 @@ const manifest = {
       cli: ["watch"],
       mcp: [],
       dashboard: [],
-      docs: ["docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -870,8 +882,8 @@ const manifest = {
       cli: ["setup-ci"],
       mcp: [],
       dashboard: [],
-      docs: ["docs/CLI_REFERENCE.md"],
-      tests: ["tests/unit/advanced-qa-services.test.ts"],
+      docs: ["docs/reference/cli.md"],
+      tests: ["tests/unit/advanced-vp-services.test.ts"],
       status: "implemented"
     },
     {
@@ -882,7 +894,7 @@ const manifest = {
       cli: ["mcp"],
       mcp: [],
       dashboard: [],
-      docs: ["docs/MCP_REFERENCE.md", "docs/CLI_REFERENCE.md"],
+      docs: ["docs/reference/mcp.md", "docs/reference/cli.md"],
       tests: ["tests/unit/interface-parity.test.ts"],
       status: "implemented"
     },
@@ -892,9 +904,9 @@ const manifest = {
       domain: "diagnostics",
       api: ["DoctorService.diagnose()"],
       cli: ["doctor"],
-      mcp: ["qa.doctor"],
+      mcp: ["vp.doctor"],
       dashboard: ["doctor"],
-      docs: ["docs/CLI_REFERENCE.md", "docs/MCP_REFERENCE.md"],
+      docs: ["docs/reference/cli.md", "docs/reference/mcp.md"],
       tests: ["tests/unit/package-distribution.test.ts"],
       status: "implemented"
     }
@@ -904,6 +916,29 @@ const manifest = {
 const outputDir = path.join(rootDir, 'docs/generated');
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
+}
+
+/** Align capability.dashboard entries with real dashboard-server action ids. */
+const DASH_RENAMES = {
+  bootstrap: 'teach-ai',
+  'mutation-score': 'mutation',
+  accessibility: 'a11y',
+  'mock-network': 'mock-gen',
+  changed: 'run-changed',
+  'export-collection': 'export-postman',
+  'remediate-malware': 'fix-malware',
+  security: 'security-scan',
+  replay: 'failure-replay',
+  'record-scenario': 'recorder-bookmarklet'
+};
+
+const dashSet = new Set(dashboardActions);
+for (const cap of manifest.capabilities) {
+  const mapped = (cap.dashboard || [])
+    .map((a) => DASH_RENAMES[a] || a)
+    .filter((a) => dashSet.has(a));
+  // Prefer unique real actions only; empty means intentionally CLI/MCP-only for that capability
+  cap.dashboard = [...new Set(mapped)];
 }
 
 fs.writeFileSync(path.join(outputDir, 'CAPABILITY_MANIFEST.json'), JSON.stringify(manifest, null, 2), 'utf8');

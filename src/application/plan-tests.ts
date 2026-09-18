@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import type { ProjectProfile } from '../shared/types/project.js';
 import type { DiscoveredRequirement } from '../shared/types/requirements.js';
 import type { TestPlan, PlannedTestCase, TestLevel, TestCasePriority } from '../shared/types/tests.js';
@@ -9,6 +11,27 @@ export interface PlanTestsOptions {
   includeE2E?: boolean;
   includeAPI?: boolean;
   impactedTestFiles?: string[];
+  /** Prefer site-exploration.json use-cases when present (default true) */
+  fromExplore?: boolean;
+  projectRoot?: string;
+}
+
+function loadExplorationScreens(projectRoot?: string): Array<{
+  routePath: string;
+  sourceFile: string;
+  inferredUseCases: string[];
+}> {
+  if (!projectRoot) return [];
+  const cachePath = path.join(projectRoot, '.veloprove', 'cache', 'site-exploration.json');
+  if (!fs.existsSync(cachePath)) return [];
+  try {
+    const raw = JSON.parse(fs.readFileSync(cachePath, 'utf8')) as {
+      screens?: Array<{ routePath: string; sourceFile: string; inferredUseCases: string[] }>;
+    };
+    return raw.screens || [];
+  } catch {
+    return [];
+  }
 }
 
 export class PlanTestsService {
@@ -26,9 +49,12 @@ export class PlanTestsService {
       ? 'vitest'
       : profile.testFrameworks.includes('jest')
       ? 'jest'
+      : profile.testFrameworks.includes('node:test')
+      ? 'node:test'
       : 'vitest';
 
     const hasPlaywright = profile.testFrameworks.includes('playwright');
+    const root = options.projectRoot || profile.root;
 
     // 1. Plan for Discovered Requirements
     for (const req of requirements) {
@@ -120,6 +146,37 @@ export class PlanTestsService {
           steps: [`Send ${ep.method} request to "${ep.path}"`, 'Assert response code and content-type'],
           riskScore: epRisk
         });
+      }
+    }
+
+    // 3b. Seed E2E cases from prior site exploration (local explore → plan)
+    if (options.fromExplore !== false && options.includeE2E !== false) {
+      const screens = loadExplorationScreens(root);
+      for (const screen of screens.slice(0, 20)) {
+        const useCases = screen.inferredUseCases?.length
+          ? screen.inferredUseCases
+          : [`Load ${screen.routePath} and verify primary UI`];
+        for (const [i, useCase] of useCases.slice(0, 3).entries()) {
+          const id = `TC-EXPLORE-${screen.routePath.replace(/[^a-zA-Z0-9]+/g, '-')}-${i + 1}`;
+          if (testCases.some((t) => t.id === id)) continue;
+          testCases.push({
+            id,
+            title: `Explored flow: ${useCase.slice(0, 80)}`,
+            description: useCase,
+            type: 'e2e',
+            priority: screen.routePath === '/' ? 'high' : 'medium',
+            requirementIds: [],
+            targetFiles: screen.sourceFile ? [screen.sourceFile] : [],
+            runner: hasPlaywright ? 'playwright' : defaultRunner,
+            reason: `Seeded from local site-exploration.json for ${screen.routePath}`,
+            expectedBehavior: useCase,
+            category: 'functional',
+            steps: [`Navigate to ${screen.routePath}`, useCase],
+            riskScore: screen.routePath === '/' ? 70 : 45,
+            exploreRoute: screen.routePath
+          });
+          detectedFeatures.add('Explored');
+        }
       }
     }
 

@@ -102,7 +102,7 @@ export class TestRefineService {
       for (const entry of entries) {
         const full = path.join(current, entry.name);
         if (entry.isDirectory()) {
-          if (!['node_modules', 'dist', '.git', '.qaforge'].includes(entry.name)) {
+          if (!['node_modules', 'dist', '.git', '.veloprove'].includes(entry.name)) {
             walk(full);
           }
         } else if (/\.(test|spec)\.(ts|js)$/.test(entry.name)) {

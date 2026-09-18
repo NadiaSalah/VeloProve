@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "VeloProve Scenario Recorder",
+  "description": "Record clicks and fills into a JSON payload for VeloProve Playwright synthesis.",
+  "version": "1.0.0",
+  "action": {
+    "default_title": "VeloProve Recorder",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["activeTab", "scripting", "clipboardWrite"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

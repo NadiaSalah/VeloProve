@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as http from 'http';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 import { ScreenReaderSimulatorService } from '../../src/application/screen-reader-simulator.js';
 import { DatabaseQueryAuditorService } from '../../src/application/db-query-auditor.js';
 import { EnvDriftAuditorService } from '../../src/application/env-drift-auditor.js';
@@ -16,12 +16,12 @@ import { ArchitectureGraphService } from '../../src/application/architecture-gra
 describe('Phase 7 Next-Gen Enterprise Suite', () => {
   let tmpDir: string;
   let guard: WorkspaceGuard;
-  let engine: QAForgeEngine;
+  let engine: VeloProveEngine;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-p7-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-p7-test-'));
     guard = new WorkspaceGuard(tmpDir);
-    engine = new QAForgeEngine(tmpDir);
+    engine = new VeloProveEngine(tmpDir);
   });
 
   afterEach(() => {
@@ -36,7 +36,7 @@ describe('Phase 7 Next-Gen Enterprise Suite', () => {
   it('ScreenReaderSimulatorService simulates reading flow and flags missing accessible names and heading skips', () => {
     const rawHtml = `
       <main>
-        <h1>Welcome to QAForge</h1>
+        <h1>Welcome to VeloProve</h1>
         <h4>Skipped Heading</h4>
         <img src="logo.png" />
         <button></button>
@@ -125,7 +125,7 @@ describe('Phase 7 Next-Gen Enterprise Suite', () => {
     expect(replay.id).toBeDefined();
     expect(replay.failedStepIndex).toBe(3);
     expect(replay.frames.length).toBe(3);
-    expect(replay.standaloneHtmlReplayer).toContain('QAForge Failure Visual Replayer');
+    expect(replay.standaloneHtmlReplayer).toContain('VeloProve Failure Visual Replayer');
     expect(replay.standaloneHtmlReplayer).toContain('Checkout Flow Test');
   });
 
@@ -218,7 +218,7 @@ describe('Phase 7 Next-Gen Enterprise Suite', () => {
     expect(graph.summary.externalIntegrations).toContain('AI / LLM Provider');
   });
 
-  it('QAForgeEngine provides unified access to all Phase 7 services', async () => {
+  it('VeloProveEngine provides unified access to all Phase 7 services', async () => {
     const screenRep = engine.simulateScreenReader({ rawHtml: '<button aria-label="Save">Save</button>' });
     expect(screenRep.readabilityScore).toBe(100);
 

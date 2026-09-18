@@ -18,6 +18,8 @@ export class DiagnoseFailureService {
         confidence: outcome.confidence,
         rootCause: outcome.rootCause,
         evidence,
+        evidenceSignals: outcome.evidenceSignals,
+        speculationNotes: outcome.speculationNotes,
         affectedFiles: failure.error?.location?.file
           ? [failure.error.location.file]
           : [failure.filePath],

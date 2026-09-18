@@ -1,9 +1,9 @@
-import type { QAForgeConfig } from '../../shared/types/config.js';
+import type { VeloProveConfig } from '../../shared/types/config.js';
 import type { DynamicVariableStore } from './dynamic-variables.js';
 
 export class AutoAuthManager {
   public static async authenticate(
-    config: QAForgeConfig['api'],
+    config: VeloProveConfig['api'],
     variableStore: DynamicVariableStore
   ): Promise<string | null> {
     if (!config?.autoAuth?.loginEndpoint) {
@@ -22,7 +22,7 @@ export class AutoAuthManager {
       });
 
       if (!res.ok) {
-        console.warn(`[QAForge] Auto-auth failed with HTTP ${res.status}`);
+        console.warn(`[VeloProve] Auto-auth failed with HTTP ${res.status}`);
         return null;
       }
 
@@ -35,7 +35,7 @@ export class AutoAuthManager {
         return String(token);
       }
     } catch (err) {
-      console.warn('[QAForge] Auto-auth request error:', err);
+      console.warn('[VeloProve] Auto-auth request error:', err);
     }
 
     return null;

@@ -4,8 +4,8 @@ import type { TestAdapter, AdapterContext, TestDiscoveryResult } from '../base.j
 import type { TestRunRequest, TestRunResult, TestCaseResult } from '../../shared/types/tests.js';
 import { SafeProcessRunner } from '../../execution/process-runner.js';
 import { WorkspaceGuard } from '../../execution/workspace-guard.js';
-import { DevServerManager } from '../../execution/server-manager.js';
 import { ConfigLoader } from '../../shared/config-loader.js';
+import { DEFAULT_EXECUTION_POLICY } from '../../shared/execution-policy.js';
 
 export class PlaywrightAdapter implements TestAdapter {
   public readonly runner = 'playwright';
@@ -46,7 +46,7 @@ export class PlaywrightAdapter implements TestAdapter {
     for (const entry of entries) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (!['node_modules', 'dist', '.git', '.qaforge'].includes(entry.name)) {
+        if (!['node_modules', 'dist', '.git', '.veloprove'].includes(entry.name)) {
           this.walkDirectory(full, root, testFiles);
         }
       } else if (/\.(spec|test)\.(ts|js)$/.test(entry.name)) {
@@ -60,16 +60,19 @@ export class PlaywrightAdapter implements TestAdapter {
     const configLoader = new ConfigLoader(guard);
     const config = await configLoader.loadConfig();
 
-    const devServerManager = new DevServerManager(guard);
-    const serverManagerStarted = false;
-
-    // 1. Ensure Dev Server if configured
+    // 1. Ensure Dev Server (configured command or auto-detected package script)
     try {
-      if (config.devServer?.command) {
-        await devServerManager.ensureServer(config.devServer);
-      }
+      const { SmartDevServerService } = await import('../../application/smart-dev-server.js');
+      await SmartDevServerService.ensure(guard, {
+        command: config.devServer?.command,
+        port: config.devServer?.port,
+        healthEndpoint: config.devServer?.healthEndpoint,
+        timeoutMs: config.devServer?.timeoutMs,
+        reuseExisting: config.devServer?.reuseExisting !== false,
+        baseURL: config.browser?.baseURL
+      });
     } catch (err) {
-      console.warn('[QAForge] Warning: Dev server startup failed:', err);
+      console.warn('[VeloProve] Warning: Dev server startup failed:', err);
     }
 
     const runner = new SafeProcessRunner(guard);
@@ -87,21 +90,16 @@ export class PlaywrightAdapter implements TestAdapter {
       args.push(...request.paths);
     }
 
-    const outputFile = path.join(guard.getQAForgeDirectory(), 'cache', 'playwright-output.json');
-    args.push(`--output=${path.join(guard.getQAForgeDirectory(), 'artifacts')}`);
+    const outputFile = path.join(guard.getVeloProveDirectory(), 'cache', 'playwright-output.json');
+    args.push(`--output=${path.join(guard.getVeloProveDirectory(), 'artifacts')}`);
 
     const res = await runner.run('npx', args, {
       cwd: context.projectRoot,
-      timeoutMs: request.timeoutMs || 120000,
+      timeoutMs: request.timeoutMs || DEFAULT_EXECUTION_POLICY.timeouts.browserMs,
       env: {
         PLAYWRIGHT_JSON_OUTPUT_NAME: outputFile
       }
     });
-
-    // Cleanup dev server if QAForge started it
-    if (serverManagerStarted) {
-      await devServerManager.stopServer();
-    }
 
     const runId = `run-playwright-${Date.now()}`;
     const testResults: TestCaseResult[] = [];

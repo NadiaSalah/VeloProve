@@ -284,7 +284,7 @@ export class SecuritySurfaceScanner {
     const results: string[] = [];
     if (!fs.existsSync(dir)) return results;
 
-    const ignoreDirs = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.qaforge', '.cursor', '.agents']);
+    const ignoreDirs = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.veloprove', '.cursor', '.agents']);
     try {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
       for (const entry of entries) {

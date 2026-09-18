@@ -36,7 +36,7 @@ export interface CustomFrameworkDefinition {
   specialInstructions?: string[];
 }
 
-export type TestFrameworkType = 'vitest' | 'jest' | 'playwright' | 'none';
+export type TestFrameworkType = 'vitest' | 'jest' | 'playwright' | 'node:test' | 'none';
 
 export interface RouteDefinition {
   path: string;
@@ -60,6 +60,8 @@ export interface ApiEndpoint {
   }>;
   requestBodySchema?: Record<string, unknown>;
   responseSchemas?: Record<string, Record<string, unknown>>;
+  /** Preferred mock body from OpenAPI `example` / `examples` / schema defaults */
+  exampleResponse?: unknown;
   authRequired?: boolean;
   authType?: 'bearer' | 'apiKey' | 'basic' | 'cookie' | 'none';
 }

@@ -87,8 +87,8 @@ export class AppExplorationService {
       timestamp: new Date().toISOString()
     };
 
-    // Save site exploration map to .qaforge/
-    const savePath = path.join(guard.getQAForgeDirectory(), 'cache', 'site-exploration.json');
+    // Save site exploration map to .veloprove/
+    const savePath = path.join(guard.getVeloProveDirectory(), 'cache', 'site-exploration.json');
     fs.writeFileSync(savePath, JSON.stringify(result, null, 2), 'utf8');
 
     return result;

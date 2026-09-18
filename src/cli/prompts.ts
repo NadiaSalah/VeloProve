@@ -1,27 +1,39 @@
 import readline from 'node:readline';
 import pc from 'picocolors';
+import type { AiEditorTarget } from '../application/ai-link.js';
+import { detectAiEditors, editorsWithHints } from '../application/ai-link.js';
 
 export interface InitPromptAnswers {
-  testFramework: 'vitest' | 'playwright' | 'jest' | 'auto';
+  testFramework: 'vitest' | 'playwright' | 'jest' | 'node:test' | 'auto';
   configureMcp: boolean;
-  mcpTargets: Array<'cursor' | 'claude' | 'windsurf'>;
+  mcpTargets: AiEditorTarget[];
+  teachAi: boolean;
   installDependencies: boolean;
 }
 
 /**
- * Asks interactive setup questions during `qaforge init`
+ * Asks interactive setup questions during `veloprove init`
  */
-export async function promptInitQuestions(detectedStack: {
-  projectName: string;
-  frameworks: string[];
-  testFrameworks: string[];
-}): Promise<InitPromptAnswers> {
+export async function promptInitQuestions(
+  detectedStack: {
+    projectName: string;
+    frameworks: string[];
+    testFrameworks: string[];
+  },
+  projectRoot = process.cwd()
+): Promise<InitPromptAnswers> {
+  const detected = detectAiEditors(projectRoot);
+  const hinted = editorsWithHints(detected);
+  const hintLabel =
+    hinted.length > 0 ? hinted.map((h) => h.label).join(', ') : 'none detected';
+
   // If not running in an interactive terminal or CI environment, return defaults
   if (!process.stdin.isTTY || process.env.CI) {
     return {
       testFramework: 'auto',
-      configureMcp: true,
-      mcpTargets: ['cursor'],
+      configureMcp: hinted.length > 0,
+      mcpTargets: hinted.length > 0 ? hinted.map((h) => h.id) : ['cursor'],
+      teachAi: hinted.length > 0,
       installDependencies: false
     };
   }
@@ -36,40 +48,46 @@ export async function promptInitQuestions(detectedStack: {
   };
 
   try {
-    console.log(pc.bold(pc.white('\n🔧 Interactive Project Setup:')));
-    
-    // 1. Test runner preference
+    console.log(pc.bold(pc.white('\nInteractive Project Setup:')));
+
     console.log(`\n1. Select primary test runner:`);
-    console.log(`   ${pc.cyan('1)')} Vitest ${pc.dim('(Fast, modern unit/integration testing - Recommended)')}`);
-    console.log(`   ${pc.cyan('2)')} Playwright ${pc.dim('(End-to-End browser & visual regression testing)')}`);
-    console.log(`   ${pc.cyan('3)')} Jest ${pc.dim('(Standard enterprise testing framework)')}`);
-    console.log(`   ${pc.cyan('4)')} Auto-detect from codebase ${pc.dim(`(Currently: ${detectedStack.testFrameworks.join(', ') || 'None'})`)}`);
-    
-    const runnerChoice = await ask(`   ${pc.bold('Choice [1-4] (default: 1):')} `);
+    console.log(`   ${pc.cyan('1)')} Vitest ${pc.dim('(Recommended)')}`);
+    console.log(`   ${pc.cyan('2)')} Playwright`);
+    console.log(`   ${pc.cyan('3)')} Jest`);
+    console.log(`   ${pc.cyan('4)')} node:test ${pc.dim('(Node built-in)')}`);
+    console.log(
+      `   ${pc.cyan('5)')} Auto-detect ${pc.dim(`(Currently: ${detectedStack.testFrameworks.join(', ') || 'None'})`)}`
+    );
+
+    const runnerChoice = await ask(`   ${pc.bold('Choice [1-5] (default: 1):')} `);
     let testFramework: InitPromptAnswers['testFramework'] = 'vitest';
     if (runnerChoice === '2') testFramework = 'playwright';
     else if (runnerChoice === '3') testFramework = 'jest';
-    else if (runnerChoice === '4') testFramework = 'auto';
+    else if (runnerChoice === '4') testFramework = 'node:test';
+    else if (runnerChoice === '5') testFramework = 'auto';
 
-    // 2. AI Agent MCP Integration
-    console.log(`\n2. Configure AI Agent MCP integration (Local-first Model Context Protocol)?`);
-    console.log(`   ${pc.cyan('Y)')} Yes, generate .cursor/mcp.json and agent instructions (Recommended)`);
-    console.log(`   ${pc.cyan('N)')} No, skip MCP configuration`);
-    
-    const mcpChoice = await ask(`   ${pc.bold('Enable MCP [Y/n] (default: Y):')} `);
-    const configureMcp = !mcpChoice.toLowerCase().startsWith('n');
+    console.log(`\n2. Link AI coding agents to VeloProve? ${pc.dim(`(hints: ${hintLabel})`)}`);
+    console.log(`   ${pc.cyan('1)')} Auto — use detected editors + teach AI (Recommended)`);
+    console.log(`   ${pc.cyan('2)')} Cursor only (.cursor/mcp.json) + teach AI`);
+    console.log(`   ${pc.cyan('3)')} Cursor + Claude + Windsurf + teach AI`);
+    console.log(`   ${pc.cyan('4)')} Skip AI link for now`);
 
-    let mcpTargets: InitPromptAnswers['mcpTargets'] = ['cursor'];
-    if (configureMcp) {
-      console.log(`\n3. Select target AI coding assistants:`);
-      console.log(`   ${pc.cyan('1)')} Cursor Desktop / IDE (.cursor/mcp.json)`);
-      console.log(`   ${pc.cyan('2)')} Cursor + Claude Code + Windsurf`);
-      console.log(`   ${pc.cyan('3)')} All Supported Agents`);
-      
-      const agentChoice = await ask(`   ${pc.bold('Target [1-3] (default: 1):')} `);
-      if (agentChoice === '2' || agentChoice === '3') {
-        mcpTargets = ['cursor', 'claude', 'windsurf'];
-      }
+    const aiChoice = await ask(`   ${pc.bold('Choice [1-4] (default: 1):')} `);
+    let configureMcp = true;
+    let teachAi = true;
+    let mcpTargets: AiEditorTarget[] = hinted.length > 0 ? hinted.map((h) => h.id) : ['cursor'];
+
+    if (aiChoice === '2') {
+      mcpTargets = ['cursor'];
+    } else if (aiChoice === '3') {
+      mcpTargets = ['cursor', 'claude', 'windsurf'];
+    } else if (aiChoice === '4') {
+      configureMcp = false;
+      teachAi = false;
+      mcpTargets = [];
+    } else {
+      // default / 1 = auto
+      mcpTargets = hinted.length > 0 ? hinted.map((h) => h.id) : ['cursor'];
     }
 
     rl.close();
@@ -77,6 +95,7 @@ export async function promptInitQuestions(detectedStack: {
       testFramework,
       configureMcp,
       mcpTargets,
+      teachAi,
       installDependencies: false
     };
   } catch {
@@ -85,6 +104,7 @@ export async function promptInitQuestions(detectedStack: {
       testFramework: 'auto',
       configureMcp: true,
       mcpTargets: ['cursor'],
+      teachAi: true,
       installDependencies: false
     };
   }

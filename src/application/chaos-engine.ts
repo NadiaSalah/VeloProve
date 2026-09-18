@@ -59,7 +59,7 @@ export class ChaosEngineService {
         let payload: unknown = options.basePayload ? { ...options.basePayload } : { sample: 'data', count: 1 };
         let customHeaders: Record<string, string> = {
           'Content-Type': 'application/json',
-          'User-Agent': 'QAForge-ChaosEngine/1.0',
+          'User-Agent': 'VeloProve-ChaosEngine/1.0',
           ...(options.headers || {})
         };
         let probeName = `${strategy} Probe #${i + 1}`;

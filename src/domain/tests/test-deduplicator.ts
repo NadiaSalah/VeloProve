@@ -108,7 +108,7 @@ export class TestDeduplicatorService {
     const results: string[] = [];
     if (!fs.existsSync(dir)) return results;
 
-    const ignoreDirs = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.qaforge']);
+    const ignoreDirs = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.veloprove']);
     try {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
       for (const entry of entries) {

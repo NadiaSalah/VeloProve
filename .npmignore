@@ -9,14 +9,16 @@ scripts/
 .prompt/
 coverage/
 
-# Internal Audit & Contributor Guides (GitHub repo only)
-docs/ai-testing-handoff/
-docs/FINAL_RELEASE_CONSISTENCY_AUDIT.md
+# Internal / generated docs (GitHub repo only)
+docs/internal/
 docs/generated/
+
+# Contributor guides kept in git but not in the npm tarball
 TODO.md
 RELEASING.md
 CONTRIBUTING.md
 SECURITY.md
+AGENTS.md
 
 # Development configuration files
 tsconfig.json
@@ -28,7 +30,8 @@ vitest.config.ts
 .env.*
 
 # Temporary, cache, and local state
-.qaforge/
+.veloprove/
+_e2e_consumer/
 *.log
 *.tmp
 *.tsbuildinfo

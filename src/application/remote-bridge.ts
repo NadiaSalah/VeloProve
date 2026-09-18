@@ -63,10 +63,10 @@ export class RemoteBridgeService {
 
     switch (type) {
       case 'nextjs_route': {
-        const code = `// app/api/qaforge/route.ts (Next.js App Router)
+        const code = `// app/api/veloprove/route.ts (Next.js App Router)
 import { NextResponse } from 'next/server';
 
-const QAFORGE_SECRET = process.env.QAFORGE_BRIDGE_SECRET || '${secret}';
+const VELOPROVE_SECRET = process.env.VELOPROVE_BRIDGE_SECRET || '${secret}';
 const capturedErrors: any[] = [];
 
 // Optional: Global error tap
@@ -78,9 +78,9 @@ if (typeof process !== 'undefined') {
 }
 
 export async function GET(req: Request) {
-  const authHeader = req.headers.get('x-qaforge-secret') || new URL(req.url).searchParams.get('secret');
-  if (authHeader !== QAFORGE_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized QAForge probe access' }, { status: 401 });
+  const authHeader = req.headers.get('x-veloprove-secret') || new URL(req.url).searchParams.get('secret');
+  if (authHeader !== VELOPROVE_SECRET) {
+    return NextResponse.json({ error: 'Unauthorized VeloProve probe access' }, { status: 401 });
   }
 
   return NextResponse.json({
@@ -96,8 +96,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const authHeader = req.headers.get('x-qaforge-secret');
-  if (authHeader !== QAFORGE_SECRET) {
+  const authHeader = req.headers.get('x-veloprove-secret');
+  if (authHeader !== VELOPROVE_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const body = await req.json().catch(() => ({}));
@@ -106,21 +106,21 @@ export async function POST(req: Request) {
 `;
         return {
           code,
-          filename: 'app/api/qaforge/route.ts',
-          instructions: `Place this file in your Next.js project at "app/api/qaforge/route.ts". Ensure secret token is "${secret}".`
+          filename: 'app/api/veloprove/route.ts',
+          instructions: `Place this file in your Next.js project at "app/api/veloprove/route.ts". Ensure secret token is "${secret}".`
         };
       }
 
       case 'express_middleware': {
-        const code = `// qaforge-middleware.js (Express / Node Server)
-const QAFORGE_SECRET = process.env.QAFORGE_BRIDGE_SECRET || '${secret}';
+        const code = `// veloprove-middleware.js (Express / Node Server)
+const VELOPROVE_SECRET = process.env.VELOPROVE_BRIDGE_SECRET || '${secret}';
 const errorBuffer = [];
 
-function qaforgeBridgeMiddleware(req, res, next) {
-  if (req.path === '/api/qaforge-probe' || req.path === '/.well-known/qaforge.json') {
-    const auth = req.headers['x-qaforge-secret'] || req.query.secret;
-    if (auth !== QAFORGE_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized QAForge Probe' });
+function veloproveBridgeMiddleware(req, res, next) {
+  if (req.path === '/api/veloprove-probe' || req.path === '/.well-known/veloprove.json') {
+    const auth = req.headers['x-veloprove-secret'] || req.query.secret;
+    if (auth !== VELOPROVE_SECRET) {
+      return res.status(401).json({ error: 'Unauthorized VeloProve Probe' });
     }
     return res.json({
       status: 'active',
@@ -136,27 +136,27 @@ function qaforgeBridgeMiddleware(req, res, next) {
   next();
 }
 
-module.exports = { qaforgeBridgeMiddleware, QAFORGE_SECRET };
+module.exports = { veloproveBridgeMiddleware, VELOPROVE_SECRET };
 `;
         return {
           code,
-          filename: 'qaforge-middleware.js',
-          instructions: `Import into your Express app: "app.use(qaforgeBridgeMiddleware);". Accessible at "/api/qaforge-probe".`
+          filename: 'veloprove-middleware.js',
+          instructions: `Import into your Express app: "app.use(veloproveBridgeMiddleware);". Accessible at "/api/veloprove-probe".`
         };
       }
 
       case 'html_snippet': {
-        const code = `<!-- QAForge Live Client Bridge Script -->
+        const code = `<!-- VeloProve Live Client Bridge Script -->
 <script>
 (function() {
-  window.__QAFORGE_CLIENT_PROBE__ = {
+  window.__VELOPROVE_CLIENT_PROBE__ = {
     version: '1.0.0',
     site: '${siteName}',
     errors: [],
     logs: []
   };
   window.addEventListener('error', function(e) {
-    window.__QAFORGE_CLIENT_PROBE__.errors.push({
+    window.__VELOPROVE_CLIENT_PROBE__.errors.push({
       message: e.message,
       source: e.filename,
       lineno: e.lineno,
@@ -168,33 +168,33 @@ module.exports = { qaforgeBridgeMiddleware, QAFORGE_SECRET };
 `;
         return {
           code,
-          filename: 'qaforge-client-probe.html',
+          filename: 'veloprove-client-probe.html',
           instructions: `Paste this <script> inside the <head> of your live web application's HTML template.`
         };
       }
 
       case 'standalone_js':
       default: {
-        const code = `// qaforge-probe.js (Zero-dependency standalone HTTP bridge for any live server)
+        const code = `// veloprove-probe.js (Zero-dependency standalone HTTP bridge for any live server)
 const http = require('http');
 
-const PORT = process.env.QAFORGE_PROBE_PORT || 7788;
-const SECRET = process.env.QAFORGE_BRIDGE_SECRET || '${secret}';
+const PORT = process.env.VELOPROVE_PROBE_PORT || 7788;
+const SECRET = process.env.VELOPROVE_BRIDGE_SECRET || '${secret}';
 const SITE_NAME = '${siteName}';
 
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'x-qaforge-secret, Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'x-veloprove-secret, Content-Type');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
     return res.end();
   }
 
-  const token = req.headers['x-qaforge-secret'] || new URL(req.url, 'http://localhost').searchParams.get('secret');
+  const token = req.headers['x-veloprove-secret'] || new URL(req.url, 'http://localhost').searchParams.get('secret');
   if (token !== SECRET) {
     res.writeHead(401, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ error: 'Unauthorized: Invalid QAForge Bridge Token' }));
+    return res.end(JSON.stringify({ error: 'Unauthorized: Invalid VeloProve Bridge Token' }));
   }
 
   res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -211,14 +211,14 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(\`⚡ QAForge Live Remote Companion Probe running on port \${PORT}\`);
+  console.log(\`⚡ VeloProve Live Remote Companion Probe running on port \${PORT}\`);
   console.log(\`Bridge Secret: \${SECRET}\`);
 });
 `;
         return {
           code,
-          filename: 'qaforge-probe.js',
-          instructions: `Upload "qaforge-probe.js" to your live server and run with "node qaforge-probe.js". Connect via port 7788.`
+          filename: 'veloprove-probe.js',
+          instructions: `Upload "veloprove-probe.js" to your live server and run with "node veloprove-probe.js". Connect via port 7788.`
         };
       }
     }
@@ -233,9 +233,9 @@ server.listen(PORT, () => {
   ): Promise<RemoteHandshakeResult> {
     const cleanUrl = remoteUrl.replace(/\/+$/, '');
     const probeEndpoints = [
-      `${cleanUrl}/api/qaforge`,
-      `${cleanUrl}/api/qaforge-probe`,
-      `${cleanUrl}/.well-known/qaforge.json`,
+      `${cleanUrl}/api/veloprove`,
+      `${cleanUrl}/api/veloprove-probe`,
+      `${cleanUrl}/.well-known/veloprove.json`,
       cleanUrl
     ];
 
@@ -247,10 +247,10 @@ server.listen(PORT, () => {
         const timeout = setTimeout(() => controller.abort(), 6000);
 
         const headers: Record<string, string> = {
-          'User-Agent': 'QAForge-Remote-Agent/1.0'
+          'User-Agent': 'VeloProve-Remote-Agent/1.0'
         };
         if (bridgeSecret) {
-          headers['x-qaforge-secret'] = bridgeSecret;
+          headers['x-veloprove-secret'] = bridgeSecret;
         }
 
         const res = await fetch(endpoint, {
@@ -318,7 +318,7 @@ server.listen(PORT, () => {
       const timeout = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(remoteUrl, {
         method: 'GET',
-        headers: { 'User-Agent': 'QAForge-LiveAuditor/1.0' },
+        headers: { 'User-Agent': 'VeloProve-LiveAuditor/1.0' },
         signal: controller.signal
       });
       clearTimeout(timeout);

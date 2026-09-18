@@ -7,9 +7,9 @@ import { GitBisectHunterService } from '../../src/application/git-bisect-hunter.
 import { NetworkThrottlerService } from '../../src/application/network-throttler.js';
 import { SmartContractAuditorService } from '../../src/application/smart-contract-auditor.js';
 import { DeadAssetPurgeService } from '../../src/application/dead-asset-purge.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 
-describe('QAForge Phase 6 Next-Gen Engines Suite', () => {
+describe('VeloProve Phase 6 Next-Gen Engines Suite', () => {
   const fixtureDir = path.resolve(process.cwd(), 'fixtures/phase6-test-repo');
   let guard: WorkspaceGuard;
 
@@ -64,8 +64,8 @@ contract VulnerableBank {
         modelResponses: [
           {
             promptId: 'P1',
-            prompt: 'Explain QAForge',
-            response: 'QAForge is a local-first autonomous QA testing engine with zero cloud dependency.'
+            prompt: 'Explain VeloProve',
+            response: 'VeloProve is a local-first autonomous QA testing engine with zero cloud dependency.'
           },
           {
             promptId: 'P2',
@@ -76,7 +76,7 @@ contract VulnerableBank {
         testCases: [
           {
             id: 'P1',
-            prompt: 'Explain QAForge',
+            prompt: 'Explain VeloProve',
             expectedKeywords: ['local-first', 'QA'],
             forbiddenKeywords: ['requires cloud registration', 'aws proprietary']
           },
@@ -148,8 +148,8 @@ contract VulnerableBank {
   });
 
   describe('GitBisectHunterService & Engine Integration', () => {
-    it('exposes phase 6 methods on QAForgeEngine instance', async () => {
-      const engine = new QAForgeEngine(fixtureDir);
+    it('exposes phase 6 methods on VeloProveEngine instance', async () => {
+      const engine = new VeloProveEngine(fixtureDir);
 
       const contractAudit = engine.auditSmartContracts();
       expect(contractAudit.overallVerdict).toBeDefined();

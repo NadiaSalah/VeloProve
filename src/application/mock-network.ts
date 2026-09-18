@@ -34,14 +34,17 @@ export class MockNetworkGenerator {
 
     for (const ep of endpoints) {
       const method = ep.method.toLowerCase();
-      const mockData = {
-        id: 'mock_1',
-        name: 'Mock Response Item',
-        status: 'active',
-        timestamp: new Date().toISOString()
-      };
+      const mockData =
+        ep.exampleResponse !== undefined
+          ? ep.exampleResponse
+          : {
+              id: 'mock_1',
+              name: 'Mock Response Item',
+              status: 'active',
+              timestamp: new Date().toISOString()
+            };
 
-      handlersCode.push(`  // Mock handler for ${ep.method} ${ep.path}
+      handlersCode.push(`  // Mock handler for ${ep.method} ${ep.path}${ep.exampleResponse !== undefined ? ' (OpenAPI example)' : ''}
   http.${method}('${ep.path}', () => {
     return HttpResponse.json(${JSON.stringify(mockData, null, 4)});
   }),`);

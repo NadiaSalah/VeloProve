@@ -1,4 +1,4 @@
-export interface QAForgeConfig {
+export interface VeloProveConfig {
   test?: {
     unit?: 'vitest' | 'jest' | 'none';
     e2e?: 'playwright' | 'none';
@@ -28,6 +28,28 @@ export interface QAForgeConfig {
     allowTestHealing?: boolean;
     allowSourceWrites?: boolean;
   };
+  execution?: {
+    timeouts?: {
+      processMs?: number;
+      browserMs?: number;
+      networkMs?: number;
+      aiMs?: number;
+      scannerMs?: number;
+    };
+    retry?: {
+      maxAttempts?: number;
+      baseDelayMs?: number;
+      maxDelayMs?: number;
+    };
+    concurrency?: number;
+  };
+  cache?: {
+    inspect?: boolean;
+  };
+  release?: {
+    blockOn?: string[];
+    require?: Record<string, unknown>;
+  };
   devServer?: {
     command?: string;
     port?: number;
@@ -40,6 +62,8 @@ export interface QAForgeConfig {
     safeMode?: boolean;
     environment?: 'test' | 'staging' | 'production' | 'local';
     allowProduction?: boolean;
+    /** Allow intrusive probes against unclassified remote hosts (default false). */
+    allowUnknownRemote?: boolean;
     auth?: {
       enabled?: boolean;
       testRateLimit?: boolean;

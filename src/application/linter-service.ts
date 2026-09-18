@@ -248,7 +248,7 @@ export class LinterService {
       for (const entry of entries) {
         const full = path.join(current, entry.name);
         if (entry.isDirectory()) {
-          if (!['node_modules', 'dist', '.git', '.qaforge', '.next'].includes(entry.name)) {
+          if (!['node_modules', 'dist', '.git', '.veloprove', '.next'].includes(entry.name)) {
             walk(full);
           }
         } else if (/\.(ts|tsx|js|jsx)$/.test(entry.name) && !entry.name.includes('.test.') && !entry.name.includes('.spec.')) {

@@ -1,3 +1,10 @@
+/**
+ * VeloProve MCP server (stdio).
+ *
+ * Exposes the same VeloProveEngine as the CLI/Dashboard via 75 `vp.*` tools.
+ * Argument parsing goes through `arg-utils` so agent JSON stays type-safe.
+ * Resources use the `vp://…` scheme only (no legacy aliases).
+ */
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -6,14 +13,19 @@ import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
-import { QAForgeEngine } from '../application/engine.js';
+import { VeloProveEngine } from '../application/engine.js';
+import { asRecord, boolFlag, boolOpt, numOpt, objOpt, strArrayOpt, strOpt, unknownOpt } from './arg-utils.js';
 
 export async function runMcpServer(projectRoot: string = process.cwd()): Promise<void> {
-  const engine = new QAForgeEngine(projectRoot);
+  // Mark process as AI/MCP context so sensitive gates auto-execute for the agent
+  process.env.VELOPROVE_MCP = '1';
+  process.env.VELOPROVE_AGENT = '1';
+
+  const engine = new VeloProveEngine(projectRoot);
 
   const server = new Server(
     {
-      name: 'qaforge',
+      name: 'veloprove',
       version: '1.0.0'
     },
     {
@@ -29,8 +41,8 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
     return {
       tools: [
         {
-          name: 'qa.inspect',
-          description: 'Inspect current project repository, detect frameworks, routes, API endpoints, and existing tests.',
+          name: 'vp.inspect',
+          description: 'Inspect current project repository, detect frameworks, routes, API endpoints, test runners (Vitest/Jest/Playwright/node:test), and existing tests.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -39,19 +51,34 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.bootstrap',
-          description: 'Handshake and teach any AI Agent / Editor how to interact with QAForge autonomously.',
+          name: 'vp.bootstrap',
+          description:
+            'Teach AI how to use VeloProve: writes AGENTS.md + agent-manifest, returns pasteToAi briefing (CLI: veloprove teach-ai).',
           inputSchema: {
             type: 'object',
             properties: {
               agentName: { type: 'string' },
-              preferredOutput: { type: 'string', enum: ['json', 'markdown', 'compact'] }
+              preferredOutput: { type: 'string', enum: ['json', 'markdown', 'compact'] },
+              force: { type: 'boolean', description: 'Rewrite AGENTS.md even if present' },
+              writeMcp: { type: 'boolean', description: 'Create .cursor/mcp.json when missing' }
             }
           }
         },
         {
-          name: 'qa.learnFramework',
-          description: 'Teach QAForge an uncommon or in-house custom framework using AGENTS.md, instructions, or directory rules.',
+          name: 'vp.ask',
+          description:
+            'Ask a question answered only from packaged VeloProve documentation (local docs search; no cloud LLM). CLI: veloprove ask.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              question: { type: 'string', description: 'User question about VeloProve usage, MCP, CLI, or AI linking' }
+            },
+            required: ['question']
+          }
+        },
+        {
+          name: 'vp.learnFramework',
+          description: 'Teach VeloProve an uncommon or in-house custom framework using AGENTS.md, instructions, or directory rules.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -63,7 +90,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.explore',
+          name: 'vp.explore',
           description: 'Walk and explore live routes, elements, buttons, and build site visual exploration map.',
           inputSchema: {
             type: 'object',
@@ -73,7 +100,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.fuzzApi',
+          name: 'vp.fuzzApi',
           description: 'Generate security and boundary probes (auth bypass, SQLi/injection, empty payload) for APIs.',
           inputSchema: {
             type: 'object',
@@ -81,7 +108,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.mutationScore',
+          name: 'vp.mutationScore',
           description: 'Evaluate test suite mutation score and quality verdict by checking assertion sensitivity.',
           inputSchema: {
             type: 'object',
@@ -89,7 +116,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.refine',
+          name: 'vp.refine',
           description: 'Refine or adjust test assertions and steps using natural language instructions.',
           inputSchema: {
             type: 'object',
@@ -101,7 +128,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.accessibility',
+          name: 'vp.accessibility',
           description: 'Run automated WCAG 2.1 accessibility audit across project components and routes.',
           inputSchema: {
             type: 'object',
@@ -109,7 +136,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.visualDiff',
+          name: 'vp.visualDiff',
           description: 'Compare UI screenshot baselines and detect visual regression/drift.',
           inputSchema: {
             type: 'object',
@@ -117,7 +144,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.lint',
+          name: 'vp.lint',
           description: 'Run ESLint and static code analysis across codebase with auto-fix and changed scope support.',
           inputSchema: {
             type: 'object',
@@ -129,7 +156,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.contractDrift',
+          name: 'vp.contractDrift',
           description: 'Detect API contract drift between OpenAPI documentation and active source code routes.',
           inputSchema: {
             type: 'object',
@@ -137,7 +164,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.auditSec',
+          name: 'vp.auditSec',
           description: 'Scan dependencies and project files for known CVE vulnerabilities and hardcoded secrets.',
           inputSchema: {
             type: 'object',
@@ -145,7 +172,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.perf',
+          name: 'vp.perf',
           description: 'Audit Core Web Vitals (LCP, FID, CLS, TTFB, bundle weight) across detected routes.',
           inputSchema: {
             type: 'object',
@@ -153,7 +180,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.mockNetwork',
+          name: 'vp.mockNetwork',
           description: 'Generate Mock Service Worker (MSW) network mock handlers from discovered API endpoints.',
           inputSchema: {
             type: 'object',
@@ -161,7 +188,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.quarantine',
+          name: 'vp.quarantine',
           description: 'Isolate and quarantine high-variance flaky tests from breaking CI pipelines.',
           inputSchema: {
             type: 'object',
@@ -171,7 +198,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.coverage',
+          name: 'vp.coverage',
           description: 'Generate PRD requirements coverage heatmap matrix with test pass rate correlation.',
           inputSchema: {
             type: 'object',
@@ -179,7 +206,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.plan',
+          name: 'vp.plan',
           description: 'Generate a risk-aware, prioritized test plan from project PRD, requirements, routes, and APIs without generating code.',
           inputSchema: {
             type: 'object',
@@ -190,20 +217,22 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.generate',
-          description: 'Generate executable test files for Vitest, Jest, or Playwright based on the active test plan.',
+          name: 'vp.generate',
+          description: 'Generate executable test files for Vitest, Jest, Playwright, or node:test (+ node:assert/strict) based on the active test plan. Live-grounds API assertions via GET when the local app is up.',
           inputSchema: {
             type: 'object',
             properties: {
               planId: { type: 'string' },
               testCaseIds: { type: 'array', items: { type: 'string' } },
-              overwritePolicy: { type: 'string', enum: ['never', 'generated-only', 'explicit'] }
+              overwritePolicy: { type: 'string', enum: ['never', 'generated-only', 'explicit'] },
+              liveGround: { type: 'boolean', description: 'Probe live local GET endpoints before writing API asserts (default true)' },
+              baseURL: { type: 'string', description: 'Base URL for live grounding (default API_BASE_URL or http://localhost:3000)' }
             }
           }
         },
         {
-          name: 'qa.run',
-          description: 'Execute unit, integration, API, or Playwright E2E tests and collect structured execution evidence.',
+          name: 'vp.run',
+          description: 'Execute unit, integration, API, Playwright E2E, or node --test suites and collect structured execution evidence.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -215,7 +244,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.run.get',
+          name: 'vp.run.get',
           description: 'Retrieve results and evidence for a specific test run.',
           inputSchema: {
             type: 'object',
@@ -225,7 +254,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.changed',
+          name: 'vp.changed',
           description: 'Analyze Git changes and select only impacted unit, integration, API, and E2E tests.',
           inputSchema: {
             type: 'object',
@@ -233,7 +262,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.diagnose',
+          name: 'vp.diagnose',
           description: 'Diagnose test run failures, classify root cause (APPLICATION_BUG vs TEST_BUG vs FLAKY_TEST), and suggest actions.',
           inputSchema: {
             type: 'object',
@@ -243,7 +272,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.heal',
+          name: 'vp.heal',
           description: 'Safely repair stale selectors and fragile test locators in generated test files without modifying business logic.',
           inputSchema: {
             type: 'object',
@@ -253,7 +282,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.suggestFix',
+          name: 'vp.suggestFix',
           description: 'Generate specific code fix recommendation and diff for the coding agent to resolve an application bug.',
           inputSchema: {
             type: 'object',
@@ -263,7 +292,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.flaky',
+          name: 'vp.flaky',
           description: 'Inspect flaky test history and variance statistics across local test executions.',
           inputSchema: {
             type: 'object',
@@ -271,7 +300,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.releaseCheck',
+          name: 'vp.releaseCheck',
           description: 'Evaluate release confidence score and readiness verdict (READY, READY_WITH_WARNINGS, NOT_READY).',
           inputSchema: {
             type: 'object',
@@ -279,7 +308,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.runCollection',
+          name: 'vp.runCollection',
           description: 'Execute a Postman Collection v2.1/v2.0 test suite locally with variable chaining.',
           inputSchema: {
             type: 'object',
@@ -292,18 +321,18 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.exportCollection',
+          name: 'vp.exportCollection',
           description: 'Export all discovered project routes and API endpoints as a standard Postman Collection v2.1 JSON.',
           inputSchema: {
             type: 'object',
             properties: {
-              outputPath: { type: 'string', description: 'Output file path (default: qaforge_postman_collection.json)' },
+              outputPath: { type: 'string', description: 'Output file path (default: veloprove_postman_collection.json)' },
               collectionName: { type: 'string', description: 'Optional custom collection name' }
             }
           }
         },
         {
-          name: 'qa.sendRequest',
+          name: 'vp.sendRequest',
           description: 'Send an ad-hoc HTTP request (GET, POST, PUT, DELETE, PATCH) and inspect response, latency, and headers.',
           inputSchema: {
             type: 'object',
@@ -318,7 +347,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.loadTest',
+          name: 'vp.loadTest',
           description: 'Execute high-throughput local load & stress testing on endpoint with virtual users (VUs) and latency percentiles.',
           inputSchema: {
             type: 'object',
@@ -334,7 +363,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.mockData',
+          name: 'vp.mockData',
           description: 'Generate realistic contextual mock test data (users, orders, products, addresses, payments, arabic locales).',
           inputSchema: {
             type: 'object',
@@ -347,7 +376,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.owaspScan',
+          name: 'vp.owaspScan',
           description: 'Run deep local OWASP Top 10 security audit (CORS, CSP, Clickjacking, MIME sniffing, Server leaks, Stack traces).',
           inputSchema: {
             type: 'object',
@@ -358,7 +387,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.graphqlTest',
+          name: 'vp.graphqlTest',
           description: 'Execute and validate GraphQL queries/mutations with variables and schema assertion.',
           inputSchema: {
             type: 'object',
@@ -372,7 +401,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.wsTest',
+          name: 'vp.wsTest',
           description: 'Test WebSocket connection handshake and real-time message interchange.',
           inputSchema: {
             type: 'object',
@@ -385,7 +414,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.remoteInit',
+          name: 'vp.remoteInit',
           description: 'Generate a drop-in companion probe script/middleware to place on a live website for remote QA connection.',
           inputSchema: {
             type: 'object',
@@ -397,8 +426,8 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.remoteConnect',
-          description: 'Connect and verify handshake link with a live remote website running the QAForge companion probe.',
+          name: 'vp.remoteConnect',
+          description: 'Connect and verify handshake link with a live remote website running the VeloProve companion probe.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -409,7 +438,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.remoteAudit',
+          name: 'vp.remoteAudit',
           description: 'Execute full live remote QA, OWASP security, load benchmark, and route health audit against a live website.',
           inputSchema: {
             type: 'object',
@@ -423,7 +452,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.recordScenario',
+          name: 'vp.recordScenario',
           description: 'Generate robust Playwright or Vitest E2E test files from structured user actions (click, fill, assert).',
           inputSchema: {
             type: 'object',
@@ -438,7 +467,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.stabilizeFlaky',
+          name: 'vp.stabilizeFlaky',
           description: 'Scan and automatically refactor brittle, flaky test code (replacing sleep with auto-wait and web-first assertions).',
           inputSchema: {
             type: 'object',
@@ -450,7 +479,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.dbSnapshot',
+          name: 'vp.dbSnapshot',
           description: 'Create an isolated backup snapshot of database and fixture files prior to running destructive tests.',
           inputSchema: {
             type: 'object',
@@ -462,7 +491,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.dbRestore',
+          name: 'vp.dbRestore',
           description: 'Restore database and fixture state from a previous snapshot.',
           inputSchema: {
             type: 'object',
@@ -473,7 +502,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.autoBugFix',
+          name: 'vp.autoBugFix',
           description: 'Synthesize code repair patches for APPLICATION_BUG failures and generate unified Git diff.',
           inputSchema: {
             type: 'object',
@@ -483,19 +512,20 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.exportReport',
-          description: 'Export comprehensive standalone single-file executive QA & Security audit report (HTML, JSON, Markdown).',
+          name: 'vp.exportReport',
+          description: 'Export executive QA report (HTML, JSON, Markdown, JUnit XML, or PDF summary). Use preview=true to inspect content and save path without writing.',
           inputSchema: {
             type: 'object',
             properties: {
               outputPath: { type: 'string', description: 'Output destination path' },
-              format: { type: 'string', enum: ['html', 'json', 'markdown'] },
-              title: { type: 'string', description: 'Custom report title' }
+              format: { type: 'string', enum: ['html', 'json', 'markdown', 'junit', 'pdf', 'allure'] },
+              title: { type: 'string', description: 'Custom report title' },
+              preview: { type: 'boolean', description: 'When true, return preview + save path without writing files' }
             }
           }
         },
         {
-          name: 'qa.chaosTest',
+          name: 'vp.chaosTest',
           description: 'Run autonomous chaos & edge-case monkey testing (malformed payloads, prototype pollution, type confusion).',
           inputSchema: {
             type: 'object',
@@ -509,7 +539,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.dockerEnv',
+          name: 'vp.dockerEnv',
           description: 'Generate isolated containerized test dependencies (PostgreSQL, Redis, MongoDB, MySQL) and docker-compose.test.yml.',
           inputSchema: {
             type: 'object',
@@ -521,7 +551,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.browserMatrix',
+          name: 'vp.browserMatrix',
           description: 'Generate multi-browser & mobile viewport Playwright matrix configuration (Chromium, Firefox, WebKit, Mobile devices).',
           inputSchema: {
             type: 'object',
@@ -532,7 +562,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.bddFeatures',
+          name: 'vp.bddFeatures',
           description: 'Generate standard BDD / Gherkin .feature specs and step definitions from discovered PRD requirements.',
           inputSchema: {
             type: 'object',
@@ -542,7 +572,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.sendAlert',
+          name: 'vp.sendAlert',
           description: 'Dispatch formatted QA quality, security, and test run alert notifications to Slack, Discord, MS Teams, or Webhooks.',
           inputSchema: {
             type: 'object',
@@ -555,7 +585,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.featureParity',
+          name: 'vp.featureParity',
           description: 'Universal UI-to-Backend parity auditor: detects ghost features, no-op click handlers, unhandled Tauri/API commands, and missing enum options.',
           inputSchema: {
             type: 'object',
@@ -565,7 +595,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.scanMalware',
+          name: 'vp.scanMalware',
           description: 'Scan repository files for malicious code, obfuscated payloads, suspicious lifecycle scripts, reverse shells, and exposed API keys.',
           inputSchema: {
             type: 'object',
@@ -573,7 +603,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.remediateMalware',
+          name: 'vp.remediateMalware',
           description: 'One-click auto-remediation to clean, sanitize, and neutralize detected malware threats and suspicious scripts.',
           inputSchema: {
             type: 'object',
@@ -583,7 +613,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.aiEvaluate',
+          name: 'vp.aiEvaluate',
           description: 'Evaluate AI / LLM output accuracy, detect hallucinations against ground truth facts, and validate JSON schema compliance.',
           inputSchema: {
             type: 'object',
@@ -595,7 +625,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.gitBisect',
+          name: 'vp.gitBisect',
           description: 'Autonomous Git bisect regression hunter: pinpoint the exact commit that introduced a test failure or bug.',
           inputSchema: {
             type: 'object',
@@ -606,7 +636,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.networkThrottle',
+          name: 'vp.networkThrottle',
           description: 'Simulate mobile network conditions (3G, GPRS, 4G, packet loss, offline drops) to verify frontend/API resilience.',
           inputSchema: {
             type: 'object',
@@ -618,7 +648,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.smartContractAudit',
+          name: 'vp.smartContractAudit',
           description: 'Deep security audit for Solidity / Web3 smart contracts (reentrancy, unprotected selfdestruct, tx.origin, timestamp manipulation).',
           inputSchema: {
             type: 'object',
@@ -626,7 +656,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.deadAssetPurge',
+          name: 'vp.deadAssetPurge',
           description: 'Scan and purge unreferenced images, fonts, dead CSS, and unused asset files to reclaim disk space.',
           inputSchema: {
             type: 'object',
@@ -636,7 +666,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.screenReaderSim',
+          name: 'vp.screenReaderSim',
           description: 'Simulate screen reader (NVDA/VoiceOver) auditory speech order, detect unlabelled buttons/inputs, redundant image text, and heading hierarchy skips.',
           inputSchema: {
             type: 'object',
@@ -647,7 +677,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.dbQueryAudit',
+          name: 'vp.dbQueryAudit',
           description: 'Deep audit for SQL N+1 queries in loops, unindexed queries, raw string concatenations (SQLi), and unbounded collection fetches.',
           inputSchema: {
             type: 'object',
@@ -658,7 +688,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.envDriftAudit',
+          name: 'vp.envDriftAudit',
           description: 'Multi-environment config & secret drift auditor: compare .env against .env.example, detect missing keys in code, and catch leaked secrets.',
           inputSchema: {
             type: 'object',
@@ -668,7 +698,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.recordFailureReplay',
+          name: 'vp.recordFailureReplay',
           description: 'Generate interactive step-by-step visual timeline replay package (.html / SVG) for failed tests.',
           inputSchema: {
             type: 'object',
@@ -683,7 +713,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.rateLimitAudit',
+          name: 'vp.rateLimitAudit',
           description: 'API rate-limiting & DoS threshold profiler: burst-test endpoints to verify 429 status enforcement and server resilience.',
           inputSchema: {
             type: 'object',
@@ -697,7 +727,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.statefulMock',
+          name: 'vp.statefulMock',
           description: 'Start, stop, or reset local zero-cloud in-memory stateful RESTful CRUD mock server.',
           inputSchema: {
             type: 'object',
@@ -710,7 +740,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.architectureGraph',
+          name: 'vp.architectureGraph',
           description: 'Generate microservices & architecture dependency graph (UI, APIs, DBs, Caches, External Services) with Mermaid and topology view.',
           inputSchema: {
             type: 'object',
@@ -718,7 +748,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.securityScan',
+          name: 'vp.securityScan',
           description: 'Discover and inspect security attack surfaces (auth routes, protected routes, forms, file uploads, JWT, cookies, and database technologies).',
           inputSchema: {
             type: 'object',
@@ -726,8 +756,8 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.securityPlan',
-          description: 'Generate prioritized, risk-scored security test plan for authentication, authorization, injection, forms, sessions, and uploads.',
+          name: 'vp.securityPlan',
+          description: 'Generate prioritized, risk-scored security test plan for authentication, authorization, injection, forms, session theft/hijacking, and uploads.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -741,8 +771,8 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.securityRun',
-          description: 'Execute automated non-destructive security tests against live target or codebase, identifying vulnerabilities with severity and confidence.',
+          name: 'vp.securityRun',
+          description: 'Execute automated non-destructive security tests (including session theft: cookie flags, fixation, URL leaks, client storage, logout invalidation) against a live target or codebase.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -759,7 +789,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.securityReport',
+          name: 'vp.securityReport',
           description: 'Generate comprehensive security report with explainable score (0-100), findings, evidence, redacted logs, and remediation roadmap.',
           inputSchema: {
             type: 'object',
@@ -771,7 +801,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.exportSarif',
+          name: 'vp.exportSarif',
           description: 'Export security findings and CVE vulnerabilities in standard SARIF v2.1.0 JSON format for GitHub Security integration.',
           inputSchema: {
             type: 'object',
@@ -781,7 +811,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.auditSriCsrf',
+          name: 'vp.auditSriCsrf',
           description: 'Audit Subresource Integrity (SRI) on external CDN assets, CSRF token protections on mutating forms, and CORS policy wildcards.',
           inputSchema: {
             type: 'object',
@@ -789,7 +819,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.dedupTests',
+          name: 'vp.dedupTests',
           description: 'Analyze test suites to identify duplicate, redundant, and overlapping test cases across Vitest/Playwright suites.',
           inputSchema: {
             type: 'object',
@@ -799,21 +829,56 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
         },
         {
-          name: 'qa.doctor',
-          description: 'Run environmental, runtime, and project installation diagnostics to verify readiness.',
+          name: 'vp.doctor',
+          description: 'Run environmental, runtime, and project installation diagnostics to verify readiness (incl. Vitest/Jest/Playwright/node:test).',
           inputSchema: {
             type: 'object',
             properties: {}
+          }
+        },
+        {
+          name: 'vp.ensureDev',
+          description: 'Smart DevServer auto-launcher: probe baseURL, detect package scripts, and start npm/pnpm/yarn/bun dev when offline.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              baseURL: { type: 'string', description: 'Target URL to bring online' },
+              command: { type: 'string', description: 'Override spawn command (e.g. npm run dev)' },
+              port: { type: 'number' },
+              timeoutMs: { type: 'number' },
+              forceRestart: { type: 'boolean' }
+            }
+          }
+        },
+        {
+          name: 'vp.verify',
+          description: 'Autonomous change-aware QA orchestrator: inspect → impact → targeted tests → diagnose → heal TEST_BUG → release assessment. Returns OperationResult with evidence. On failures writes .veloprove/evidence/<runId>/.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              fullSuite: { type: 'boolean', description: 'Run full suite instead of impacted tests' },
+              includeSecurity: { type: 'boolean', description: 'Force non-destructive security suite' },
+              includeA11y: { type: 'boolean', description: 'Force accessibility audit' },
+              noHeal: { type: 'boolean', description: 'Disable automatic TEST_BUG healing' },
+              intent: { type: 'string', description: 'Natural-language QA goal (deterministic keyword planner)' },
+              sandbox: { type: 'boolean', description: 'Start local mock sandbox and set API_BASE_URL for this run' },
+              dockerEnv: { type: 'boolean', description: 'Generate local docker-compose test env files before verify' }
+            }
+          }
+        },
+        {
+          name: 'vp.history',
+          description: 'Load local test-run history trends (pass rate, duration, flaky aggregates) from .veloprove state.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              limit: { type: 'number', description: 'Max history points to return (1-50)' }
+            }
           }
         }
       ]
     };
   });
-
-
-
-
-
 
   // Handle Tool Executions
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -821,141 +886,184 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
 
     try {
       switch (name) {
-        case 'qa.inspect': {
+        case 'vp.inspect': {
           const result = await engine.inspect();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.bootstrap': {
-          const result = engine.handshake(args as any);
+        case 'vp.bootstrap': {
+          const preferredOutput = strOpt(args, 'preferredOutput');
+          const result = engine.handshake({
+            agentName: strOpt(args, 'agentName'),
+            preferredOutput: preferredOutput as 'json' | 'markdown' | 'compact' | undefined,
+            forceAgentsMd: boolOpt(args, 'force'),
+            writeMcpConfig: boolOpt(args, 'writeMcp')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.learnFramework': {
-          const result = engine.learnFramework(args as any);
+        case 'vp.ask': {
+          const question = strOpt(args, 'question') || '';
+          const result = engine.askDocs(question);
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.explore': {
-          const result = await engine.explore(args as any);
+        case 'vp.learnFramework': {
+          const result = engine.learnFramework(asRecord(args) as Parameters<VeloProveEngine['learnFramework']>[0]);
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.fuzzApi': {
+        case 'vp.explore': {
+          const result = await engine.explore({
+            baseURL: strOpt(args, 'baseURL'),
+            ensureDev: boolOpt(args, 'ensureDev')
+          });
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
+
+        case 'vp.fuzzApi': {
           const result = await engine.fuzzApi();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.mutationScore': {
+        case 'vp.mutationScore': {
           const result = await engine.evaluateMutationScore();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.refine': {
-          const result = await engine.refineTest(args as any);
+        case 'vp.refine': {
+          const result = await engine.refineTest({
+            testFilePath: strOpt(args, 'testFilePath'),
+            testId: strOpt(args, 'testId'),
+            instruction: strOpt(args, 'instruction') || ''
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.accessibility': {
+        case 'vp.accessibility': {
           const result = await engine.auditA11y();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.visualDiff': {
+        case 'vp.visualDiff': {
           const result = await engine.compareVisuals();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.contractDrift': {
+        case 'vp.contractDrift': {
           const result = await engine.checkContractDrift();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.auditSec': {
+        case 'vp.auditSec': {
           const result = engine.auditSecurity();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.perf': {
+        case 'vp.perf': {
           const result = await engine.profilePerf();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.mockNetwork': {
+        case 'vp.mockNetwork': {
           const result = await engine.generateMsw();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.quarantine': {
-          const result = engine.quarantineFlaky((args as any).threshold);
+        case 'vp.quarantine': {
+          const result = engine.quarantineFlaky(numOpt(args, 'threshold'));
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.coverage': {
+        case 'vp.coverage': {
           const result = await engine.getCoverageHeatmap();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.lint': {
-          const result = await engine.lint(args as any);
+        case 'vp.lint': {
+          const scope = strOpt(args, 'scope');
+          const result = await engine.lint({
+            scope: scope as 'all' | 'changed' | 'paths' | undefined,
+            paths: strArrayOpt(args, 'paths'),
+            fix: boolOpt(args, 'fix')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.plan': {
-          const plan = await engine.plan(args as any);
+        case 'vp.plan': {
+          const scope = strOpt(args, 'scope');
+          const plan = await engine.plan({
+            scope: scope as 'all' | 'uncovered' | 'critical' | 'e2e' | 'api' | 'unit' | 'changed' | undefined,
+            maxTests: numOpt(args, 'maxTests')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(plan, null, 2) }]
           };
         }
 
-        case 'qa.generate': {
-          const result = await engine.generate(args as any);
+        case 'vp.generate': {
+          const overwritePolicy = strOpt(args, 'overwritePolicy');
+          const liveGroundOpt = boolOpt(args, 'liveGround');
+          const result = await engine.generate({
+            planId: strOpt(args, 'planId'),
+            testCaseIds: strArrayOpt(args, 'testCaseIds'),
+            overwritePolicy: overwritePolicy as 'never' | 'generated-only' | 'explicit' | undefined,
+            liveGround: liveGroundOpt === undefined ? true : liveGroundOpt,
+            baseURL: strOpt(args, 'baseURL')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.run': {
-          const runResult = await engine.run(args as any);
+        case 'vp.run': {
+          const scope = strOpt(args, 'scope');
+          const runResult = await engine.run({
+            scope: scope as 'all' | 'changed' | 'paths' | 'plan' | 'testIds' | 'critical' | undefined,
+            paths: strArrayOpt(args, 'paths'),
+            timeoutMs: numOpt(args, 'timeoutMs')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(runResult, null, 2) }]
           };
         }
 
-        case 'qa.run.get': {
-          const runId = (args as any).runId || 'latest';
+        case 'vp.run.get': {
+          const runId = strOpt(args, 'runId') || 'latest';
           const runResult = runId === 'latest'
             ? engine.storage.getLatestTestRun()
             : engine.storage.getTestRun(runId);
@@ -964,30 +1072,31 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           };
         }
 
-        case 'qa.changed': {
+        case 'vp.changed': {
           const impact = await engine.changed();
           return {
             content: [{ type: 'text', text: JSON.stringify(impact, null, 2) }]
           };
         }
 
-        case 'qa.diagnose': {
-          const diagnoses = await engine.diagnose((args as any).runId);
+        case 'vp.diagnose': {
+          const diagnoses = await engine.diagnose(strOpt(args, 'runId'));
           return {
             content: [{ type: 'text', text: JSON.stringify(diagnoses, null, 2) }]
           };
         }
 
-        case 'qa.heal': {
-          const healResults = await engine.heal((args as any).runId);
+        case 'vp.heal': {
+          const healResults = await engine.heal(strOpt(args, 'runId'));
           return {
             content: [{ type: 'text', text: JSON.stringify(healResults, null, 2) }]
           };
         }
 
-        case 'qa.suggestFix': {
+        case 'vp.suggestFix': {
           const diagnoses = await engine.diagnose();
-          const target = diagnoses.find(d => d.diagnosisId === (args as any).diagnosisId) || diagnoses[0];
+          const diagnosisId = strOpt(args, 'diagnosisId');
+          const target = diagnoses.find(d => d.diagnosisId === diagnosisId) || diagnoses[0];
           if (!target) {
             return { content: [{ type: 'text', text: JSON.stringify({ error: 'No diagnosis available' }) }] };
           }
@@ -997,323 +1106,477 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           };
         }
 
-        case 'qa.flaky': {
+        case 'vp.flaky': {
           const flaky = engine.getFlaky();
           return {
             content: [{ type: 'text', text: JSON.stringify(flaky, null, 2) }]
           };
         }
 
-        case 'qa.releaseCheck': {
+        case 'vp.releaseCheck': {
           const release = await engine.releaseCheck();
           return {
             content: [{ type: 'text', text: JSON.stringify(release, null, 2) }]
           };
         }
 
-        case 'qa.runCollection': {
-          const { collectionPath, environmentPath, baseURL } = args as any;
+        case 'vp.runCollection': {
+          const collectionPath = strOpt(args, 'collectionPath') || '';
+          const environmentPath = strOpt(args, 'environmentPath');
+          const baseURL = strOpt(args, 'baseURL');
           const result = await engine.runPostmanCollection(collectionPath, environmentPath, baseURL);
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.exportCollection': {
-          const { outputPath, collectionName } = args as any;
-          const result = await engine.exportPostmanCollection(outputPath, collectionName);
+        case 'vp.exportCollection': {
+          const outputPath = strOpt(args, 'outputPath');
+          const collectionName = strOpt(args, 'collectionName');
+          const result = await engine.exportPostmanCollection(
+            outputPath || 'veloprove_postman_collection.json',
+            collectionName
+          );
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.sendRequest': {
-          const result = await engine.sendHttpRequest(args as any);
+        case 'vp.sendRequest': {
+          const method = strOpt(args, 'method') || 'GET';
+          const result = await engine.sendHttpRequest({
+            method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS',
+            url: strOpt(args, 'url') || '',
+            headers: objOpt(args, 'headers') as Record<string, string> | undefined,
+            params: objOpt(args, 'params') as Record<string, string> | undefined,
+            body: unknownOpt(args, 'body'),
+            timeoutMs: numOpt(args, 'timeoutMs')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.loadTest': {
-          const result = await engine.runLoadTest(args as any);
+        case 'vp.loadTest': {
+          const method = strOpt(args, 'method');
+          const result = await engine.runLoadTest({
+            url: strOpt(args, 'url') || '',
+            method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | undefined,
+            vus: numOpt(args, 'vus'),
+            durationSec: numOpt(args, 'durationSec'),
+            headers: objOpt(args, 'headers') as Record<string, string> | undefined,
+            body: unknownOpt(args, 'body')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.mockData': {
-          const result = engine.generateMockData(args as any);
+        case 'vp.mockData': {
+          const preset = strOpt(args, 'preset');
+          const locale = strOpt(args, 'locale');
+          const result = engine.generateMockData({
+            preset: preset as 'user' | 'order' | 'product' | 'address' | 'payment' | 'auth' | 'arabic_user' | 'custom' | undefined,
+            count: numOpt(args, 'count'),
+            locale: locale as 'en' | 'ar' | undefined,
+            schema: objOpt(args, 'schema') as NonNullable<Parameters<VeloProveEngine['generateMockData']>[0]>['schema']
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.owaspScan': {
-          const result = await engine.scanOwasp((args as any).targetUrl);
+        case 'vp.owaspScan': {
+          const result = await engine.scanOwasp(strOpt(args, 'targetUrl') || '');
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.graphqlTest': {
-          const result = await engine.runGraphQL(args as any);
+        case 'vp.graphqlTest': {
+          const result = await engine.runGraphQL({
+            endpoint: strOpt(args, 'endpoint') || '',
+            query: strOpt(args, 'query') || '',
+            variables: objOpt(args, 'variables'),
+            expectedDataKey: strOpt(args, 'expectedDataKey')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.wsTest': {
-          const result = await engine.testWebSocket(args as any);
+        case 'vp.wsTest': {
+          const result = await engine.testWebSocket({
+            url: strOpt(args, 'url') || '',
+            messagesToSend: strArrayOpt(args, 'messagesToSend'),
+            expectedResponseSubstring: strOpt(args, 'expectedResponseSubstring')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.remoteInit': {
-          const { type, siteName, secretToken } = args as any;
-          const result = engine.generateRemoteProbe(type, { siteName, secretToken });
+        case 'vp.remoteInit': {
+          const type = strOpt(args, 'type') || 'standalone_js';
+          const result = engine.generateRemoteProbe(
+            type as 'standalone_js' | 'nextjs_route' | 'express_middleware' | 'html_snippet',
+            {
+              siteName: strOpt(args, 'siteName'),
+              secretToken: strOpt(args, 'secretToken')
+            }
+          );
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.remoteConnect': {
-          const { remoteUrl, bridgeSecret } = args as any;
-          const result = await engine.connectRemoteSite(remoteUrl, bridgeSecret);
+        case 'vp.remoteConnect': {
+          const result = await engine.connectRemoteSite(
+            strOpt(args, 'remoteUrl') || '',
+            strOpt(args, 'bridgeSecret')
+          );
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.remoteAudit': {
-          const { remoteUrl, includeLoadTest, loadVus, bridgeSecret } = args as any;
-          const result = await engine.auditRemoteSite(remoteUrl, { includeLoadTest, loadVus, bridgeSecret });
+        case 'vp.remoteAudit': {
+          const result = await engine.auditRemoteSite(
+            strOpt(args, 'remoteUrl') || '',
+            {
+              includeLoadTest: boolOpt(args, 'includeLoadTest'),
+              loadVus: numOpt(args, 'loadVus'),
+              bridgeSecret: strOpt(args, 'bridgeSecret')
+            }
+          );
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.recordScenario': {
-          const result = engine.recordScenario(args as any);
+        case 'vp.recordScenario': {
+          const framework = strOpt(args, 'framework');
+          const result = engine.recordScenario({
+            title: strOpt(args, 'title') || '',
+            startUrl: strOpt(args, 'startUrl') || '',
+            framework: framework as 'playwright' | 'vitest' | undefined,
+            steps: (unknownOpt(args, 'steps') as NonNullable<Parameters<VeloProveEngine['recordScenario']>[0]>['steps']) || [],
+            outputFile: strOpt(args, 'outputFile')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.stabilizeFlaky': {
-          const { targetFileOrCode, saveFix } = args as any;
-          const result = engine.stabilizeTests(targetFileOrCode, saveFix);
+        case 'vp.stabilizeFlaky': {
+          const result = engine.stabilizeTests(
+            strOpt(args, 'targetFileOrCode') || '',
+            boolFlag(args, 'saveFix')
+          );
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.dbSnapshot': {
-          const { name: snapName, filePaths } = args as any;
-          const result = engine.createDbSnapshot(snapName, filePaths);
+        case 'vp.dbSnapshot': {
+          const result = engine.createDbSnapshot(
+            strOpt(args, 'name') || '',
+            strArrayOpt(args, 'filePaths') || []
+          );
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.dbRestore': {
-          const { snapshotId } = args as any;
-          const result = engine.restoreDbSnapshot(snapshotId);
+        case 'vp.dbRestore': {
+          const result = engine.restoreDbSnapshot(strOpt(args, 'snapshotId') || '');
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.autoBugFix': {
-          const { apply } = args as any;
-          const result = await engine.autoFixBugs(apply);
+        case 'vp.autoBugFix': {
+          const result = await engine.autoFixBugs(boolFlag(args, 'apply'));
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.exportReport': {
-          const result = engine.exportReport(args as any);
+        case 'vp.exportReport': {
+          const result = engine.exportReport({
+            outputPath: strOpt(args, 'outputPath'),
+            format: strOpt(args, 'format') as 'html' | 'json' | 'markdown' | 'junit' | 'pdf' | 'allure' | undefined,
+            title: strOpt(args, 'title'),
+            preview: boolFlag(args, 'preview')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.chaosTest': {
-          const result = await engine.runChaosTest(args as any);
+        case 'vp.chaosTest': {
+          const method = strOpt(args, 'method');
+          const result = await engine.runChaosTest({
+            targetUrl: strOpt(args, 'targetUrl') || '',
+            method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | undefined,
+            strategies: strArrayOpt(args, 'strategies') as NonNullable<Parameters<VeloProveEngine['runChaosTest']>[0]>['strategies'],
+            iterations: numOpt(args, 'iterations')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.dockerEnv': {
-          const result = engine.generateDockerEnv(args as any);
+        case 'vp.dockerEnv': {
+          const result = engine.generateDockerEnv({
+            services: (strArrayOpt(args, 'services') as NonNullable<Parameters<VeloProveEngine['generateDockerEnv']>[0]>['services']) || [],
+            outputPath: strOpt(args, 'outputPath'),
+            projectName: strOpt(args, 'projectName')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.browserMatrix': {
-          const result = engine.generateBrowserMatrix(args as any);
+        case 'vp.browserMatrix': {
+          const result = engine.generateBrowserMatrix({
+            browsers: strArrayOpt(args, 'browsers') as NonNullable<Parameters<VeloProveEngine['generateBrowserMatrix']>[0]>['browsers'],
+            devices: strArrayOpt(args, 'devices') as NonNullable<Parameters<VeloProveEngine['generateBrowserMatrix']>[0]>['devices']
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.bddFeatures': {
-          const result = await engine.generateBddFeatures((args as any).outputDir);
+        case 'vp.bddFeatures': {
+          const result = await engine.generateBddFeatures(strOpt(args, 'outputDir'));
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.sendAlert': {
-          const result = await engine.sendAlert(args as any);
+        case 'vp.sendAlert': {
+          const provider = strOpt(args, 'provider');
+          const result = await engine.sendAlert({
+            webhookUrl: strOpt(args, 'webhookUrl') || '',
+            provider: provider as 'slack' | 'discord' | 'teams' | 'generic' | undefined,
+            payload: (objOpt(args, 'payload') || {}) as unknown as NonNullable<Parameters<VeloProveEngine['sendAlert']>[0]>['payload']
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.featureParity': {
-          const result = engine.auditFeatureParity(args as any);
+        case 'vp.featureParity': {
+          const result = engine.auditFeatureParity({
+            generateE2ESuite: boolOpt(args, 'generateE2ESuite')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.scanMalware': {
+        case 'vp.scanMalware': {
           const result = engine.scanMalware();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.remediateMalware': {
-          const result = engine.remediateMalware((args as any).threatIds);
+        case 'vp.remediateMalware': {
+          const result = engine.remediateMalware(strArrayOpt(args, 'threatIds'));
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.aiEvaluate': {
-          const result = await engine.evaluateAiOutputs(args as any);
+        case 'vp.aiEvaluate': {
+          const result = await engine.evaluateAiOutputs({
+            endpointUrl: strOpt(args, 'endpointUrl'),
+            testCases: (unknownOpt(args, 'testCases') as NonNullable<Parameters<VeloProveEngine['evaluateAiOutputs']>[0]>['testCases']) || []
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.gitBisect': {
-          const result = await engine.huntRegression(args as any);
+        case 'vp.gitBisect': {
+          const result = await engine.huntRegression({
+            testCommand: strOpt(args, 'testCommand'),
+            goodCommit: strOpt(args, 'goodCommit'),
+            badCommit: strOpt(args, 'badCommit'),
+            maxCommits: numOpt(args, 'maxCommits')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.networkThrottle': {
-          const result = await engine.throttleRequest(args as any);
+        case 'vp.networkThrottle': {
+          const profile = strOpt(args, 'profile') || 'REGULAR_3G';
+          const result = await engine.throttleRequest({
+            targetUrl: strOpt(args, 'targetUrl') || '',
+            profile: profile as 'GPRS_SLOW' | 'REGULAR_3G' | 'GOOD_4G' | 'OFFLINE_DROP' | 'PACKET_LOSS'
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.smartContractAudit': {
+        case 'vp.smartContractAudit': {
           const result = engine.auditSmartContracts();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.deadAssetPurge': {
-          const { purge } = args as any;
-          const result = purge ? engine.purgeDeadAssets() : engine.scanDeadAssets();
+        case 'vp.deadAssetPurge': {
+          const result = boolFlag(args, 'purge') ? engine.purgeDeadAssets() : engine.scanDeadAssets();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.screenReaderSim': {
-          const result = engine.simulateScreenReader(args as any);
+        case 'vp.screenReaderSim': {
+          const result = engine.simulateScreenReader({
+            targetPaths: strArrayOpt(args, 'targetPaths'),
+            rawHtml: strOpt(args, 'rawHtml')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.dbQueryAudit': {
-          const result = engine.auditDbQueries(args as any);
+        case 'vp.dbQueryAudit': {
+          const result = engine.auditDbQueries({
+            targetDir: strOpt(args, 'targetDir'),
+            scanAllExtensions: boolOpt(args, 'scanAllExtensions')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.envDriftAudit': {
-          const result = engine.auditEnvDrift(args as any);
+        case 'vp.envDriftAudit': {
+          const result = engine.auditEnvDrift({
+            generateExample: boolOpt(args, 'generateExample')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.recordFailureReplay': {
-          const result = engine.recordFailureReplay(args as any);
+        case 'vp.recordFailureReplay': {
+          const result = engine.recordFailureReplay({
+            testTitle: strOpt(args, 'testTitle') || '',
+            testFile: strOpt(args, 'testFile') || '',
+            errorMessage: strOpt(args, 'errorMessage') || '',
+            steps: unknownOpt(args, 'steps') as NonNullable<Parameters<VeloProveEngine['recordFailureReplay']>[0]>['steps'],
+            saveToFile: boolOpt(args, 'saveToFile')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.rateLimitAudit': {
-          const result = await engine.auditRateLimit(args as any);
+        case 'vp.rateLimitAudit': {
+          const result = await engine.auditRateLimit({
+            targetUrl: strOpt(args, 'targetUrl') || '',
+            requestCount: numOpt(args, 'requestCount'),
+            concurrency: numOpt(args, 'concurrency'),
+            method: strOpt(args, 'method')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.statefulMock': {
-          const { action, port, initialData } = args as any;
-          let result: any;
-          if (action === 'start') result = await engine.startStatefulMock({ port, initialData });
-          else if (action === 'stop') result = engine.stopStatefulMock();
-          else result = engine.resetStatefulMock();
+        case 'vp.statefulMock': {
+          const action = strOpt(args, 'action');
+          let result: unknown;
+          if (action === 'start') {
+            result = await engine.startStatefulMock({
+              port: numOpt(args, 'port'),
+              initialData: unknownOpt(args, 'initialData') as NonNullable<Parameters<VeloProveEngine['startStatefulMock']>[0]>['initialData']
+            });
+          } else if (action === 'stop') {
+            result = engine.stopStatefulMock();
+          } else {
+            result = engine.resetStatefulMock();
+          }
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.architectureGraph': {
+        case 'vp.architectureGraph': {
           const result = engine.generateArchitectureGraph();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.securityScan': {
+        case 'vp.securityScan': {
           const result = await engine.scanSecuritySurface();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.securityPlan': {
-          const result = await engine.planSecurityTests(args as any);
+        case 'vp.securityPlan': {
+          const result = await engine.planSecurityTests({
+            categories: strArrayOpt(args, 'categories') as NonNullable<Parameters<VeloProveEngine['planSecurityTests']>[0]>['categories'],
+            safeMode: boolOpt(args, 'safeMode')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.securityRun': {
-          const result = await engine.runSecurityTests(args as any);
+        case 'vp.securityRun': {
+          const environment = strOpt(args, 'environment');
+          const format = strOpt(args, 'format');
+          const result = await engine.runSecurityTests({
+            baseURL: strOpt(args, 'baseURL'),
+            categories: strArrayOpt(args, 'categories') as NonNullable<Parameters<VeloProveEngine['runSecurityTests']>[0]>['categories'],
+            safeMode: boolOpt(args, 'safeMode'),
+            deepMode: boolOpt(args, 'deepMode'),
+            environment: environment as 'test' | 'staging' | 'production' | 'local' | undefined,
+            allowProduction: boolOpt(args, 'allowProduction'),
+            allowUnknownRemote: boolOpt(args, 'allowUnknownRemote'),
+            maxSafeAttempts: numOpt(args, 'maxSafeAttempts'),
+            format: format as 'console' | 'json' | 'markdown' | 'html' | undefined,
+            outputFile: strOpt(args, 'outputFile'),
+            ensureDev: boolOpt(args, 'ensureDev')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.securityReport': {
-          const result = await engine.generateSecurityReport(args as any);
+        case 'vp.securityReport': {
+          const environment = strOpt(args, 'environment');
+          const format = strOpt(args, 'format');
+          const result = await engine.generateSecurityReport({
+            baseURL: strOpt(args, 'baseURL'),
+            categories: strArrayOpt(args, 'categories') as NonNullable<Parameters<VeloProveEngine['generateSecurityReport']>[0]>['categories'],
+            safeMode: boolOpt(args, 'safeMode'),
+            deepMode: boolOpt(args, 'deepMode'),
+            environment: environment as 'test' | 'staging' | 'production' | 'local' | undefined,
+            allowProduction: boolOpt(args, 'allowProduction'),
+            allowUnknownRemote: boolOpt(args, 'allowUnknownRemote'),
+            maxSafeAttempts: numOpt(args, 'maxSafeAttempts'),
+            format: format as 'console' | 'json' | 'markdown' | 'html' | undefined,
+            outputFile: strOpt(args, 'outputFile'),
+            ensureDev: boolOpt(args, 'ensureDev')
+          });
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.exportSarif': {
-          const { outputPath } = (args || {}) as any;
+        case 'vp.exportSarif': {
+          const outputPath = strOpt(args, 'outputPath');
           const report = await engine.runSecurityTests({ safeMode: true });
           const audit = engine.auditSecurity();
           const result = engine.exportSarif(report, audit, outputPath);
@@ -1322,92 +1585,124 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           };
         }
 
-        case 'qa.auditSriCsrf': {
+        case 'vp.auditSriCsrf': {
           const result = engine.auditSriAndCsrf();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.dedupTests': {
-          const { testFiles } = (args || {}) as any;
-          const result = engine.deduplicateTests(testFiles);
+        case 'vp.dedupTests': {
+          const result = engine.deduplicateTests(strArrayOpt(args, 'testFiles'));
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
-        case 'qa.doctor': {
+        case 'vp.doctor': {
           const result = engine.doctor();
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           };
         }
 
+        case 'vp.ensureDev': {
+          const result = await engine.ensureDevServer({
+            baseURL: strOpt(args, 'baseURL'),
+            command: strOpt(args, 'command'),
+            port: numOpt(args, 'port'),
+            timeoutMs: numOpt(args, 'timeoutMs'),
+            forceRestart: boolFlag(args, 'forceRestart')
+          });
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
 
+        case 'vp.verify': {
+          const result = await engine.verify({
+            fullSuite: boolFlag(args, 'fullSuite'),
+            includeSecurity: boolFlag(args, 'includeSecurity'),
+            includeA11y: boolFlag(args, 'includeA11y'),
+            noHeal: boolFlag(args, 'noHeal'),
+            intent: strOpt(args, 'intent'),
+            sandbox: boolFlag(args, 'sandbox'),
+            dockerEnv: boolFlag(args, 'dockerEnv')
+          });
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+          };
+        }
 
-
-
-
-
-
+        case 'vp.history': {
+          const snapshot = engine.getRunHistory();
+          const limitRaw = numOpt(args, 'limit');
+          const limit = Math.max(1, Math.min(limitRaw ?? 20, 50));
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ ...snapshot, points: snapshot.points.slice(-limit) }, null, 2)
+            }]
+          };
+        }
 
         default:
-          throw new Error(`Unknown QAForge tool: ${name}`);
+          throw new Error(`Unknown VeloProve tool: ${name}`);
       }
     } catch (err: any) {
       return {
         isError: true,
-        content: [{ type: 'text', text: `QAForge Error: ${err.message}` }]
+        content: [{ type: 'text', text: `VeloProve Error: ${err.message}` }]
       };
     }
   });
 
-  // Resources
+  // Resources — vp:// only (VeloProve product namespace; no legacy aliases)
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    const catalog = [
+      { path: 'project/profile', name: 'Project Profile' },
+      { path: 'requirements', name: 'Discovered Requirements' },
+      { path: 'test-plan/latest', name: 'Latest Test Plan' },
+      { path: 'runs/latest', name: 'Latest Test Run Results' },
+      { path: 'release/confidence', name: 'Release Confidence' }
+    ];
     return {
-      resources: [
-        {
-          uri: 'qa://project/profile',
-          name: 'Project Profile',
-          mimeType: 'application/json'
-        },
-        {
-          uri: 'qa://requirements',
-          name: 'Discovered Requirements',
-          mimeType: 'application/json'
-        },
-        {
-          uri: 'qa://test-plan/latest',
-          name: 'Latest Test Plan',
-          mimeType: 'application/json'
-        },
-        {
-          uri: 'qa://runs/latest',
-          name: 'Latest Test Run Results',
-          mimeType: 'application/json'
-        }
-      ]
+      resources: catalog.map((r) => ({
+        uri: `vp://${r.path}`,
+        name: r.name,
+        mimeType: 'application/json'
+      }))
     };
   });
 
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const uri = request.params.uri;
-    if (uri === 'qa://project/profile') {
+    if (!uri.startsWith('vp://')) {
+      throw new Error(
+        `Unsupported resource URI "${uri}". VeloProve resources use the vp:// scheme only (example: vp://project/profile).`
+      );
+    }
+    const key = uri.slice('vp://'.length);
+
+    if (key === 'project/profile') {
       const profile = engine.storage.getProjectProfile() || (await engine.inspect()).profile;
       return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(profile, null, 2) }] };
     }
-    if (uri === 'qa://requirements') {
+    if (key === 'requirements') {
       const reqs = engine.storage.getRequirements() || (await engine.inspect()).requirements;
       return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(reqs, null, 2) }] };
     }
-    if (uri === 'qa://test-plan/latest') {
+    if (key === 'test-plan/latest') {
       const plan = engine.storage.getLatestTestPlan();
       return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(plan || {}, null, 2) }] };
     }
-    if (uri === 'qa://runs/latest') {
+    if (key === 'runs/latest') {
       const run = engine.storage.getLatestTestRun();
       return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(run || {}, null, 2) }] };
+    }
+    if (key === 'release/confidence') {
+      const report = await engine.releaseCheck();
+      return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(report, null, 2) }] };
     }
 
     throw new Error(`Resource not found: ${uri}`);

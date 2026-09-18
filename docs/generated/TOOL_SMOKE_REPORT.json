@@ -1,0 +1,294 @@
+{
+  "fixture": "D:\\projects\\VeloProve\\fixtures\\real-app-smoke",
+  "generatedAt": "2026-09-18T15:20:51.358Z",
+  "executed": [
+    {
+      "id": "fixture-server",
+      "ok": true,
+      "note": "ready :3456"
+    },
+    {
+      "id": "inspect",
+      "ok": true
+    },
+    {
+      "id": "doctor",
+      "ok": true
+    },
+    {
+      "id": "bootstrap",
+      "ok": true
+    },
+    {
+      "id": "plan",
+      "ok": true
+    },
+    {
+      "id": "generate",
+      "ok": true,
+      "note": "written=0"
+    },
+    {
+      "id": "verify",
+      "ok": true,
+      "note": "SUCCESS"
+    },
+    {
+      "id": "coverage",
+      "ok": true
+    },
+    {
+      "id": "release",
+      "ok": true
+    },
+    {
+      "id": "history",
+      "ok": true
+    },
+    {
+      "id": "changed",
+      "ok": true
+    },
+    {
+      "id": "audit",
+      "ok": true
+    },
+    {
+      "id": "scan-malware",
+      "ok": true
+    },
+    {
+      "id": "arch-graph",
+      "ok": true
+    },
+    {
+      "id": "feature-parity",
+      "ok": true
+    },
+    {
+      "id": "env-drift",
+      "ok": true
+    },
+    {
+      "id": "web-sec",
+      "ok": true
+    },
+    {
+      "id": "dedup",
+      "ok": true
+    },
+    {
+      "id": "security-scan",
+      "ok": true
+    },
+    {
+      "id": "security-plan",
+      "ok": true
+    },
+    {
+      "id": "export-postman",
+      "ok": true
+    },
+    {
+      "id": "mock-data",
+      "ok": true
+    },
+    {
+      "id": "bdd",
+      "ok": true
+    },
+    {
+      "id": "docker-env",
+      "ok": true
+    },
+    {
+      "id": "browser-matrix",
+      "ok": true
+    },
+    {
+      "id": "audit-contracts",
+      "ok": true
+    },
+    {
+      "id": "dead-assets",
+      "ok": true
+    },
+    {
+      "id": "db-audit",
+      "ok": true
+    },
+    {
+      "id": "a11y",
+      "ok": true
+    },
+    {
+      "id": "screen-reader",
+      "ok": true
+    },
+    {
+      "id": "fuzz-api",
+      "ok": true
+    },
+    {
+      "id": "learn-framework",
+      "ok": true
+    },
+    {
+      "id": "mock-gen",
+      "ok": true
+    },
+    {
+      "id": "quarantine",
+      "ok": true
+    },
+    {
+      "id": "remote-init",
+      "ok": true
+    },
+    {
+      "id": "record-scenario",
+      "ok": true
+    },
+    {
+      "id": "setup-ci",
+      "ok": true
+    },
+    {
+      "id": "flaky",
+      "ok": true
+    },
+    {
+      "id": "lint",
+      "ok": true
+    },
+    {
+      "id": "owasp-scan",
+      "ok": true
+    },
+    {
+      "id": "load-test",
+      "ok": true
+    },
+    {
+      "id": "request",
+      "ok": true
+    },
+    {
+      "id": "rate-limit",
+      "ok": true
+    },
+    {
+      "id": "chaos",
+      "ok": true
+    },
+    {
+      "id": "throttle",
+      "ok": true
+    },
+    {
+      "id": "url-tier",
+      "ok": true,
+      "note": "expanded against :3456"
+    },
+    {
+      "id": "cli-help-sample",
+      "ok": true,
+      "note": "15 commands"
+    }
+  ],
+  "tiers": {
+    "offline": [
+      "inspect",
+      "doctor",
+      "bootstrap",
+      "ask",
+      "learn-framework",
+      "fuzz-api",
+      "mutation-score",
+      "a11y",
+      "visual-diff",
+      "lint",
+      "contract-drift",
+      "audit",
+      "mock-gen",
+      "quarantine",
+      "coverage",
+      "plan",
+      "generate",
+      "run",
+      "changed",
+      "flaky",
+      "release",
+      "export-postman",
+      "mock-data",
+      "remote-init",
+      "record-scenario",
+      "db-snapshot",
+      "export-report",
+      "docker-env",
+      "browser-matrix",
+      "bdd",
+      "feature-parity",
+      "scan-malware",
+      "audit-contracts",
+      "screen-reader",
+      "db-audit",
+      "env-drift",
+      "arch-graph",
+      "security-scan",
+      "security-plan",
+      "web-sec",
+      "dedup",
+      "verify",
+      "history",
+      "init",
+      "setup-ci",
+      "sandbox",
+      "hook"
+    ],
+    "needsUrl": [
+      "explore",
+      "perf",
+      "run-collection",
+      "request",
+      "load-test",
+      "owasp-scan",
+      "graphql",
+      "ws-test",
+      "remote-connect",
+      "remote-audit",
+      "chaos",
+      "alert",
+      "ai-eval",
+      "throttle",
+      "rate-limit",
+      "security-run",
+      "ensure-dev"
+    ],
+    "needsState": [
+      "refine",
+      "run.get",
+      "diagnose",
+      "heal",
+      "suggestFix",
+      "stabilize",
+      "db-restore",
+      "bisect",
+      "replay",
+      "security-report",
+      "export-sarif"
+    ],
+    "destructive": [
+      "auto-fix",
+      "remediate-malware",
+      "dead-assets"
+    ],
+    "interactive": [
+      "mock-server",
+      "ui",
+      "tui",
+      "watch",
+      "mcp"
+    ]
+  }
+}

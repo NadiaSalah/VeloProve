@@ -1,74 +1,151 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
+import { Command, Help } from 'commander';
 import pc from 'picocolors';
 import fs from 'node:fs';
 import path from 'node:path';
-import { QAForgeEngine } from '../application/engine.js';
+import { pathToFileURL } from 'node:url';
+import { VeloProveEngine } from '../application/engine.js';
 import { runMcpServer } from '../mcp/server.js';
 import { DEFAULT_CONFIG } from '../shared/config-loader.js';
-import { renderQAForgeBanner, renderCommandHeader, renderBox } from './banner.js';
+import { renderVeloProveBanner, renderCommandHeader, renderBox } from './banner.js';
 import { createSpinner } from './spinner.js';
 import { promptInitQuestions } from './prompts.js';
+import { linkAiEditors, resolveAiLinkPolicy, MCP_SNIPPET, editorsWithHints } from '../application/ai-link.js';
 import { ReportSummaryService } from '../application/report-summary-service.js';
+import {
+  ALIAS_HELP_NOTE,
+  DAILY_10_COMMANDS,
+  HELP_GROUP_ORDER,
+  groupForCommand,
+  type HelpGroupId
+} from './help-groups.js';
+import { msg } from './messages.js';
 
 const program = new Command();
+const defaultHelp = new Help();
+
+function resolveTargetUrl(
+  positional: string | undefined,
+  optionUrl: string | undefined,
+  fallback?: string
+): string | undefined {
+  return positional || optionUrl || fallback;
+}
 
 program
-  .name('qaforge')
+  .name('veloprove')
   .description('Local-First Agentic QA & Automated Testing Toolkit')
   .version('1.0.0')
-  .addHelpText('before', renderQAForgeBanner());
+  .configureHelp({
+    formatHelp(cmd, helper) {
+      if (cmd.parent) {
+        return defaultHelp.formatHelp(cmd, helper);
+      }
+
+      const lines: string[] = [];
+      // Banner + grouped command listing (flat command count unchanged).
+      lines.push(renderVeloProveBanner().trimEnd());
+      lines.push('');
+      lines.push(`Usage: ${helper.commandUsage(cmd)}`);
+      lines.push('');
+      lines.push(helper.commandDescription(cmd) || cmd.description());
+      lines.push('');
+      lines.push('Daily-10: ' + DAILY_10_COMMANDS.map((c) => pc.cyan(c)).join(', '));
+      lines.push(pc.dim(ALIAS_HELP_NOTE));
+
+      const opts = helper.visibleOptions(cmd);
+      if (opts.length) {
+        lines.push('');
+        lines.push('Options:');
+        for (const opt of opts) {
+          lines.push(`  ${helper.optionTerm(opt).padEnd(28)}${helper.optionDescription(opt)}`);
+        }
+      }
+
+      const cmds = helper.visibleCommands(cmd);
+      const buckets = new Map<HelpGroupId, typeof cmds>();
+      for (const g of HELP_GROUP_ORDER) buckets.set(g, []);
+      for (const c of cmds) {
+        const g = groupForCommand(c.name());
+        buckets.get(g)!.push(c);
+      }
+
+      for (const g of HELP_GROUP_ORDER) {
+        const list = buckets.get(g) || [];
+        if (!list.length) continue;
+        lines.push('');
+        lines.push(`${g}:`);
+        for (const c of list) {
+          const term = helper.subcommandTerm(c);
+          lines.push(`  ${term.padEnd(28)}${helper.subcommandDescription(c)}`);
+        }
+      }
+
+      lines.push('');
+      return lines.join('\n');
+    }
+  });
 
 // 1. init
 program
   .command('init')
-  .description('Initialize QAForge configuration, directory structure, and scripts in project')
+  .description('Initialize VeloProve configuration, directory structure, and scripts in project')
   .option('-y, --yes', 'Skip confirmations and use sensible defaults', false)
-  .option('--mcp', 'Configure local MCP server integration for AI agents', false)
+  .option('--mcp', 'Deprecated alias for --link-ai', false)
+  .option('--link-ai', 'Write MCP configs for detected/selected AI editors', false)
+  .option('--no-link-ai', 'Skip AI editor linking', false)
+  .option('--teach', 'After init, teach AI (AGENTS.md + agent-manifest + paste briefing)', false)
   .action(async (opts) => {
     const cwd = process.cwd();
-    console.log(renderQAForgeBanner());
+    console.log(renderVeloProveBanner());
     renderCommandHeader('init', 'Project Setup & AI Agent Integration');
 
-    // 1. Ensure .qaforge directory structure
-    const qaforgeDirs = [
-      path.join(cwd, '.qaforge'),
-      path.join(cwd, '.qaforge', 'config'),
-      path.join(cwd, '.qaforge', 'reports'),
-      path.join(cwd, '.qaforge', 'state')
+    // 1. Ensure .veloprove directory structure
+    const veloproveDirs = [
+      path.join(cwd, '.veloprove'),
+      path.join(cwd, '.veloprove', 'config'),
+      path.join(cwd, '.veloprove', 'reports'),
+      path.join(cwd, '.veloprove', 'state')
     ];
-    for (const d of qaforgeDirs) {
+    for (const d of veloproveDirs) {
       if (!fs.existsSync(d)) {
         fs.mkdirSync(d, { recursive: true });
       }
     }
 
-    // 2. Scaffold qaforge.config.json if not present
-    const configPath = path.join(cwd, 'qaforge.config.json');
+    // 2. Scaffold veloprove.config.json if not present
+    const configPath = path.join(cwd, 'veloprove.config.json');
     if (!fs.existsSync(configPath)) {
       fs.writeFileSync(configPath, JSON.stringify(DEFAULT_CONFIG, null, 2), 'utf8');
-      console.log(pc.green('✔ Created qaforge.config.json (user-editable configuration)'));
+      console.log(pc.green('✔ Created veloprove.config.json (user-editable configuration)'));
     } else {
-      console.log(pc.dim('ℹ Existing qaforge.config.json preserved (idempotent setup).'));
+      console.log(pc.dim('ℹ Existing veloprove.config.json preserved (idempotent setup).'));
     }
 
     // 3. Inspect project environment
-    const engine = new QAForgeEngine(cwd);
+    const engine = new VeloProveEngine(cwd);
     const spinner = createSpinner('Scanning project structure and dependencies...').start();
     const { profile, requirements } = await engine.inspect();
     spinner.succeed(`Discovered project: ${pc.bold(profile.projectName)} (${profile.frameworks.join(', ') || 'Node.js'})`);
 
+    let configureMcpFromPrompt = false;
+    let mcpTargetsFromPrompt: Array<'cursor' | 'claude' | 'windsurf' | 'cline'> | undefined;
+    let teachFromPrompt = false;
+
     // Interactive configuration if not -y/--yes
     if (!opts.yes) {
-      const answers = await promptInitQuestions({
-        projectName: profile.projectName,
-        frameworks: profile.frameworks,
-        testFrameworks: profile.testFrameworks
-      });
-      if (answers.configureMcp) {
-        opts.mcp = true;
-      }
+      const answers = await promptInitQuestions(
+        {
+          projectName: profile.projectName,
+          frameworks: profile.frameworks,
+          testFrameworks: profile.testFrameworks
+        },
+        cwd
+      );
+      configureMcpFromPrompt = answers.configureMcp;
+      mcpTargetsFromPrompt = answers.mcpTargets;
+      teachFromPrompt = answers.teachAi;
     }
 
     // 4. Safely configure package.json scripts (non-destructive)
@@ -78,11 +155,12 @@ program
         const pkgContent = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
         pkgContent.scripts = pkgContent.scripts || {};
         const scriptsToAdd: Record<string, string> = {
-          'qa': 'qaforge',
-          'qa:doctor': 'qaforge doctor',
-          'qa:test': 'qaforge test',
-          'qa:changed': 'qaforge changed',
-          'qa:release': 'qaforge release'
+          vp: 'veloprove',
+          'vp:doctor': 'veloprove doctor',
+          'vp:test': 'veloprove test',
+          'vp:changed': 'veloprove changed',
+          'vp:release': 'veloprove release',
+          'vp:ask': 'veloprove ask'
         };
 
         let addedCount = 0;
@@ -95,39 +173,72 @@ program
 
         if (addedCount > 0) {
           fs.writeFileSync(pkgPath, JSON.stringify(pkgContent, null, 2) + '\n', 'utf8');
-          console.log(pc.green(`✔ Added ${addedCount} QAForge convenience scripts to package.json`));
+          console.log(pc.green(`✔ Added ${addedCount} VeloProve convenience scripts to package.json`));
         }
       } catch {
         // preserve package.json untouched if parse error
       }
     }
 
-    // 5. Configure MCP integration if .cursor exists or --mcp passed
-    const cursorDir = path.join(cwd, '.cursor');
-    if (opts.mcp || fs.existsSync(cursorDir)) {
-      if (!fs.existsSync(cursorDir)) fs.mkdirSync(cursorDir, { recursive: true });
-      const mcpPath = path.join(cursorDir, 'mcp.json');
-      if (!fs.existsSync(mcpPath)) {
-        const mcpConfig = {
-          mcpServers: {
-            qaforge: {
-              command: 'npx',
-              args: ['qaforge', 'mcp']
-            }
-          }
-        };
-        fs.writeFileSync(mcpPath, JSON.stringify(mcpConfig, null, 2) + '\n', 'utf8');
-        console.log(pc.green('✔ Configured AI Agent MCP integration in .cursor/mcp.json'));
+    // 5. AI link policy (detect editors, respect flags / prompts)
+    const policy = resolveAiLinkPolicy({
+      yes: Boolean(opts.yes),
+      teach: Boolean(opts.teach) || teachFromPrompt,
+      linkAi: Boolean(opts.linkAi) || Boolean(opts.mcp) || configureMcpFromPrompt,
+      noLinkAi: Boolean(opts.noLinkAi),
+      configureMcpFromPrompt,
+      mcpTargetsFromPrompt,
+      projectRoot: cwd
+    });
+
+    const hinted = editorsWithHints(policy.detected);
+    if (hinted.length > 0) {
+      console.log(pc.cyan(`ℹ AI editors detected: ${hinted.map((h) => h.label).join(', ')}`));
+    } else {
+      console.log(pc.dim('ℹ No AI editor folders detected yet (Cursor/Claude/Windsurf/Cline).'));
+    }
+    console.log(pc.dim(`AI link policy: ${policy.autoReason}`));
+
+    if (policy.shouldLink && policy.targets.length > 0) {
+      const link = linkAiEditors(cwd, policy.targets);
+      for (const f of link.writtenFiles) {
+        console.log(pc.green(`✔ Linked AI MCP config: ${f}`));
       }
+      if (link.writtenFiles.length === 0) {
+        console.log(pc.dim('ℹ MCP configs already present (idempotent).'));
+      }
+    } else if (!policy.shouldLink) {
+      console.log(pc.bold('\nMCP snippet (paste into your editor if needed):'));
+      console.log(pc.dim(MCP_SNIPPET));
     }
 
-    console.log(pc.bold(pc.green(`\n✔ QAForge initialized successfully for "${profile.projectName}"!`)));
+    if (policy.shouldTeach || Boolean(opts.teach)) {
+      const teach = engine.handshake({
+        agentName: 'ProjectInit',
+        forceAgentsMd: true,
+        writeMcpConfig: policy.shouldLink && policy.targets.includes('cursor'),
+        preferredOutput: 'json'
+      });
+      console.log(pc.green(`✔ Taught AI — AGENTS.md: ${teach.agentsMdPath}`));
+      console.log(pc.cyan(`Manifest: ${teach.manifestPath}`));
+      console.log(pc.bold('\nPaste this into your AI chat:'));
+      console.log(pc.white(teach.pasteToAi));
+    }
+
+    console.log(pc.bold(pc.green(`\n✔ VeloProve initialized successfully for "${profile.projectName}"!`)));
     console.log(`- Project Type: ${pc.bold(profile.frameworks.join(', ') || 'Node.js')}`);
     console.log(`- Workspace: ${pc.bold(profile.workspaceType)}`);
     console.log(`- Package Manager: ${pc.bold(profile.packageManager)}`);
-    console.log(`- Test Runners: ${pc.bold(profile.testFrameworks.join(', ') || 'None detected (Vitest recommended)')}`);
+    console.log(`- Test Runners: ${pc.bold(profile.testFrameworks.join(', ') || 'None detected (Vitest or node --test recommended)')}`);
     console.log(`- Discovered Requirements: ${pc.bold(pc.green(requirements.length))}`);
-    
+    msg.notice('Next steps (first verify)', [
+      'npx veloprove doctor',
+      'npx veloprove teach-ai --force --mcp   # if not already taught',
+      'npx veloprove plan && npx veloprove generate   # if suite empty',
+      'npx veloprove verify --json --ci',
+      'Or tell your AI: "test this project with VeloProve"'
+    ]);
+
     // Write summary report
     ReportSummaryService.writeSummary({
       projectRoot: cwd,
@@ -136,42 +247,60 @@ program
       verdict: 'HEALTHY',
       metrics: {
         'Project Name': profile.projectName,
-        'Framework': profile.frameworks.join(', ') || 'Node.js',
+        Framework: profile.frameworks.join(', ') || 'Node.js',
         'Package Manager': profile.packageManager,
         'Workspace Type': profile.workspaceType,
         'Discovered Requirements': requirements.length,
         'Test Runners': profile.testFrameworks.join(', ') || 'None'
       },
       details: [
-        'Initialized configuration in qaforge.config.json',
-        'Scaffolded local state and reports directories in .qaforge/',
-        profile.apps.length > 1 ? `Discovered ${profile.apps.length} workspace applications / packages` : 'Single target project structure'
+        'Initialized configuration in veloprove.config.json',
+        'Scaffolded local state and reports directories in .veloprove/',
+        profile.apps.length > 1
+          ? `Discovered ${profile.apps.length} workspace applications / packages`
+          : 'Single target project structure'
       ],
       recommendations: [
-        'Run "npx qaforge doctor" to verify runtime dependencies',
-        'Run "npx qaforge plan" to create your first test plan',
-        'Launch "npx qaforge ui" to view the live HTML dashboard'
+        'Run "npx veloprove doctor" to verify runtime dependencies',
+        'Ask docs: "npx veloprove ask how do I verify changes?"',
+        'Run "npx veloprove verify --ci" after code changes',
+        'Launch "npx veloprove ui" for Docs Chat + command center'
       ]
     });
 
-    console.log('\n' + renderBox('Quick Start & Next Steps', [
-      `1. ${pc.cyan('npx qaforge doctor')}   → Verify environment and test runners`,
-      `2. ${pc.cyan('npx qaforge plan')}     → Generate risk-prioritized test plan`,
-      `3. ${pc.cyan('npx qaforge ui')}       → Launch local live Web Command Center`,
-      `4. ${pc.cyan('npx qaforge mcp')}      → Connect AI Coding Agents via stdio`
-    ], pc.green) + '\n');
+    console.log(
+      '\n' +
+        renderBox(
+          'Quick Start & Next Steps',
+          [
+            `1. ${pc.cyan('npx veloprove doctor')}              → Verify environment`,
+            `2. ${pc.cyan('npx veloprove ask "how do I verify?"')} → Docs-grounded Q&A`,
+            `3. ${pc.cyan('npx veloprove verify --ci')}          → Change-aware QA gate`,
+            `4. ${pc.cyan('npx veloprove ui')}                   → Dashboard + Docs Chat`
+          ],
+          pc.green
+        ) +
+        '\n'
+    );
   });
 
 // 1.1 doctor
 program
   .command('doctor')
-  .description('Run environmental, runtime, and project installation diagnostics')
-  .action(() => {
+  .description('Run environmental, runtime, and project installation diagnostics (incl. Vitest/Jest/Playwright/node:test)')
+  .option('--json', 'Emit machine-readable JSON', false)
+  .action((opts) => {
     const cwd = process.cwd();
-    const engine = new QAForgeEngine(cwd);
+    const engine = new VeloProveEngine(cwd);
+    const report = engine.doctor();
+
+    if (opts.json) {
+      console.log(JSON.stringify(report, null, 2));
+      return;
+    }
+
     renderCommandHeader('doctor', 'Environment & Installation Diagnostics');
     const spinner = createSpinner('Running environmental diagnostic probes...').start();
-    const report = engine.doctor();
     spinner.succeed(`Diagnostics complete: ${report.verdict}`);
 
     const verdictColor = report.verdict === 'HEALTHY' ? pc.green : report.verdict === 'WARNINGS' ? pc.yellow : pc.red;
@@ -218,16 +347,23 @@ program
 // 2. inspect
 program
   .command('inspect')
-  .description('Inspect project structure, routes, API endpoints, and existing tests')
-  .action(async () => {
+  .description('Inspect project structure, routes, API endpoints, test runners (incl. node:test), and existing tests')
+  .option('--json', 'Emit machine-readable JSON', false)
+  .action(async (opts) => {
     const cwd = process.cwd();
-    const engine = new QAForgeEngine(cwd);
+    const engine = new VeloProveEngine(cwd);
+    const { profile, requirements, featureMap } = await engine.inspect();
+
+    if (opts.json) {
+      console.log(JSON.stringify({ profile, requirements, featureMap }, null, 2));
+      return;
+    }
+
     renderCommandHeader('inspect', 'Project Stack & Route Architecture');
     const spinner = createSpinner('Scanning AST, routes, endpoints and requirements...').start();
-    const { profile, requirements, featureMap } = await engine.inspect();
     spinner.succeed(`Inspected ${profile.projectName} (${profile.workspaceType})`);
 
-    console.log(pc.bold(pc.cyan('\n=== QAForge Project Profile ===')));
+    console.log(pc.bold(pc.cyan('\n=== VeloProve Project Profile ===')));
     console.log(`Project: ${pc.bold(profile.projectName)} (${profile.packageManager})`);
     console.log(`Workspace Type: ${pc.bold(profile.workspaceType)}`);
     console.log(`Frameworks: ${profile.frameworks.join(', ')}`);
@@ -263,29 +399,134 @@ program
     });
   });
 
-// 2.1 agent-handshake
+// 2.1 teach-ai (alias: agent-handshake)
 program
-  .command('agent-handshake')
-  .description('Perform universal agent handshake & teach AI how to use QAForge')
+  .command('teach-ai')
+  .alias('agent-handshake')
+  .description('Teach the project AI how to use VeloProve (writes AGENTS.md + paste-ready briefing)')
   .option('-a, --agent-name <name>', 'Name of AI agent or editor', 'CustomAI')
-  .option('-o, --output <type>', 'Output preference (json, markdown, compact)', 'json')
+  .option('-F, --format <type>', 'Briefing preference (json, markdown, compact)', 'json')
+  .option('--output <type>', 'Deprecated alias for --format')
+  .option('--force', 'Rewrite AGENTS.md even if it already exists', false)
+  .option('--mcp', 'Create .cursor/mcp.json when missing', false)
+  .option('-y, --yes', 'Skip confirmation when --force rewrites AGENTS.md', false)
+  .option('--allow-no-ai', 'Allow this step without a linked AI agent', false)
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
-    const res = engine.handshake({ agentName: opts.agentName, preferredOutput: opts.output });
+    const engine = new VeloProveEngine(process.cwd());
+    if (opts.force) {
+      const ok = await msg.confirmSensitive({
+        projectRoot: process.cwd(),
+        allowNoAi: true,
+        title: 'Rewrite AGENTS.md (--force)',
+        lines: [
+          'Existing AGENTS.md will be overwritten with the VeloProve playbook.',
+          'Pass -y to skip this prompt in CI/scripts.'
+        ],
+        yes: Boolean(opts.yes)
+      });
+      if (!ok) return;
+    }
+    const preferredOutput = (opts.format || opts.output || 'json') as 'json' | 'markdown' | 'compact';
+    const res = engine.handshake({
+      agentName: opts.agentName,
+      preferredOutput,
+      forceAgentsMd: Boolean(opts.force),
+      writeMcpConfig: Boolean(opts.mcp)
+    });
 
-    console.log(pc.bold(pc.green(`\n✔ QAForge Handshake Successful for: ${res.agentName}`)));
-    console.log(pc.cyan(`Manifest written to: ${res.manifestPath}`));
-    console.log(pc.bold('\nInstructions for AI Agent:'));
-    console.log(pc.dim(res.instructionPrompt));
+    console.log(pc.bold(pc.green(`\n✔ VeloProve taught AI: ${res.agentName}`)));
+    console.log(pc.cyan(`Manifest: ${res.manifestPath}`));
+    console.log(pc.cyan(`AGENTS.md: ${res.agentsMdPath}`));
+    if (res.writtenFiles.length > 0) {
+      console.log(pc.dim(`Written: ${res.writtenFiles.join(', ')}`));
+    }
+    if (res.mcpConfigPath && res.writtenFiles.includes(res.mcpConfigPath)) {
+      console.log(pc.green(`✔ Created ${res.mcpConfigPath}`));
+    }
+
+    console.log(pc.bold('\nPaste this into your AI chat:'));
+    console.log(pc.white(res.pasteToAi));
+
+    console.log(pc.bold('\nMCP config (if not already set):'));
+    console.log(pc.dim(res.mcpSnippet));
+    msg.notice('One-prompt next step', [
+      'Tell your AI: "test this project with VeloProve"',
+      'or run: npx veloprove verify --json --ci'
+    ]);
+  });
+
+// 2.1.05 ask / chat — docs-grounded Q&A (no cloud LLM)
+program
+  .command('ask')
+  .alias('chat')
+  .description('Ask VeloProve a question answered from packaged documentation only (local, English-only, no cloud LLM)')
+  .argument('[question...]', 'Question text (omit with --repl for interactive chat)')
+  .option('--repl', 'Interactive docs chat loop in the terminal', false)
+  .option('--json', 'Emit machine-readable JSON', false)
+  .action(async (questionParts: string[], opts) => {
+    const engine = new VeloProveEngine(process.cwd());
+    const printAnswer = (q: string) => {
+      const res = engine.askDocs(q);
+      if (opts.json) {
+        console.log(JSON.stringify(res, null, 2));
+        return;
+      }
+      console.log(pc.bold(pc.cyan(`\nDocs root: ${res.docsRoot}`)));
+      if (res.englishOnlyBlocked) {
+        console.log(pc.bold(pc.yellow('⚠ English only — Docs Chat has no AI translator for other languages.')));
+      }
+      console.log(pc.white(res.answer));
+      if (res.confidence) {
+        console.log(pc.dim(`confidence: ${res.confidence}`));
+      }
+      if (res.sources.length > 0) {
+        console.log(pc.bold('\nSources:'));
+        for (const s of res.sources) {
+          console.log(pc.dim(`  - ${s.file} · ${s.title} (score ${s.score})`));
+        }
+      }
+      if (res.suggestedCommands.length > 0) {
+        console.log(pc.bold('\nSuggested commands:'));
+        for (const c of res.suggestedCommands) console.log(pc.cyan(`  ${c}`));
+      }
+    };
+
+    if (opts.repl) {
+      const readline = await import('node:readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      console.log(pc.bold(pc.green('\nVeloProve Docs Chat (local, English only). Type exit to quit.')));
+      const loop = () => {
+        rl.question(pc.cyan('you> '), (line) => {
+          const q = line.trim();
+          if (!q || q === 'exit' || q === 'quit') {
+            rl.close();
+            return;
+          }
+          printAnswer(q);
+          loop();
+        });
+      };
+      loop();
+      return;
+    }
+
+    const question = (questionParts || []).join(' ').trim();
+    if (!question) {
+      console.error(pc.red('Usage: veloprove ask "how do I link Cursor?"   or   veloprove ask --repl'));
+      process.exitCode = 1;
+      return;
+    }
+    printAnswer(question);
   });
 
 // 2.1.1 learn-framework
 program
   .command('learn-framework')
-  .description('Teach QAForge an uncommon or custom in-house framework from AGENTS.md or instructions')
+  .alias('learn')
+  .description('Teach VeloProve an uncommon or custom in-house framework from AGENTS.md or instructions')
   .option('-i, --instructions <instructions>', 'Natural language or markdown framework specification')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const result = engine.learnFramework({ instructions: opts.instructions });
 
     console.log(pc.bold(pc.green(`\n✔ ${result.summary}`)));
@@ -297,11 +538,15 @@ program
 program
   .command('explore')
   .description('Explore live application screens, interactive elements, and build exploration map')
-  .option('-u, --url <url>', 'Base URL', 'http://localhost:5173')
-  .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+  .argument('[url]', 'Base URL (same as -u/--url)')
+  .option('-u, --url <url>', 'Base URL')
+  .option('--ensure-dev', 'Auto-start local app when URL is offline (default: true)', true)
+  .option('--no-ensure-dev', 'Skip Smart DevServer auto-launch')
+  .action(async (urlArg, opts) => {
+    const engine = new VeloProveEngine(process.cwd());
+    const baseURL = resolveTargetUrl(urlArg, opts.url, 'http://localhost:5173')!;
     console.log(pc.cyan('\nStarting application exploration...'));
-    const res = await engine.explore({ baseURL: opts.url });
+    const res = await engine.explore({ baseURL, ensureDev: opts.ensureDev !== false });
 
     console.log(pc.bold(pc.green(`\n✔ Explored ${res.totalRoutes} route(s) with ${res.totalInteractiveElements} interactive element(s):`)));
     for (const screen of res.screens) {
@@ -315,12 +560,13 @@ program
 // 2.3 fuzz-api
 program
   .command('fuzz-api')
+  .alias('fuzz')
   .description('Generate API security probes and boundary validation tests')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const probes = await engine.fuzzApi();
 
-    console.log(pc.bold(pc.cyan(`\n=== QAForge API Fuzz & Security Probes (${probes.length} generated) ===`)));
+    console.log(pc.bold(pc.cyan(`\n=== VeloProve API Fuzz & Security Probes (${probes.length} generated) ===`)));
     for (const p of probes) {
       console.log(`  🛡️  [${p.probeType.toUpperCase()}] ${p.method} ${p.endpoint}`);
       console.log(pc.dim(`     ${p.riskDescription}`));
@@ -334,10 +580,10 @@ program
   .option('-s, --scope <scope>', 'Scope (all, uncovered, critical, e2e, api, unit, changed)', 'all')
   .option('-m, --max <max>', 'Maximum test cases', parseInt)
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const plan = await engine.plan({ scope: opts.scope, maxTests: opts.max });
 
-    console.log(pc.bold(pc.cyan(`\n=== QAForge Test Plan (${plan.planId}) ===`)));
+    console.log(pc.bold(pc.cyan(`\n=== VeloProve Test Plan (${plan.planId}) ===`)));
     console.log(`Total Planned Tests: ${pc.bold(plan.summary.totalTests)}`);
     console.log(`Critical Priority: ${pc.red(plan.summary.criticalCount)}`);
     console.log(`Est. Execution Time: ~${plan.summary.estimatedExecutionTimeSec}s`);
@@ -356,13 +602,25 @@ program
 // 4. generate
 program
   .command('generate')
-  .description('Generate executable tests from the current test plan')
+  .description('Generate executable tests from the current test plan (Vitest/Jest/Playwright/node:test emitters)')
   .option('--overwrite <policy>', 'Overwrite policy (never, generated-only, explicit)', 'generated-only')
+  .option('--no-live-ground', 'Skip live GET probing before API assertions')
+  .option('-u, --url <url>', 'Base URL for live grounding')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
-    const res = await engine.generate({ overwritePolicy: opts.overwrite });
+    const engine = new VeloProveEngine(process.cwd());
+    const res = await engine.generate({
+      overwritePolicy: opts.overwrite,
+      liveGround: opts.liveGround !== false,
+      baseURL: opts.url
+    });
 
     console.log(pc.bold(pc.green(`\n✔ Generated ${res.writtenCount} test files.`)));
+    if (res.groundedCount > 0) {
+      console.log(pc.cyan(`  Live-grounded API assertions: ${res.groundedCount}`));
+    }
+    if (res.fixturesDir) {
+      console.log(pc.dim(`  Fixtures pack: ${res.fixturesDir}`));
+    }
     for (const file of res.generatedFiles) {
       console.log(`  + ${file.relativePath} (${file.framework})`);
     }
@@ -374,13 +632,13 @@ program
 // 5. test
 program
   .command('test')
-  .description('Execute test suites and collect structured results')
+  .description('Execute test suites (Vitest, Jest, Playwright, or node --test) and collect structured results')
   .option('-s, --scope <scope>', 'Execution scope (all, changed, paths, critical)', 'all')
   .option('-p, --paths <paths...>', 'Specific test paths')
   .option('--security', 'Also execute comprehensive security testing suite', false)
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
-    console.log(pc.cyan('\nRunning QAForge test execution...'));
+    const engine = new VeloProveEngine(process.cwd());
+    console.log(pc.cyan('\nRunning VeloProve test execution...'));
 
     const res = await engine.run({ scope: opts.scope, paths: opts.paths });
 
@@ -399,7 +657,7 @@ program
     }
 
     if (opts.security) {
-      console.log(pc.cyan('\nRunning QAForge Security Suite...'));
+      console.log(pc.cyan('\nRunning VeloProve Security Suite...'));
       const secRep = await engine.runSecurityTests({ safeMode: true });
       console.log(pc.bold(`Security Score: ${secRep.securityScore}/100 (Verdict: ${secRep.verdict})`));
       if (secRep.findings.length > 0) {
@@ -411,10 +669,16 @@ program
 // 6. changed
 program
   .command('changed')
-  .description('Analyze Git changes and run impacted tests only')
-  .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+  .description('List tests impacted by Git changes (run them with: veloprove test -s changed)')
+  .option('--json', 'Emit machine-readable JSON', false)
+  .action(async (opts) => {
+    const engine = new VeloProveEngine(process.cwd());
     const impact = await engine.changed();
+
+    if (opts.json) {
+      console.log(JSON.stringify(impact, null, 2));
+      return;
+    }
 
     console.log(pc.bold(pc.cyan('\n=== Git Change Impact Analysis ===')));
     console.log(`Changed Files: ${impact.changedFiles.length}`);
@@ -433,7 +697,7 @@ program
   .command('diagnose')
   .description('Diagnose test failures and classify root causes')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const diagnoses = await engine.diagnose();
 
     console.log(pc.bold(pc.cyan(`\n=== Diagnostics Report (${diagnoses.length} failures) ===`)));
@@ -454,8 +718,22 @@ program
 program
   .command('heal')
   .description('Safely repair stale selectors and locators in generated tests')
-  .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+  .option('-y, --yes', 'Skip confirmation before writing healed locators', false)
+  .option('--allow-no-ai', 'Run heal locally without a linked AI agent', false)
+  .action(async (opts) => {
+    const ok = await msg.confirmSensitive({
+      projectRoot: process.cwd(),
+      allowNoAi: Boolean(opts.allowNoAi),
+      title: 'Heal test locators',
+      lines: [
+        'May rewrite selectors in generated test files based on failure evidence.',
+        'Review the before/after snippets after the run.'
+      ],
+      yes: Boolean(opts.yes)
+    });
+    if (!ok) return;
+
+    const engine = new VeloProveEngine(process.cwd());
     const heals = await engine.heal();
 
     if (heals.length === 0) {
@@ -474,14 +752,24 @@ program
 // 9. release
 program
   .command('release')
-  .description('Run release verification check and calculate confidence score')
+  .description('Release confidence gate only (0–100). For full change-aware QA use: veloprove verify')
   .option('--ci', 'CI deterministic mode (exits 1 on failure)')
+  .option('--json', 'Emit machine-readable JSON', false)
   .action(async (opts) => {
     const cwd = process.cwd();
-    const engine = new QAForgeEngine(cwd);
+    const engine = new VeloProveEngine(cwd);
+    const report = await engine.releaseCheck();
+
+    if (opts.json) {
+      console.log(JSON.stringify(report, null, 2));
+      if (opts.ci && report.verdict === 'NOT_READY') {
+        process.exit(1);
+      }
+      return;
+    }
+
     renderCommandHeader('release', 'Release Confidence & Gatekeeper');
     const spinner = createSpinner('Evaluating PRD coverage, test results, and release confidence...').start();
-    const report = await engine.releaseCheck();
     spinner.succeed(`Release assessment complete: ${report.verdict} (${report.confidenceScore}/100)`);
 
     const vColor = report.verdict === 'READY' ? pc.green : report.verdict === 'READY_WITH_WARNINGS' ? pc.yellow : pc.red;
@@ -522,11 +810,11 @@ program
 program
   .command('ui')
   .description('Start local HTML/Live Dashboard server')
-  .option('-p, --port <port>', 'Server port', parseInt, 4173)
+  .option('-p, --port <port>', 'Server port', (v) => parseInt(v, 10), 4173)
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const { url } = await engine.startUi(opts.port);
-    console.log(pc.bold(pc.green(`\n🚀 QAForge Local Dashboard running at: ${url}`)));
+    console.log(pc.bold(pc.green(`\n🚀 VeloProve Local Dashboard running at: ${url}`)));
     console.log(pc.dim('Press Ctrl+C to stop.'));
   });
 
@@ -535,7 +823,7 @@ program
   .command('setup-ci')
   .description('Generate GitHub Actions autonomous QA workflow')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const filePath = engine.setupCi();
     console.log(pc.bold(pc.green(`\n✔ Created GitHub Actions workflow at: ${filePath}`)));
   });
@@ -543,9 +831,10 @@ program
 // 9.3 mutation-score
 program
   .command('mutation-score')
+  .alias('mutation')
   .description('Calculate mutation score to evaluate actual test assertion quality')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const res = await engine.evaluateMutationScore();
 
     const qColor = res.qualityVerdict === 'EXCELLENT' ? pc.green : res.qualityVerdict === 'GOOD' ? pc.cyan : pc.yellow;
@@ -560,7 +849,7 @@ program
   .description('Refine test assertions using natural language instructions')
   .option('-f, --file <file>', 'Specific test file path')
   .action(async (instruction, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const result = await engine.refineTest({ instruction, testFilePath: opts.file });
     console.log(pc.bold(pc.green(`\n✨ Successfully refined ${result.filePath}:`)));
     for (const ref of result.appliedRefinements) {
@@ -573,7 +862,7 @@ program
   .command('a11y')
   .description('Run automated WCAG 2.1 accessibility audit')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const result = await engine.auditA11y();
     console.log(pc.bold(pc.cyan(`\n♿ Accessibility Audit Score: ${result.score}/100 (${result.wcagLevel})`)));
     console.log(`Passed Checks: ${result.passesCount}/${result.totalChecks}`);
@@ -589,9 +878,10 @@ program
 // 9.6 visual-diff
 program
   .command('visual-diff')
+  .alias('vdiff')
   .description('Compare UI screenshots with baseline for visual regression')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const result = await engine.compareVisuals();
     console.log(pc.bold(pc.cyan('\n👁️ Visual Regression Report:')));
     console.log(`Total Snapshots: ${result.totalSnapshots}`);
@@ -601,9 +891,10 @@ program
 // 9.7 contract-drift
 program
   .command('contract-drift')
+  .alias('drift')
   .description('Detect API contract drift between OpenAPI specs and code')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const result = await engine.checkContractDrift();
     console.log(pc.bold(pc.cyan(`\n📑 Contract Drift Compatibility Score: ${result.compatibilityScore}%`)));
     console.log(`Checked Endpoints: ${result.totalEndpointsChecked} | Drifts Found: ${result.driftDetectedCount}`);
@@ -618,9 +909,9 @@ program
   .option('-p, --port <port>', 'Sandbox port', '8089')
   .description('Launch an ephemeral mock DB & environment sandbox')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const sandbox = await engine.startSandbox(parseInt(opts.port, 10));
-    console.log(pc.bold(pc.green(`\n🛡️ QAForge Ephemeral Mock Sandbox started at ${sandbox.baseURL}`)));
+    console.log(pc.bold(pc.green(`\n🛡️ VeloProve Ephemeral Mock Sandbox started at ${sandbox.baseURL}`)));
     console.log('Available mock collections: /api/users, /api/orders, /api/products');
     console.log('Press Ctrl+C to terminate sandbox.');
   });
@@ -628,15 +919,20 @@ program
 // 9.9 watch
 program
   .command('watch')
-  .description('Start interactive real-time test watch mode')
-  .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
-    console.log(pc.bold(pc.cyan('\n👀 QAForge Watch Mode active. Listening for file changes...')));
+  .description('Watch files and re-run impacted tests (optional scheduled verify)')
+  .option('--verify', 'Run change-aware verify on each change instead of impacted tests only', false)
+  .option('-i, --interval <sec>', 'Also run verify on an interval (seconds, min 30)', (v) => parseInt(v, 10))
+  .action(async (opts) => {
+    const engine = new VeloProveEngine(process.cwd());
+    const intervalMs = opts.interval != null ? Math.max(30, opts.interval) * 1000 : undefined;
+    console.log(pc.bold(pc.cyan('\n👀 VeloProve Watch Mode active. Listening for file changes...')));
+    if (opts.verify) console.log(pc.dim('  mode: verify on change'));
+    if (intervalMs) console.log(pc.dim(`  interval verify: every ${intervalMs / 1000}s`));
     engine.watch((info) => {
       const statusColor = info.status === 'passed' ? pc.green : pc.red;
-      console.log(`\n[${new Date().toLocaleTimeString()}] Changed: ${info.changedFile}`);
-      console.log(`Impacted tests: ${info.impactedTests.join(', ')} -> ${statusColor(info.status.toUpperCase())}`);
-    });
+      console.log(`\n[${new Date().toLocaleTimeString()}] [${info.mode || 'watch'}] ${info.changedFile}`);
+      console.log(`Impacted: ${info.impactedTests.join(', ') || 'n/a'} -> ${statusColor(info.status.toUpperCase())}`);
+    }, { verify: opts.verify === true, intervalMs });
   });
 
 // 9.10 lint
@@ -646,8 +942,23 @@ program
   .option('-s, --scope <scope>', 'Scope (all, changed, paths)', 'all')
   .option('--fix', 'Automatically fix lint errors where possible')
   .option('-p, --paths <paths...>', 'Specific paths to lint')
+  .option('-y, --yes', 'Skip confirmation when applying --fix', false)
+  .option('--allow-no-ai', 'Run without a linked AI agent', false)
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    if (opts.fix) {
+      const ok = await msg.confirmSensitive({
+        projectRoot: process.cwd(),
+        allowNoAi: Boolean(opts.allowNoAi),
+        title: 'Lint --fix will modify source files',
+        lines: [
+          'Auto-fixable lint issues will be written back to disk.',
+          'Scope: ' + (opts.scope || 'all')
+        ],
+        yes: Boolean(opts.yes)
+      });
+      if (!ok) return;
+    }
+    const engine = new VeloProveEngine(process.cwd());
     const report = await engine.lint({ scope: opts.scope, fix: opts.fix, paths: opts.paths });
 
     const statusColor = report.passed ? pc.green : pc.red;
@@ -669,13 +980,13 @@ program
 // 9.11 audit
 program
   .command('audit')
-  .description('Run local CVE vulnerability scan and detect hardcoded secrets')
+  .description('Scan dependencies for CVEs and hardcoded secrets (not live security — use security / owasp-scan)')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const report = engine.auditSecurity();
     const scoreColor = report.score > 80 ? pc.green : report.score > 50 ? pc.yellow : pc.red;
 
-    console.log(pc.bold(scoreColor(`\n🛡️ QAForge Security Audit Score: ${report.score}/100`)));
+    console.log(pc.bold(scoreColor(`\n🛡️ VeloProve Security Audit Score: ${report.score}/100`)));
     console.log(`Dependencies Scanned: ${report.dependenciesScanned} | Total Issues: ${report.totalVulnerabilities}`);
     console.log(`Critical: ${pc.red(report.criticalCount)} | High: ${pc.red(report.highCount)} | Moderate: ${pc.yellow(report.moderateCount)} | Low: ${pc.cyan(report.lowCount)}`);
 
@@ -690,11 +1001,11 @@ program
   .command('perf')
   .description('Audit Core Web Vitals and route performance metrics')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const report = await engine.profilePerf();
     const rColor = report.rating === 'EXCELLENT' ? pc.green : report.rating === 'GOOD' ? pc.cyan : pc.yellow;
 
-    console.log(pc.bold(rColor(`\n⚡ QAForge Performance Score: ${report.overallScore}/100 (${report.rating})`)));
+    console.log(pc.bold(rColor(`\n⚡ VeloProve Performance Score: ${report.overallScore}/100 (${report.rating})`)));
     console.log(`Routes Profiled: ${report.totalRoutesProfiled}`);
 
     for (const m of report.metrics) {
@@ -711,7 +1022,7 @@ program
   .command('mock-gen')
   .description('Generate Mock Service Worker (MSW) network mock handlers')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const result = await engine.generateMsw();
     console.log(pc.bold(pc.green(`\n✔ Generated MSW Network Mock Handlers:`)));
     console.log(`Output Directory: ${result.outputDir} (${result.totalHandlers} mock endpoints)`);
@@ -723,12 +1034,12 @@ program
 // 9.14 quarantine
 program
   .command('quarantine')
-  .description('Isolate and quarantine flaky tests from braking CI pipelines')
+  .description('Isolate and quarantine flaky tests from breaking CI pipelines')
   .option('-t, --threshold <threshold>', 'Flakiness rate threshold', parseFloat, 0.25)
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const result = engine.quarantineFlaky(opts.threshold);
-    console.log(pc.bold(pc.cyan(`\n🚷 QAForge Flaky Test Quarantine:`)));
+    console.log(pc.bold(pc.cyan(`\n🚷 VeloProve Flaky Test Quarantine:`)));
     console.log(`Quarantined Tests: ${pc.yellow(result.activeQuarantineCount)}`);
     for (const q of result.quarantinedTests) {
       console.log(`  - ${q.testTitle} in ${q.testFile} (${Math.round(q.flakinessRate * 100)}% flakiness)`);
@@ -740,7 +1051,7 @@ program
   .command('coverage')
   .description('Generate PRD requirements coverage heatmap matrix')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const report = await engine.getCoverageHeatmap();
     console.log(pc.bold(pc.cyan(`\n📊 Requirements Coverage Heatmap: ${report.overallCoverageScore}%`)));
     console.log(`Full: ${pc.green(report.fullCount)} | Partial: ${pc.yellow(report.partialCount)} | Uncovered: ${pc.red(report.uncoveredCount)}`);
@@ -754,20 +1065,22 @@ program
   .command('tui')
   .description('Open interactive Terminal Command Center')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     await engine.renderTui();
   });
 
 // 9.17 run-collection
 program
   .command('run-collection <collectionFile>')
+  .alias('collection')
   .description('Run Postman Collection v2.1/v2.0 test suite locally')
   .option('-e, --env <envFile>', 'Postman environment JSON file')
-  .option('-u, --base-url <url>', 'Base URL for requests')
+  .option('-u, --url <url>', 'Base URL for requests')
+  .option('--base-url <url>', 'Alias for --url')
   .action(async (collectionFile, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\n🚀 Executing Postman Collection: ${collectionFile}`));
-    const result = await engine.runPostmanCollection(collectionFile, opts.env, opts.baseUrl);
+    const result = await engine.runPostmanCollection(collectionFile, opts.env, opts.url || opts.baseUrl);
 
     const statusColor = result.failedCount === 0 ? pc.green : pc.red;
     console.log(pc.bold(statusColor(`\n=== Collection Run: ${result.collectionName} (${result.passedCount}/${result.totalRequests} Passed) in ${result.totalDurationMs}ms ===`)));
@@ -784,12 +1097,14 @@ program
 // 9.18 export-postman
 program
   .command('export-postman')
+  .alias('postman')
   .description('Export discovered routes and APIs to Postman Collection v2.1 JSON')
-  .option('-o, --output <outputFile>', 'Output file path', 'qaforge_postman_collection.json')
+  .option('-o, --out <outputFile>', 'Output file path', 'veloprove_postman_collection.json')
+  .option('--output <outputFile>', 'Deprecated alias for --out')
   .option('-n, --name <name>', 'Collection name')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
-    const res = await engine.exportPostmanCollection(opts.output, opts.name);
+    const engine = new VeloProveEngine(process.cwd());
+    const res = await engine.exportPostmanCollection(opts.out || opts.output, opts.name);
     console.log(pc.bold(pc.green(`\n✔ Exported Postman Collection to: ${res.savedPath}`)));
     console.log(`Total Requests Exported: ${res.collection.item.reduce((acc, it) => acc + (it.item?.length || 1), 0)}`);
   });
@@ -801,7 +1116,7 @@ program
   .option('-H, --header <headers...>', 'Headers in Key:Value format')
   .option('-d, --data <data>', 'JSON body or raw payload')
   .action(async (method, url, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const headers: Record<string, string> = {};
     if (opts.header) {
       for (const h of opts.header) {
@@ -834,12 +1149,13 @@ program
 // 9.20 load-test
 program
   .command('load-test <url>')
+  .alias('load')
   .description('Run local load & stress testing on HTTP/API endpoint')
   .option('-m, --method <method>', 'HTTP method (GET, POST, etc.)', 'GET')
-  .option('-u, --vus <vus>', 'Number of concurrent Virtual Users', parseInt, 10)
+  .option('-c, --vus <vus>', 'Number of concurrent Virtual Users', parseInt, 10)
   .option('-d, --duration <sec>', 'Duration in seconds', parseInt, 5)
   .action(async (url, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n⚡ Starting Load & Stress Test against: ${url}`)));
     console.log(`Virtual Users: ${pc.yellow(opts.vus)} | Duration: ${pc.yellow(opts.duration + 's')} | Method: ${opts.method}`);
 
@@ -866,7 +1182,7 @@ program
   .option('-c, --count <count>', 'Number of records to generate', parseInt, 3)
   .option('-l, --locale <locale>', 'Locale (en, ar)', 'en')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const data = engine.generateMockData({
       preset: opts.preset as any,
       count: opts.count,
@@ -879,9 +1195,10 @@ program
 // 9.22 owasp-scan
 program
   .command('owasp-scan <url>')
-  .description('Run local OWASP Top 10 security & headers audit on endpoint')
+  .alias('owasp')
+  .description('OWASP headers/CSP/CORS probe against a live URL (not full security suite)')
   .action(async (url) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🛡️ Running OWASP Top 10 Security Audit against: ${url}`)));
     const report = await engine.scanOwasp(url);
 
@@ -904,7 +1221,7 @@ program
   .command('graphql <endpoint> <query>')
   .description('Execute and test GraphQL query or mutation')
   .action(async (endpoint, query) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\nExecuting GraphQL against ${endpoint}...`));
     const res = await engine.runGraphQL({ endpoint, query });
     if (res.status === 'passed') {
@@ -922,7 +1239,7 @@ program
   .description('Test WebSocket connection and message handshake')
   .option('-m, --message <msg>', 'Message to send on open')
   .action(async (url, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\nConnecting to WebSocket: ${url}...`));
     const res = await engine.testWebSocket({
       url,
@@ -939,15 +1256,16 @@ program
 // 9.25 remote-init
 program
   .command('remote-init')
-  .description('Generate drop-in companion probe file to connect a live website to local QAForge')
+  .alias('probe')
+  .description('Generate drop-in companion probe file to connect a live website to local VeloProve')
   .option('-t, --type <type>', 'Probe type: standalone_js, nextjs_route, express_middleware, html_snippet', 'standalone_js')
   .option('-n, --name <name>', 'Remote site display name', 'LiveApp')
   .option('-o, --out <path>', 'Save probe to local file directly')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const snippet = engine.generateRemoteProbe(opts.type as any, { siteName: opts.name });
 
-    console.log(pc.bold(pc.cyan(`\n⚡ QAForge Live Remote Companion Probe Generated:`)));
+    console.log(pc.bold(pc.cyan(`\n⚡ VeloProve Live Remote Companion Probe Generated:`)));
     console.log(pc.bold(`Recommended File: `) + pc.yellow(snippet.filename));
     console.log(pc.bold(`Instructions: `) + snippet.instructions);
 
@@ -965,10 +1283,11 @@ program
 // 9.26 remote-connect
 program
   .command('remote-connect <url>')
+  .alias('connect')
   .description('Establish and test authenticated link with live remote website')
   .option('-s, --secret <token>', 'Secret authentication token')
   .action(async (url, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\nEstablishing link with live website: ${url}...`));
     const handshake = await engine.connectRemoteSite(url, opts.secret);
 
@@ -985,19 +1304,20 @@ program
       }
     } else {
       console.log(pc.bold(pc.red(`\n✖ Connection Failed: ${handshake.statusMessage}`)));
-      console.log(pc.dim(`Tip: Run "npx qaforge remote-init" to generate the companion probe for your live site.`));
+      console.log(pc.dim(`Tip: Run "npx veloprove remote-init" to generate the companion probe for your live site.`));
     }
   });
 
 // 9.27 remote-audit
 program
   .command('remote-audit <url>')
+  .alias('raudit')
   .description('Execute full live remote QA, OWASP security, and health audit on live URL')
   .option('--load', 'Include live load and stress testing benchmark')
-  .option('-u, --vus <vus>', 'Virtual users for load test', parseInt, 8)
+  .option('-c, --vus <vus>', 'Virtual users for load test', parseInt, 8)
   .option('-s, --secret <token>', 'Optional bridge secret token')
   .action(async (url, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🌐 Running Full Live Remote Audit on: ${url}`)));
 
     const report = await engine.auditRemoteSite(url, {
@@ -1022,11 +1342,12 @@ program
 // 9.28 record-scenario
 program
   .command('record-scenario <title>')
+  .alias('record')
   .description('Synthesize resilient Playwright E2E scenario from start URL')
   .option('-u, --url <url>', 'Starting page URL', 'http://localhost:3000')
   .option('-o, --out <path>', 'Destination test file path')
   .action(async (title, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\nSynthesizing recorded E2E journey: "${title}"...`));
     const scenario = engine.recordScenario({
       title,
@@ -1052,8 +1373,23 @@ program
   .command('stabilize <file>')
   .description('Audit and refactor flaky test files (auto-wait and web-first assertions)')
   .option('--fix', 'Save refactored code directly to file', false)
+  .option('-y, --yes', 'Skip confirmation when applying --fix', false)
+  .option('--allow-no-ai', 'Run without a linked AI agent', false)
   .action(async (file, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    if (opts.fix) {
+      const ok = await msg.confirmSensitive({
+        projectRoot: process.cwd(),
+        allowNoAi: Boolean(opts.allowNoAi),
+        title: 'Stabilize --fix will rewrite the test file',
+        lines: [
+          'Target: ' + file,
+          'Flaky patterns will be refactored to web-first assertions on disk.'
+        ],
+        yes: Boolean(opts.yes)
+      });
+      if (!ok) return;
+    }
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\nAuditing test flakiness patterns in: ${file}...`));
     const result = engine.stabilizeTests(file, opts.fix);
 
@@ -1078,7 +1414,7 @@ program
   .command('db-snapshot <name> [files...]')
   .description('Create an isolated snapshot of database / fixture files')
   .action(async (name, files) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const targetFiles = files && files.length > 0 ? files : ['package.json'];
     console.log(pc.cyan(`\nCreating snapshot "${name}" for files: ${targetFiles.join(', ')}...`));
     const meta = engine.createDbSnapshot(name, targetFiles);
@@ -1089,8 +1425,22 @@ program
 program
   .command('db-restore <snapshotId>')
   .description('Restore database / fixture files from snapshot ID')
-  .action(async (snapshotId) => {
-    const engine = new QAForgeEngine(process.cwd());
+  .option('-y, --yes', 'Skip confirmation before overwriting files', false)
+  .option('--allow-no-ai', 'Restore without a linked AI agent', false)
+  .action(async (snapshotId, opts) => {
+    const ok = await msg.confirmSensitive({
+      projectRoot: process.cwd(),
+      allowNoAi: Boolean(opts.allowNoAi),
+      title: 'Restore database / fixture snapshot',
+      lines: [
+        'Snapshot: ' + snapshotId,
+        'Target files in the snapshot will be overwritten on disk.'
+      ],
+      yes: Boolean(opts.yes)
+    });
+    if (!ok) return;
+
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\nRestoring state from snapshot: ${snapshotId}...`));
     const res = engine.restoreDbSnapshot(snapshotId);
     if (res.success) {
@@ -1105,8 +1455,23 @@ program
   .command('auto-fix')
   .description('Synthesize code repair patches from latest test diagnostics')
   .option('--apply', 'Apply patch repairs directly to source code', false)
+  .option('-y, --yes', 'Skip confirmation when applying --apply', false)
+  .option('--allow-no-ai', 'Apply patches without a linked AI agent', false)
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    if (opts.apply) {
+      const ok = await msg.confirmSensitive({
+        projectRoot: process.cwd(),
+        allowNoAi: Boolean(opts.allowNoAi),
+        title: 'Auto-fix --apply will modify application source',
+        lines: [
+          'Synthesized patches from diagnostics will be written to source files.',
+          'Prefer dry-run (without --apply) first, then review diffs.'
+        ],
+        yes: Boolean(opts.yes)
+      });
+      if (!ok) return;
+    }
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\nSynthesizing code repairs from diagnostic engine...`));
     const report = await engine.autoFixBugs(opts.apply);
 
@@ -1131,18 +1496,31 @@ program
 // 9.33 export-report
 program
   .command('export-report')
-  .description('Export standalone single-file executive QA & Security audit report')
-  .option('-f, --format <format>', 'Output format: html, json, markdown', 'html')
+  .alias('report')
+  .description('Export executive QA report (html|json|markdown|junit|pdf|allure)')
+  .option('-f, --format <format>', 'Output format: html, json, markdown, junit, pdf, allure', 'html')
   .option('-o, --out <path>', 'Destination output file path')
+  .option('--preview', 'Show report preview and save path without writing files')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
-    console.log(pc.cyan(`\nExporting executive QA report (${opts.format})...`));
+    const engine = new VeloProveEngine(process.cwd());
     const res = engine.exportReport({
-      format: opts.format as any,
-      outputPath: opts.out
+      format: opts.format,
+      outputPath: opts.out,
+      preview: Boolean(opts.preview)
     });
-    console.log(pc.bold(pc.green(`✔ Executive audit report generated (${res.sizeBytes} bytes):`)));
-    console.log(`Path: ${pc.bold(res.filePath)}`);
+    if (res.saved) {
+      console.log(pc.bold(pc.green(`✔ Executive audit report saved (${res.sizeBytes} bytes)`)));
+      console.log(`Save path: ${pc.bold(res.filePath)}`);
+    } else {
+      console.log(pc.bold(pc.cyan(`\nPreview · ${res.format} (not saved yet)`)));
+      console.log(`Save path: ${pc.bold(res.filePath)}`);
+      if (res.previewText) {
+        console.log(pc.dim('\n--- preview ---'));
+        console.log(res.previewText.length > 4000 ? res.previewText.slice(0, 4000) + '\n…' : res.previewText);
+        console.log(pc.dim('--- end preview ---'));
+      }
+      console.log(pc.dim('\nRe-run without --preview to write the file.'));
+    }
   });
 
 // 9.34 chaos
@@ -1152,7 +1530,7 @@ program
   .option('-m, --method <method>', 'HTTP method', 'POST')
   .option('-i, --iterations <count>', 'Number of iterations per chaos strategy', parseInt, 3)
   .action(async (url, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🐒 Starting Chaos & Edge-Case Monkey Test on: ${url}`)));
 
     const report = await engine.runChaosTest({
@@ -1174,11 +1552,12 @@ program
 // 9.35 docker-env
 program
   .command('docker-env')
+  .alias('docker')
   .description('Generate isolated containerized test dependencies (PostgreSQL, Redis, MongoDB, MySQL)')
   .option('-s, --services <services...>', 'Services list (postgres, redis, mongodb, mysql)', ['postgres', 'redis'])
   .option('-o, --out <path>', 'Output docker-compose file path', 'docker-compose.test.yml')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const res = engine.generateDockerEnv({
       services: opts.services,
       outputPath: opts.out
@@ -1192,9 +1571,10 @@ program
 // 9.36 browser-matrix
 program
   .command('browser-matrix')
+  .alias('browsers')
   .description('Generate multi-browser & mobile viewport Playwright matrix snippet')
   .action(async () => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const matrix = engine.generateBrowserMatrix();
     console.log(pc.bold(pc.green(`\n✔ Generated Cross-Browser Matrix (${matrix.matrixCount} targets):`)));
     console.log(matrix.playwrightProjectsSnippet);
@@ -1206,7 +1586,7 @@ program
   .description('Generate standard BDD Gherkin .feature files from discovered PRD requirements')
   .option('-o, --out <dir>', 'Output directory for feature files', 'features')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan(`\nExtracting requirements and generating BDD feature specs...`));
     const features = await engine.generateBddFeatures(opts.out);
     console.log(pc.bold(pc.green(`✔ Generated ${features.length} BDD feature file(s) in "${opts.out}":`)));
@@ -1220,7 +1600,7 @@ program
   .command('alert <webhookUrl>')
   .description('Dispatch latest test run & security verdict alert to Slack, Discord, or Teams')
   .action(async (webhookUrl) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const { profile } = await engine.inspect();
     const latestRun = engine.storage.getLatestTestRun();
     const secAudit = engine.auditSecurity();
@@ -1236,6 +1616,7 @@ program
         failedCount: latestRun?.summary.failed || 0,
         securityIssuesCount: secAudit.totalVulnerabilities,
         score: secAudit.score
+        // branch / MTTR / regressionAlert auto-enriched from run history
       }
     });
 
@@ -1249,10 +1630,11 @@ program
 // 9.39 feature-parity
 program
   .command('feature-parity')
+  .alias('parity')
   .description('Audit UI-to-Backend parity and detect ghost/unimplemented UI features (Tauri, React, Vue, Express, Python)')
   .option('-e, --e2e', 'Generate Playwright E2E parity test suite', true)
   .action((opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🔍 Scanning UI elements against Backend Handlers & Enums...`)));
 
     const report = engine.auditFeatureParity({ generateE2ESuite: opts.e2e });
@@ -1281,10 +1663,13 @@ program
 // 9.40 scan-malware
 program
   .command('scan-malware')
+  .alias('malware')
   .description('Deep scan for malicious code, backdoors, obfuscated payloads, and lifecycle script attacks')
   .option('--fix', 'Automatically remediate and neutralize all detected threats', false)
-  .action((opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+  .option('-y, --yes', 'Skip confirmation when applying --fix', false)
+  .option('--allow-no-ai', 'Run without a linked AI agent', false)
+  .action(async (opts) => {
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🛡️ Scanning repository files for malware, backdoors, and obfuscation...`)));
 
     const report = engine.scanMalware();
@@ -1306,6 +1691,17 @@ program
       }
 
       if (opts.fix) {
+        const ok = await msg.confirmSensitive({
+          projectRoot: process.cwd(),
+          allowNoAi: Boolean(opts.allowNoAi),
+          title: 'Malware --fix will rewrite threat files',
+          lines: [
+            `${report.threatCount} threat(s) will be neutralized in place.`,
+            'This modifies source files. Prefer review + backup first.'
+          ],
+          yes: Boolean(opts.yes)
+        });
+        if (!ok) return;
         console.log(pc.bold(pc.cyan(`\nApplying automated remediations...`)));
         const res = engine.remediateMalware();
         if (res.success) {
@@ -1314,7 +1710,7 @@ program
           console.log(pc.yellow(`⚠ ${res.message}`));
         }
       } else {
-        console.log(pc.dim(`\nTip: Run "npx qaforge scan-malware --fix" to automatically neutralize and clean all threats.`));
+        console.log(pc.dim(`\nTip: Run "npx veloprove scan-malware --fix -y" to automatically neutralize and clean all threats.`));
       }
     }
   });
@@ -1324,7 +1720,7 @@ program
   .command('ai-eval <url>')
   .description('Evaluate AI / LLM outputs for hallucinations, keyword grounding, and JSON schema compliance')
   .action(async (url) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🧠 Evaluating AI model accuracy & hallucinations on: ${url}`)));
 
     const report = await engine.evaluateAiOutputs({
@@ -1332,9 +1728,9 @@ program
       testCases: [
         {
           id: 'TEST-1',
-          prompt: 'What is QAForge?',
+          prompt: 'What is VeloProve?',
           expectedKeywords: ['local-first', 'QA', 'autonomous'],
-          groundTruthContext: 'QAForge is a 100% local-first autonomous QA testing engine.'
+          groundTruthContext: 'VeloProve is a 100% local-first autonomous QA testing engine.'
         }
       ]
     });
@@ -1350,8 +1746,23 @@ program
   .description('Autonomous Git bisect regression hunter to find commit causing test failure')
   .option('-c, --cmd <cmd>', 'Test command to run', 'npm test')
   .option('-m, --max <count>', 'Max commits to examine', parseInt, 10)
+  .option('-y, --yes', 'Skip confirmation before checking out commits', false)
+  .option('--allow-no-ai', 'Bisect without a linked AI agent', false)
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const ok = await msg.confirmSensitive({
+      projectRoot: process.cwd(),
+      allowNoAi: Boolean(opts.allowNoAi),
+      title: 'Git bisect will temporarily check out commits',
+      lines: [
+        'Worktree HEAD may move while hunting the regression.',
+        'Commit or stash critical local changes first.',
+        'Command: ' + (opts.cmd || 'npm test')
+      ],
+      yes: Boolean(opts.yes)
+    });
+    if (!ok) return;
+
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🔍 Running Autonomous Git Bisect Regression Hunter...`)));
     const res = await engine.huntRegression({ testCommand: opts.cmd, maxCommits: opts.max });
     if (res.culpritCommit) {
@@ -1369,7 +1780,7 @@ program
   .description('Simulate network latency, 3G/GPRS, or offline conditions')
   .option('-p, --profile <profile>', 'Profile: GPRS_SLOW, REGULAR_3G, GOOD_4G, OFFLINE_DROP, PACKET_LOSS', 'REGULAR_3G')
   .action(async (url, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n📶 Throttling network to ${opts.profile} for: ${url}`)));
     const res = await engine.throttleRequest({
       targetUrl: url,
@@ -1381,9 +1792,10 @@ program
 // 9.44 audit-contracts
 program
   .command('audit-contracts')
+  .alias('contracts')
   .description('Audit Solidity & Web3 smart contracts for reentrancy, selfdestruct, and vulnerabilities')
   .action(() => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n⛓️ Auditing Smart Contracts & Web3 code for vulnerabilities...`)));
     const rep = engine.auditSmartContracts();
     const vColor = rep.overallVerdict === 'SECURE' ? pc.green : rep.overallVerdict === 'AUDIT_WARNINGS' ? pc.yellow : pc.red;
@@ -1397,12 +1809,26 @@ program
 // 9.45 dead-assets
 program
   .command('dead-assets')
+  .alias('dead')
   .description('Scan and purge unused image assets, fonts, and dead code')
   .option('--purge', 'Purge and delete unreferenced dead assets', false)
-  .action((opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+  .option('-y, --yes', 'Skip confirmation when applying --purge', false)
+  .option('--allow-no-ai', 'Purge without a linked AI agent', false)
+  .action(async (opts) => {
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🧹 Scanning for unreferenced images, fonts, and dead assets...`)));
     if (opts.purge) {
+      const ok = await msg.confirmSensitive({
+        projectRoot: process.cwd(),
+        allowNoAi: Boolean(opts.allowNoAi),
+        title: 'Dead-assets --purge deletes files permanently',
+        lines: [
+          'Unreferenced images/fonts/assets will be removed from disk.',
+          'This cannot be undone without VCS restore.'
+        ],
+        yes: Boolean(opts.yes)
+      });
+      if (!ok) return;
       const del = engine.purgeDeadAssets();
       console.log(pc.bold(pc.green(`✔ Purged ${del.deletedFiles.length} dead asset(s) (~${Math.round(del.bytesFreed / 1024)} KB freed).`)));
     } else {
@@ -1411,16 +1837,17 @@ program
       for (const it of rep.unusedItems) {
         console.log(`  - [${it.type}] ${pc.bold(it.identifier)} in ${it.file} (${Math.round((it.sizeBytes || 0) / 1024)} KB)`);
       }
-      console.log(pc.dim(`Tip: Run "npx qaforge dead-assets --purge" to delete these files.`));
+      console.log(pc.dim(`Tip: Run "npx veloprove dead-assets --purge -y" to delete these files.`));
     }
   });
 
 // 9.46 screen-reader
 program
   .command('screen-reader')
+  .alias('sr')
   .description('Simulate screen reader auditory speech flow, verify heading hierarchy and accessibility tags')
   .action(() => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🎙️ Simulating screen reader speech flow & accessibility auditory checks...`)));
     const rep = engine.simulateScreenReader();
     const vColor = rep.verdict === 'EXCELLENT' ? pc.green : rep.verdict === 'GOOD' ? pc.cyan : rep.verdict === 'NEEDS_IMPROVEMENT' ? pc.yellow : pc.red;
@@ -1440,7 +1867,7 @@ program
   .command('db-audit')
   .description('Audit source code for SQL N+1 queries in loops, unindexed queries, and raw string concatenation')
   .action(() => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🗄️ Auditing database query patterns for SQL N+1 and performance bottlenecks...`)));
     const rep = engine.auditDbQueries();
     const vColor = rep.verdict === 'OPTIMIZED' ? pc.green : rep.verdict === 'ACCEPTABLE' ? pc.cyan : rep.verdict === 'NEEDS_OPTIMIZATION' ? pc.yellow : pc.red;
@@ -1459,7 +1886,7 @@ program
   .description('Audit .env configuration files, compare with .env.example, and detect undeclared variables')
   .option('--generate-example', 'Generate synchronized .env.example template', false)
   .action((opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n⚖️ Auditing environment configuration and secret drift...`)));
     const rep = engine.auditEnvDrift({ generateExample: opts.generateExample });
     const vColor = rep.verdict === 'SYNCHRONIZED' ? pc.green : rep.verdict === 'MINOR_DRIFT' ? pc.yellow : pc.red;
@@ -1480,7 +1907,7 @@ program
   .option('-f, --file <file>', 'Test file', 'tests/e2e/auth.spec.ts')
   .option('-m, --message <msg>', 'Error message', 'Timeout 5000ms waiting for locator .dashboard-header')
   .action((opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🎬 Generating failure visual replay package...`)));
     const rep = engine.recordFailureReplay({
       testTitle: opts.title,
@@ -1503,7 +1930,7 @@ program
   .option('-c, --concurrency <concurrency>', 'Concurrency level', '10')
   .option('-m, --method <method>', 'HTTP Method', 'GET')
   .action(async (url, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n⏱️ Probing ${url} for rate limiting & burst resilience (${opts.count} requests, ${opts.concurrency} concurrent)...`)));
     const rep = await engine.auditRateLimit({
       targetUrl: url,
@@ -1525,9 +1952,9 @@ program
   .description('Start local stateful in-memory CRUD REST mock server')
   .option('-p, --port <port>', 'Port number', '4040')
   .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     const port = parseInt(opts.port, 10);
-    console.log(pc.bold(pc.cyan(`\n🔄 Starting QAForge Stateful Dynamic Mock Server on port ${port}...`)));
+    console.log(pc.bold(pc.cyan(`\n🔄 Starting VeloProve Stateful Dynamic Mock Server on port ${port}...`)));
     const res = await engine.startStatefulMock({ port });
     console.log(pc.bold(pc.green(`✔ Stateful Mock Server running at http://localhost:${res.port}`)));
     console.log(`Available Collections: ${pc.bold(res.collections.join(', '))}`);
@@ -1540,7 +1967,7 @@ program
   .command('arch-graph')
   .description('Generate architecture topology graph and microservices dependency map')
   .action(() => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     console.log(pc.bold(pc.cyan(`\n🗺️ Generating microservices & architecture dependency graph...`)));
     const rep = engine.generateArchitectureGraph();
     console.log(pc.bold(pc.green(`\n=== Architecture Topology: ${rep.nodesCount} Nodes | ${rep.edgesCount} Connections ===`)));
@@ -1552,23 +1979,39 @@ program
 // 9.53 security
 program
   .command('security')
-  .description('Execute comprehensive non-destructive security testing (Auth, AuthZ, Injections, Forms, Sessions, Uploads)')
+  .description('Live non-destructive security suite (Auth, AuthZ, injections, sessions). Differs from audit / owasp-scan / web-sec')
+  .argument('[url]', 'Target live application URL (same as -u/--url)')
   .option('--auth', 'Run authentication tests (login, password reset, rate-limiting)', false)
   .option('--authorization', 'Run authorization tests (IDOR, role escalation, protected routes)', false)
   .option('--forms', 'Run forms and input security tests', false)
   .option('--injection', 'Run injection tests (SQLi, NoSQLi, XSS, Command, Path Traversal)', false)
   .option('--api', 'Run API security & error leakage tests', false)
   .option('--uploads', 'Run file upload security tests', false)
-  .option('--sessions', 'Run session & JWT token security tests', false)
+  .option('--sessions', 'Run session theft/hijacking & JWT security tests (cookie flags, fixation, URL leaks, logout invalidation)', false)
   .option('--safe', 'Enforce safe mode non-destructive constraints (default: true)', true)
   .option('--deep', 'Run deep security verification', false)
   .option('-u, --url <url>', 'Target live application URL')
+  .option('--ensure-dev', 'Auto-start local app via Smart DevServer when target is offline', false)
+  .option('--init-policy', 'Generate a starter security policy file (baseline|owasp-asvs|soc2|hipaa)', false)
+  .option('--policy <framework>', 'Policy framework for --init-policy', 'baseline')
   .option('-f, --format <format>', 'Output format (console, json, markdown)', 'console')
   .option('--sarif <path>', 'Export findings in standard SARIF v2.1.0 format for GitHub Security tab')
   .option('--ci', 'Exit with non-zero code if critical/high vulnerabilities exist', false)
-  .action(async (opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+  .action(async (urlArg, opts) => {
+    const engine = new VeloProveEngine(process.cwd());
     renderCommandHeader('security', 'Autonomous Security & Vulnerability Auditor');
+    const targetUrl = resolveTargetUrl(urlArg, opts.url);
+
+    if (opts.initPolicy) {
+      const policy = engine.initSecurityPolicy({
+        framework: opts.policy,
+        mergeIntoConfig: true
+      });
+      console.log(pc.bold(pc.green(`\n✔ ${policy.summary}`)));
+      console.log(`Policy: ${pc.cyan(policy.policyPath)}`);
+      if (policy.configUpdated) console.log(`Config updated: ${pc.cyan(policy.configPath)}`);
+      return;
+    }
 
     const categories: any[] = [];
     if (opts.auth) categories.push('authentication');
@@ -1581,11 +2024,12 @@ program
 
     const spinner = createSpinner('Scanning attack surface and executing security test suite...').start();
     const report = await engine.runSecurityTests({
-      baseURL: opts.url,
+      baseURL: targetUrl,
       categories: categories.length > 0 ? categories : undefined,
       safeMode: opts.safe !== false,
       deepMode: opts.deep === true,
-      environment: opts.url?.includes('prod') ? 'production' : 'test'
+      ensureDev: opts.ensureDev === true,
+      environment: targetUrl?.includes('prod') ? 'production' : 'test'
     });
 
     if (opts.sarif) {
@@ -1615,7 +2059,7 @@ program
       `Safe Mode:       ${report.safeMode ? pc.green('ENABLED (Non-destructive)') : pc.yellow('DISABLED')}`
     ];
 
-    console.log(renderBox('QAForge Security Audit Summary', summaryLines, report.verdict === 'SECURE' ? pc.green : pc.red));
+    console.log(renderBox('VeloProve Security Audit Summary', summaryLines, report.verdict === 'SECURE' ? pc.green : pc.red));
 
     if (report.findings.length > 0) {
       console.log(pc.bold('\n🔍 Findings & Vulnerabilities:'));
@@ -1634,7 +2078,7 @@ program
     ReportSummaryService.writeSummary({
       projectRoot: process.cwd(),
       commandName: 'security',
-      title: 'QAForge Security Test Summary',
+      title: 'VeloProve Security Test Summary',
       verdict: report.verdict,
       metrics: {
         'Security Score': `${report.securityScore}/100`,
@@ -1655,18 +2099,21 @@ program
 // 9.54 hook
 program
   .command('hook [action]')
-  .description('Install or uninstall QAForge Git pre-commit hooks for automated change-impact testing')
-  .option('-c, --cmd <command>', 'Command to execute on pre-commit', 'npx qaforge changed')
+  .description('Install or uninstall VeloProve Git pre-commit hooks for automated change-impact testing')
+  .option('-c, --cmd <command>', 'Command to execute on pre-commit', 'npx veloprove changed')
+  .option('--verify', 'Preset: run `npx veloprove verify --ci` on pre-commit', false)
   .action((action, opts) => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     if (action === 'uninstall') {
       const res = engine.uninstallGitHook();
       console.log(pc.bold(res.uninstalled ? pc.green(`✔ ${res.message}`) : pc.yellow(`ℹ ${res.message}`)));
     } else {
-      const res = engine.installGitHook(opts.cmd);
+      const cmd = opts.verify ? 'npx veloprove verify --ci' : opts.cmd;
+      const res = engine.installGitHook(cmd);
       if (res.installed) {
         console.log(pc.bold(pc.green(`✔ ${res.message}`)));
         console.log(`Hook path: ${pc.cyan(res.hookPath)} (${res.hookType})`);
+        console.log(pc.dim(`Command: ${cmd}`));
       } else {
         console.log(pc.bold(pc.yellow(`⚠ ${res.message}`)));
       }
@@ -1676,9 +2123,9 @@ program
 // 9.55 web-sec
 program
   .command('web-sec')
-  .description('Audit Subresource Integrity (SRI), CSRF tokens, and CORS policies across web assets')
+  .description('Static SRI / CSRF / CORS policy audit on web assets (not live attack suite)')
   .action(() => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     renderCommandHeader('web-sec', 'Web Security, SRI, CSRF & CORS Auditor');
     const rep = engine.auditSriAndCsrf();
 
@@ -1716,7 +2163,7 @@ program
   .command('dedup')
   .description('Analyze test suites to identify duplicate and redundant test cases')
   .action(() => {
-    const engine = new QAForgeEngine(process.cwd());
+    const engine = new VeloProveEngine(process.cwd());
     renderCommandHeader('dedup', 'Test Suite Redundancy & Deduplication Engine');
     const rep = engine.deduplicateTests();
 
@@ -1740,12 +2187,201 @@ program
     }
   });
 
+// 9.57 ensure-dev
+program
+  .command('ensure-dev')
+  .alias('dev')
+  .description('Smart DevServer auto-launcher: probe URL and start local npm/pnpm/yarn/bun dev when offline')
+  .argument('[url]', 'Target base URL (same as -u/--url)')
+  .option('-u, --url <url>', 'Target base URL')
+  .option('-c, --command <command>', 'Override start command (e.g. "npm run dev")')
+  .option('-p, --port <port>', 'Port override', (v) => parseInt(v, 10))
+  .option('-t, --timeout <ms>', 'Health timeout ms', (v) => parseInt(v, 10), 30000)
+  .option('--force', 'Force restart even if already healthy', false)
+  .action(async (urlArg, opts) => {
+    const engine = new VeloProveEngine(process.cwd());
+    renderCommandHeader('ensure-dev', 'Smart DevServer Auto-Launcher');
+    const res = await engine.ensureDevServer({
+      baseURL: resolveTargetUrl(urlArg, opts.url),
+      command: opts.command,
+      port: opts.port,
+      timeoutMs: opts.timeout,
+      forceRestart: opts.force === true
+    });
+    const color = res.started || res.alreadyRunning ? pc.green : pc.yellow;
+    console.log(color(`\n✔ ${res.message}`));
+    console.log(`URL: ${pc.bold(res.baseURL)} | Port: ${res.port} | Command: ${res.command || 'n/a'} | ${res.durationMs}ms`);
+  });
+
+// 9.58 verify — autonomous QA orchestrator
+program
+  .command('verify')
+  .description('Autonomous change-aware QA: inspect → impact → test → diagnose → heal → release')
+  .option('--full', 'Run full test suite instead of impacted tests only', false)
+  .option('--security', 'Include non-destructive security suite', false)
+  .option('--a11y', 'Include accessibility audit', false)
+  .option('--no-heal', 'Skip automatic TEST_BUG healing', false)
+  .option('--intent <text>', 'Natural-language QA goal (deterministic planner; no LLM)')
+  .option('--json', 'Emit machine-readable OperationResult JSON on stdout', false)
+  .option('--ci', 'Exit with documented codes (0/1/2/3)', false)
+  .option('--sandbox', 'Start local mock sandbox and set API_BASE_URL for this run', false)
+  .option('--docker-env', 'Generate local docker-compose test env files before verify', false)
+  .action(async (opts) => {
+    const cwd = process.cwd();
+    const engine = new VeloProveEngine(cwd);
+    const jsonMode = opts.json === true;
+
+    if (!jsonMode) {
+      renderCommandHeader('verify', 'Autonomous Change-Aware Verification');
+    }
+
+    const spinner = jsonMode
+      ? null
+      : createSpinner('Running verify pipeline (inspect → impact → test → diagnose → release)...').start();
+
+    const result = await engine.verify({
+      fullSuite: opts.full === true,
+      includeSecurity: opts.security === true,
+      includeA11y: opts.a11y === true,
+      noHeal: opts.noHeal === true,
+      intent: opts.intent,
+      sandbox: opts.sandbox === true,
+      dockerEnv: opts.dockerEnv === true
+    });
+
+    if (jsonMode) {
+      // Pure JSON on stdout for agents/CI
+      process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+    } else {
+      const report = result.data;
+      if (result.success) {
+        spinner?.succeed(`Verify ${report?.verdict || result.status} in ${result.durationMs}ms`);
+      } else {
+        spinner?.fail(`Verify ${result.status}: ${result.errors[0]?.message || 'failed'}`);
+      }
+
+      if (report) {
+        console.log(pc.bold('\nProject'));
+        console.log(`  Frameworks: ${report.project.frameworks.join(', ') || 'n/a'}`);
+        console.log(`  Test runners: ${report.project.testFrameworks.join(', ') || 'n/a'}`);
+
+        console.log(pc.bold('\nChanges'));
+        if (report.changes) {
+          console.log(`  ${report.changes.changedFiles.length} files | ${report.changes.impactedTestFiles.length} impacted tests | risk ${report.changes.riskScore}`);
+        } else {
+          console.log('  (no impact data)');
+        }
+
+        console.log(pc.bold('\nQA Plan'));
+        for (const phase of report.phases) {
+          const mark = phase.status === 'ran' ? pc.green('✓') : phase.status === 'skipped' ? pc.dim('○') : pc.red('✗');
+          console.log(`  ${mark} ${phase.capability} — ${phase.reason}${phase.summary ? pc.dim(` (${phase.summary})`) : ''}`);
+        }
+
+        console.log(pc.bold('\nSelection'));
+        console.log(`  Mode: ${report.selection.mode}`);
+        console.log(`  ${report.selection.reason}`);
+
+        const run = report.retestRun || report.testRun;
+        if (run) {
+          console.log(pc.bold('\nResults'));
+          console.log(`  ${run.summary.passed} passed / ${run.summary.failed} failed / ${run.summary.total} total`);
+        }
+
+        if (report.diagnoses.length) {
+          console.log(pc.bold('\nDiagnosis'));
+          for (const d of report.diagnoses) {
+            console.log(`  • ${d.classification} (${Math.round(d.confidence * 100)}%): ${d.rootCause}`);
+          }
+        }
+
+        if (report.evidencePack) {
+          console.log(pc.bold('\nEvidence pack'));
+          console.log(`  ${report.evidencePack.failureCount} failure(s) → ${report.evidencePack.indexPath}`);
+          if (report.evidencePack.zipPath) {
+            console.log(pc.dim(`  zip: ${report.evidencePack.zipPath}`));
+          }
+        }
+
+        const vColor =
+          report.verdict === 'PASS' ? pc.green : report.verdict === 'PASS_WITH_WARNINGS' ? pc.yellow : pc.red;
+        console.log(pc.bold(vColor(`\nRelease: ${report.verdict}`)));
+        for (const r of report.reasons.slice(0, 8)) {
+          console.log(`  • ${r}`);
+        }
+      }
+
+      for (const w of result.warnings) {
+        console.log(pc.yellow(`⚠ ${w.message}`));
+      }
+    }
+
+    if (opts.ci || jsonMode) {
+      process.exitCode = result.data?.exitCode ?? (result.success ? 0 : 3);
+    }
+  });
+
+// 9.59 history — local run history trends
+program
+  .command('history')
+  .description('Show local test-run history trends (pass rate, duration, flaky count)')
+  .option('-n, --limit <n>', 'Max history points to print', (v) => parseInt(v, 10), 20)
+  .option('--json', 'Emit machine-readable JSON', false)
+  .action(async (opts) => {
+    const cwd = process.cwd();
+    const engine = new VeloProveEngine(cwd);
+    const snapshot = engine.getRunHistory();
+    const limit = Math.max(1, Math.min(opts.limit || 20, 50));
+    const points = snapshot.points.slice(-limit);
+
+    if (opts.json) {
+      console.log(JSON.stringify({ ...snapshot, points }, null, 2));
+      return;
+    }
+
+    renderCommandHeader('history', 'Local Run History');
+    console.log(pc.bold('\nAggregates'));
+    console.log(`  Runs: ${snapshot.aggregates.runCount}`);
+    console.log(`  Avg pass rate: ${snapshot.aggregates.avgPassRate}%`);
+    console.log(`  Avg duration: ${snapshot.aggregates.avgDurationMs}ms`);
+    console.log(`  Flaky: ${snapshot.aggregates.flakyCount}`);
+    if (snapshot.aggregates.lastSecurityScore != null) {
+      console.log(`  Last security score: ${snapshot.aggregates.lastSecurityScore}/100`);
+    }
+
+    console.log(pc.bold('\nRecent runs'));
+    if (!points.length) {
+      console.log(pc.dim('  (no runs recorded yet — run tests or verify first)'));
+      return;
+    }
+    for (const p of points) {
+      const rateColor = p.passRate >= 90 ? pc.green : p.passRate >= 70 ? pc.yellow : pc.red;
+      console.log(
+        `  ${pc.dim(p.timestamp)}  ${rateColor(`${p.passRate}%`)}  ${p.passed}/${p.total}  ${p.durationMs}ms  ${p.status}  ${pc.dim(p.runId)}`
+      );
+    }
+  });
+
 // 10. mcp
 program
   .command('mcp')
-  .description('Start QAForge MCP Server over stdio')
+  .description('Start VeloProve MCP Server over stdio')
   .action(async () => {
     await runMcpServer(process.cwd());
   });
 
-program.parse(process.argv);
+export { program };
+
+const isDirectRun = (() => {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return import.meta.url === pathToFileURL(path.resolve(entry)).href;
+  } catch {
+    return /cli[\\/]index\.(ts|js)$/.test(entry);
+  }
+})();
+
+if (isDirectRun) {
+  program.parse(process.argv);
+}

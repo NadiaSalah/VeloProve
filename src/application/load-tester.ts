@@ -59,7 +59,7 @@ export class LoadTesterService {
     }
 
     const headers: Record<string, string> = {
-      'User-Agent': 'QAForge-LoadEngine/1.0',
+      'User-Agent': 'VeloProve-LoadEngine/1.0',
       ...(options.headers || {})
     };
     if (bodyPayload && !headers['Content-Type']) {

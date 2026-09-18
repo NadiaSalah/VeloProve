@@ -52,11 +52,82 @@ describe('LinterService & LocalDashboardServer Actions', () => {
     // Fetch dashboard HTML
     const res = await fetch('http://localhost:4199');
     const html = await res.text();
-    expect(html).toContain('QAForge Command Center');
-    expect(html).toContain('One-Click Action');
-    expect(html).toContain('QAForge Complete Interactive User & Agent Guide');
-    expect(html).toContain('tab-guide');
+    expect(html).toContain('VeloProve');
+    expect(html).toContain('Command Center');
+    expect(html).toContain('sidebar');
+    expect(html).toContain('pane-detail');
+    expect(html).toContain('pane-results');
+    expect(html).toContain('VeloProve Complete Interactive User & Agent Guide');
+    expect(html).toContain('view-guide');
+    expect(html).toContain('/icon.svg');
+    expect(html).toContain('/logo.svg');
+    expect(html).toContain('view-security');
+    expect(html).toContain('view-websec');
+    expect(html).toContain('view-dedup');
+    expect(html).toContain('view-throttle');
+    expect(html).toContain('/api/events');
+    expect(html).toContain('sidebar-quick');
+    expect(html).toContain('toast-host');
+    expect(html).toContain('function notify');
+    expect(html).toContain('__VP_AI__');
+    expect(html).toContain('confirmSensitive');
+    expect(html).toContain('SENSITIVE_ACTIONS');
+    expect(html).toContain('Run without AI');
+    expect(html).toContain('No AI coding agent linked');
+    expect(html).toContain('closeMobileNav');
+    expect(html).toContain('Teach AI');
+    expect(html).toContain('Ensure Dev');
+
+    const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
+    expect(scriptMatch).toBeTruthy();
+    expect(() => new Function(scriptMatch![1])).not.toThrow();
+    expect(scriptMatch![1]).toContain('function selectNav');
+
+    const iconRes = await fetch('http://localhost:4199/icon.svg?v=test');
+    expect(iconRes.status).toBe(200);
+    expect(iconRes.headers.get('content-type')).toContain('image/svg+xml');
+    const iconSvg = await iconRes.text();
+    expect(iconSvg).toContain('<svg');
+    expect(iconSvg).toContain('linearGradient');
+    expect(iconSvg).toMatch(/#007A3D|#002B5B/);
+
+    const logoRes = await fetch('http://localhost:4199/logo.svg?v=test');
+    expect(logoRes.status).toBe(200);
+    const logoSvg = await logoRes.text();
+    expect(logoSvg).toContain('<svg');
+    expect(logoSvg).toContain('linearGradient');
+    expect(logoSvg).toMatch(/#007A3D|#002B5B|#003C71/);
+    expect(logoSvg).not.toMatch(/QAForge|qaforge|qaforce|QAForce/i);
+
+    const faviconRes = await fetch('http://localhost:4199/favicon.ico');
+    expect(faviconRes.status).toBe(200);
+    expect(faviconRes.headers.get('content-type')).toContain('image/svg+xml');
+
+    // Extension-injected source maps must get 404, not SPA HTML (prevents JSON.parse noise)
+    const mapRes = await fetch('http://localhost:4199/installHook.js.map');
+    expect(mapRes.status).toBe(404);
+    const mapBody = await mapRes.text();
+    expect(mapBody).not.toContain('<!DOCTYPE html>');
+    expect(mapBody).not.toContain('VeloProve');
+
+    // SSE stream should emit a ready event
+    const sseRes = await fetch('http://localhost:4199/api/events');
+    expect(sseRes.status).toBe(200);
+    expect(sseRes.headers.get('content-type')).toContain('text/event-stream');
+    const reader = sseRes.body?.getReader();
+    expect(reader).toBeTruthy();
+    const { value } = await reader!.read();
+    const chunk = new TextDecoder().decode(value);
+    expect(chunk).toContain('event: ready');
+    reader!.cancel();
 
     server.close();
+  });
+
+  it('MCP server uses vp:// resources only (no qa:// or QAForge leftovers)', () => {
+    const src = fs.readFileSync(path.resolve(__dirname, '../../src/mcp/server.ts'), 'utf8');
+    expect(src).not.toMatch(/qa:\/\//);
+    expect(src).toMatch(/vp:\/\//);
+    expect(src).not.toMatch(/QAForge|qaforge|qaforce|QAForce/i);
   });
 });

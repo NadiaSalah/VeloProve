@@ -1,49 +1,94 @@
 import pc from 'picocolors';
 
 /**
- * Renders the official QAForge dual-color ANSI banner
- * Green (#20BF55) for 'QA' and Cyan (#38BDF8) for 'FORGE'
+ * Official CLI brand colors matching docs/assets/veloprove-icon.svg
+ * Gradient navy #002B5B→#36C2FF · Gradient green #007A3D→#8AF33F
  */
-export function renderQAForgeBanner(): string {
-  const qa = pc.green;
-  const forge = pc.cyan;
-  const dim = pc.dim;
-  const bold = pc.bold;
-  const white = pc.white;
+const brand = {
+  mark: pc.blue, // navy V
+  accent: pc.green, // green proof mark
+  dim: pc.dim,
+  bold: pc.bold,
+  white: pc.white,
+};
 
-  const logoLines = [
-    qa(' ██████   ██████  ') + '  ' + forge('████████  ██████   ████████   ██████   ████████ '),
-    qa('██    ██ ██    ██ ') + '  ' + forge('██        ██    ██  ██     ██ ██    ██  ██       '),
-    qa('██    ██ ████████ ') + '  ' + forge('██████    ██    ██  ████████  ██        ██████   '),
-    qa('██  ████ ██    ██ ') + '  ' + forge('██        ██    ██  ██   ██   ██   ███  ██       '),
-    qa(' ███████ ██    ██ ') + '  ' + forge('██         ██████   ██    ██   ██████   ████████ '),
-    qa('      ██          ') + '  ' + forge('                                                 '),
-  ];
-
-  const badges = `  ${bold(white('QAForge CLI'))} ${dim('v1.0.0')}  ${pc.bgGreen(pc.black(' LOCAL-FIRST '))}  ${pc.bgCyan(pc.black(' 71 MCP TOOLS '))}  ${pc.bgBlue(white(' ZERO-CLOUD '))}`;
-  const tagline = `  ${dim('Autonomous QA, Failure Healing, Stress Testing & API Quality Hub')}`;
-  const motto = `  ${pc.cyan('⚡')} ${bold(white('Build. Test. Trust.'))} ${dim('•')} ${dim('https://github.com/NadiaSalah/QAForge')}`;
-
-  return `\n${logoLines.join('\n')}\n\n${badges}\n${tagline}\n${motto}\n`;
+function stripAnsi(str: string): string {
+  return str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
 }
 
 /**
- * Renders a compact header with logo and command subtitle
+ * Clean solid-block V (true chevron tip) + outlined P — equal row widths.
+ * Avoids FIGlet ╗/╝ jags that made the V arms look uneven.
+ */
+function renderIconMark(): string[] {
+  const v = brand.mark;
+  const g = brand.accent;
+  // V: 10 cols · P: 9 cols · gap: 2
+  return [
+    v('██      ██') + '  ' + g(' ██████╗ '),
+    v(' ██    ██ ') + '  ' + g('██╔══██╗'),
+    v('  ██  ██  ') + '  ' + g('██████╔╝'),
+    v('   ████   ') + '  ' + g('██╔═══╝ '),
+    v('    ██    ') + '  ' + g('██║     '),
+    v('          ') + '  ' + g('╚═╝     '),
+  ];
+}
+
+/** Dual-tone rule: === … --- blend for a clean header frame */
+function frameRules(contentWidth: number): { top: string; mid: string; bottom: string } {
+  const w = Math.max(40, Math.min(contentWidth + 4, 72));
+  const top = brand.dim('═'.repeat(w));
+  const mid = brand.dim('─'.repeat(w));
+  const bottom = brand.dim('═'.repeat(w));
+  return { top, mid, bottom };
+}
+
+/**
+ * Full startup / help banner: VP mark left + wordmark right, framed rules
+ */
+export function renderVeloProveBanner(): string {
+  const icon = renderIconMark();
+  const text = [
+    `${brand.bold(brand.white('VeloProve'))} ${brand.dim('CLI')} ${brand.dim('v1.0.0')}`,
+    brand.bold(brand.white('Build. Test. Trust.')),
+    brand.dim('Autonomous QA · Failure Healing · API Quality Hub'),
+    `${pc.bgGreen(pc.black(' LOCAL-FIRST '))} ${pc.bgBlue(pc.white(' 75 MCP '))} ${brand.accent(brand.bold(' ZERO-CLOUD '))}`,
+    brand.dim('https://github.com/NadiaSalah/VeloProve'),
+  ];
+
+  const rows = icon.map((line, i) => {
+    const label = text[i] ? `   ${text[i]}` : '';
+    return `  ${line}${label}`;
+  });
+
+  const contentWidth = Math.max(...rows.map((r) => stripAnsi(r).length));
+  const { top, mid } = frameRules(contentWidth);
+
+  return ['', `  ${top}`, ...rows, `  ${mid}`, ''].join('\n');
+}
+
+/**
+ * Compact command header using the icon glyph
  */
 export function renderCommandHeader(commandName: string, subtitle?: string): void {
-  console.log(`\n${pc.bold(pc.green('QA') + pc.cyan('FORGE'))} ${pc.dim('›')} ${pc.bold(pc.white(commandName))}${subtitle ? pc.dim(` — ${subtitle}`) : ''}`);
+  const glyph = brand.mark('V') + brand.accent('▸');
+  console.log(
+    `\n${brand.bold(glyph)} ${brand.bold(brand.white('VeloProve'))} ${brand.dim('›')} ${brand.bold(brand.white(commandName))}${
+      subtitle ? brand.dim(` — ${subtitle}`) : ''
+    }`
+  );
 }
 
 /**
  * Renders a stylized box with border and formatted lines
  */
-export function renderBox(title: string, lines: string[], borderColor = pc.cyan): string {
-  // Strip ANSI color codes to calculate visible length
-  const stripAnsi = (str: string) => str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
-  const visibleLengths = lines.map(l => stripAnsi(l).length);
+export function renderBox(title: string, lines: string[], borderColor = pc.green): string {
+  const visibleLengths = lines.map((l) => stripAnsi(l).length);
   const contentWidth = Math.max(...visibleLengths, stripAnsi(title).length + 4, 60);
 
-  const topBorder = borderColor(`╭─ ${pc.bold(pc.white(title))} ${'─'.repeat(Math.max(0, contentWidth - stripAnsi(title).length - 3))}╮`);
+  const topBorder = borderColor(
+    `╭─ ${pc.bold(pc.white(title))} ${'─'.repeat(Math.max(0, contentWidth - stripAnsi(title).length - 3))}╮`
+  );
   const middleLines = lines.map((l) => {
     const pad = Math.max(0, contentWidth - stripAnsi(l).length);
     return `${borderColor('│')} ${l}${' '.repeat(pad)} ${borderColor('│')}`;

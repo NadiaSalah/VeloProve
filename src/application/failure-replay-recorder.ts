@@ -100,7 +100,7 @@ export class FailureReplayRecorderService {
 
     if (params.saveToFile) {
       try {
-        const outDir = guard.resolveSafePath('.qaforge/replays');
+        const outDir = guard.resolveSafePath('.veloprove/replays');
         if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
         const filePath = path.join(outDir, `${replayId}.html`);
         fs.writeFileSync(filePath, standaloneHtml, 'utf8');
@@ -146,7 +146,7 @@ export class FailureReplayRecorderService {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QAForge Failure Replay — ${data.testTitle}</title>
+  <title>VeloProve Failure Replay — ${data.testTitle}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0b0f19; color: #f8fafc; margin: 0; padding: 2rem; }
     .card { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 1.5rem; max-width: 900px; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -163,7 +163,7 @@ export class FailureReplayRecorderService {
   <div class="card">
     <div class="header">
       <div>
-        <h2 style="margin: 0; color: #38bdf8;">🎬 QAForge Failure Visual Replayer</h2>
+        <h2 style="margin: 0; color: #38bdf8;">🎬 VeloProve Failure Visual Replayer</h2>
         <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.3rem;">File: ${data.testFile} | Test: ${data.testTitle}</div>
       </div>
       <span class="badge-fail">STEP FAILED</span>

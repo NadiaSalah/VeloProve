@@ -35,7 +35,7 @@ describe('v1.0.0 Release Stability & First-Class DX Enhancements', () => {
   });
 
   it('detects monorepo configurations (pnpm, turborepo, nx, lerna)', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-monorepo-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-monorepo-'));
     try {
       // 1. Turborepo
       fs.writeFileSync(path.join(tempDir, 'turbo.json'), JSON.stringify({ pipeline: {} }), 'utf8');
@@ -67,8 +67,8 @@ describe('v1.0.0 Release Stability & First-Class DX Enhancements', () => {
     }
   });
 
-  it('generates structured Markdown summary in .qaforge/reports/latest-summary.md', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-report-test-'));
+  it('generates structured Markdown summary in .veloprove/reports/latest-summary.md', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-report-test-'));
     try {
       const summaryFile = ReportSummaryService.writeSummary({
         projectRoot: tempDir,
@@ -81,16 +81,16 @@ describe('v1.0.0 Release Stability & First-Class DX Enhancements', () => {
           'Platform': 'linux'
         },
         details: ['All 8 health checks passed successfully', 'Found installed Vitest runner'],
-        recommendations: ['Run "qaforge plan" to create test suite']
+        recommendations: ['Run "veloprove plan" to create test suite']
       });
 
       expect(fs.existsSync(summaryFile)).toBe(true);
       const content = fs.readFileSync(summaryFile, 'utf8');
-      expect(content).toContain('# ⚡ QAForge Execution Summary');
-      expect(content).toContain('`qaforge doctor`');
+      expect(content).toContain('# ⚡ VeloProve Execution Summary');
+      expect(content).toContain('`veloprove doctor`');
       expect(content).toContain('Environment & Diagnostics Verification');
       expect(content).toContain('Checks Passed');
-      expect(content).toContain('Run "qaforge plan"');
+      expect(content).toContain('Run "veloprove plan"');
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }

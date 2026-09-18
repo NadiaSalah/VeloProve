@@ -28,8 +28,8 @@ export class RouteScanner {
     // 3. Scan Express / Fastify / REST endpoints in src/
     this.scanExpressEndpoints(projectRoot, apiEndpoints);
 
-    // 4. Scan Custom Framework if configured in qaforge.framework.json
-    const customConfig = path.join(projectRoot, 'qaforge.framework.json');
+    // 4. Scan Custom Framework if configured in veloprove.framework.json
+    const customConfig = path.join(projectRoot, 'veloprove.framework.json');
     if (fs.existsSync(customConfig)) {
       try {
         const def = JSON.parse(fs.readFileSync(customConfig, 'utf8'));
@@ -150,7 +150,7 @@ export class RouteScanner {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory() && !['node_modules', 'dist', '.git', '.qaforge'].includes(entry.name)) {
+      if (entry.isDirectory() && !['node_modules', 'dist', '.git', '.veloprove'].includes(entry.name)) {
         this.scanDirForExpress(fullPath, root, apiEndpoints);
       } else if (entry.isFile() && /\.(ts|js|mjs)$/.test(entry.name)) {
         try {

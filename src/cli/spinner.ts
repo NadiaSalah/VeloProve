@@ -1,4 +1,5 @@
 import pc from 'picocolors';
+import { msg } from './messages.js';
 
 export interface SpinnerOptions {
   text: string;
@@ -52,29 +53,25 @@ export class Spinner {
 
   public succeed(text?: string): this {
     this.stop();
-    const msg = text || this.text;
-    console.log(`${pc.green('✔')} ${msg}`);
+    msg.ok(text || this.text);
     return this;
   }
 
   public fail(text?: string): this {
     this.stop();
-    const msg = text || this.text;
-    console.log(`${pc.red('✖')} ${msg}`);
+    msg.err(text || this.text);
     return this;
   }
 
   public warn(text?: string): this {
     this.stop();
-    const msg = text || this.text;
-    console.log(`${pc.yellow('⚠')} ${msg}`);
+    msg.warn(text || this.text);
     return this;
   }
 
   public info(text?: string): this {
     this.stop();
-    const msg = text || this.text;
-    console.log(`${pc.cyan('ℹ')} ${msg}`);
+    msg.info(text || this.text);
     return this;
   }
 

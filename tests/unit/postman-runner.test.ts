@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
 import { PostmanRunnerService, type PostmanCollection } from '../../src/adapters/api/postman-runner.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 
 describe('PostmanRunnerService & Collection Suite Runner', () => {
   const fixtureDir = path.resolve(process.cwd(), 'fixtures/postman-test-project');
@@ -129,8 +129,8 @@ describe('PostmanRunnerService & Collection Suite Runner', () => {
     expect(ordersGroup).toBeDefined();
   });
 
-  it('QAForgeEngine provides runPostmanCollection and exportPostmanCollection wrappers', async () => {
-    const engine = new QAForgeEngine(fixtureDir);
+  it('VeloProveEngine provides runPostmanCollection and exportPostmanCollection wrappers', async () => {
+    const engine = new VeloProveEngine(fixtureDir);
     const exportResult = await engine.exportPostmanCollection('sample_export.json');
     expect(fs.existsSync(exportResult.savedPath)).toBe(true);
 

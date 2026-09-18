@@ -3,7 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
 import { FrameworkLearnerService } from '../../src/application/framework-learner.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 
 describe('FrameworkLearnerService (Custom & Uncommon Framework Self-Teaching)', () => {
   const fixtureDir = path.resolve(process.cwd(), 'fixtures/custom-framework-project');
@@ -46,11 +46,11 @@ Default Port: 8080
     expect(result.learned).toBe(true);
     expect(result.frameworkName).toBe('MyInHouseEngine');
     expect(result.inferredRoutesCount).toBe(2);
-    expect(fs.existsSync(path.join(fixtureDir, 'qaforge.framework.json'))).toBe(true);
+    expect(fs.existsSync(path.join(fixtureDir, 'veloprove.framework.json'))).toBe(true);
   });
 
-  it('scans routes dynamically through QAForgeEngine inspection', async () => {
-    const engine = new QAForgeEngine(fixtureDir);
+  it('scans routes dynamically through VeloProveEngine inspection', async () => {
+    const engine = new VeloProveEngine(fixtureDir);
     const { profile } = await engine.inspect();
     expect(profile.frameworks.some(f => f === 'MyInHouseEngine')).toBe(true);
     expect(profile.routes.some(r => r.path === '/home')).toBe(true);

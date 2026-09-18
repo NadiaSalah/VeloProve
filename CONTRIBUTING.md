@@ -1,13 +1,13 @@
-# Contributing to QAForge
+# Contributing to VeloProve
 
-We welcome contributions to QAForge!
+We welcome contributions to VeloProve!
 
 ## Development Setup
 
 1. Clone repository:
    ```bash
-   git clone https://github.com/NadiaSalah/qaforge.git
-   cd qaforge
+   git clone https://github.com/NadiaSalah/VeloProve.git
+   cd VeloProve
    ```
 
 2. Install dependencies:

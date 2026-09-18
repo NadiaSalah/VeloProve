@@ -1,5 +1,5 @@
 # ==========================================
-# QAForge Comprehensive Git Ignore Configuration
+# VeloProve Comprehensive Git Ignore Configuration
 # ==========================================
 
 # 1. Dependency Directories
@@ -28,9 +28,9 @@ test-results/
 playwright-report/
 blob-report/
 
-# 4. QAForge Local Runtime State & Snapshots
-.qaforge/
-.qaforge-cache/
+# 4. VeloProve Local Runtime State & Snapshots
+.veloprove/
+.veloprove-cache/
 *.db.snapshot
 *.sqlite.bak
 
@@ -87,3 +87,17 @@ lerna-debug.log*
 *.tsbuildinfo
 .eslintcache
 .stylelintcache
+
+# 11. Local clean-room / one-off consumer installs
+_e2e_consumer/
+
+# 12. Ephemeral lint fixture (created by unit tests)
+fixtures/lint-test-project/
+
+# 13. Smoke-generated plans under fixtures (keep fixture source; ignore plan spam)
+fixtures/**/.veloprove/plans/plan-*.json
+fixtures/**/tests/fixtures/
+fixtures/**/tests/unit/tc-*.test.js
+
+# 14. Local-only marketplace demo (never ship to git/npm)
+_local_demo/

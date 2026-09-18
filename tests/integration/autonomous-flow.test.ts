@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import path from 'node:path';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 
 describe('Autonomous QA Engine Full Loop', () => {
   const root = path.resolve(process.cwd());
-  const engine = new QAForgeEngine(root);
+  const engine = new VeloProveEngine(root);
 
   it('should complete full inspect -> plan -> releaseCheck cycle', async () => {
     // 1. Inspect
     const { profile, requirements, featureMap } = await engine.inspect();
-    expect(profile.projectName).toContain('qaforge');
+    expect(profile.projectName).toContain('veloprove');
     expect(requirements.length).toBeGreaterThan(0);
     expect(featureMap.features.length).toBeGreaterThan(0);
 

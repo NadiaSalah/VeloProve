@@ -10,7 +10,7 @@ export interface HookInstallResult {
 }
 
 export class GitHookInstallerService {
-  public static installPreCommit(guard: WorkspaceGuard, command = 'npx qaforge changed'): HookInstallResult {
+  public static installPreCommit(guard: WorkspaceGuard, command = 'npx veloprove changed'): HookInstallResult {
     const root = guard.getRoot();
     const gitDir = path.join(root, '.git');
     const huskyDir = path.join(root, '.husky');
@@ -33,7 +33,7 @@ export class GitHookInstallerService {
         fs.mkdirSync(hooksDir, { recursive: true });
       }
       const preCommitPath = path.join(hooksDir, 'pre-commit');
-      const hookContent = `#!/bin/sh\n# QAForge Autonomous Pre-Commit Hook\n${command}\n`;
+      const hookContent = `#!/bin/sh\n# VeloProve Autonomous Pre-Commit Hook\n${command}\n`;
       fs.writeFileSync(preCommitPath, hookContent, { mode: 0o755 });
       return {
         installed: true,

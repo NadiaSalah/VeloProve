@@ -1,3 +1,13 @@
+/**
+ * VeloProveEngine — single orchestration façade used by CLI, MCP, and Dashboard.
+ *
+ * Design notes for contributors:
+ * - Prefer calling services through this class so WorkspaceGuard, InspectCache,
+ *   LocalStorage, and execution policy stay consistent across surfaces.
+ * - New capabilities must also register in CLI (`src/cli/index.ts`), MCP
+ *   (`src/mcp/server.ts`), docs, and `tests/unit/interface-parity.test.ts`.
+ * - Never bypass WorkspaceGuard when writing files or spawning processes.
+ */
 import type { ProjectProfile } from '../shared/types/project.js';
 import type { DiscoveredRequirement, FeatureMap } from '../shared/types/requirements.js';
 import type { TestPlan, TestRunRequest, TestRunResult, GeneratedTestFile, OverwritePolicy } from '../shared/types/tests.js';
@@ -16,6 +26,7 @@ import { GenerateTestsService } from './generate-tests.js';
 import { VitestAdapter } from '../adapters/vitest/vitest-adapter.js';
 import { JestAdapter } from '../adapters/jest/jest-adapter.js';
 import { PlaywrightAdapter } from '../adapters/playwright/playwright-adapter.js';
+import { NodeTestAdapter } from '../adapters/node-test/node-test-adapter.js';
 import { DiagnoseFailureService } from './diagnose-failure.js';
 import { HealTestService } from './heal-test.js';
 import { VisualAutoHealService } from './visual-autoheal.js';
@@ -23,8 +34,12 @@ import { SuggestFixService } from './suggest-fix.js';
 import { AnalyzeChangesService } from './analyze-changes.js';
 import { FlakyDetector } from '../domain/tests/flaky-detector.js';
 import { ReleaseCheckService } from './release-check.js';
+import { InspectCache } from './inspect-cache.js';
+import { mergeExecutionPolicy } from '../shared/execution-policy.js';
+import { RunHistoryService } from './run-history.js';
 
 import { AgentAdaptationService, type AgentCapabilities, type AgentHandshakeResult } from './agent-handshake.js';
+import { DocsAssistantService, type DocsAskResult } from './docs-assistant.js';
 import { AppExplorationService, type SiteExplorationResult } from './explore-app.js';
 
 import { ApiFuzzingService, type FuzzProbeResult } from './api-fuzzing.js';
@@ -92,7 +107,8 @@ import {
 } from './bugfix-synthesizer.js';
 import {
   StandaloneReportExporter,
-  type StandaloneReportOptions
+  type StandaloneReportOptions,
+  type StandaloneReportResult
 } from './report-exporter.js';
 import {
   ChaosEngineService,
@@ -182,6 +198,16 @@ import { SarifExporterService, type SarifLog } from './sarif-exporter.js';
 import { SriCsrfValidatorService, type AdvancedWebSecurityReport } from './sri-csrf-validator.js';
 import { TestDeduplicatorService, type TestDeduplicationReport } from '../domain/tests/test-deduplicator.js';
 import { GitHookInstallerService, type HookInstallResult } from './git-hook-installer.js';
+import {
+  SmartDevServerService,
+  type EnsureDevServerOptions,
+  type EnsureDevServerResult
+} from './smart-dev-server.js';
+import {
+  SecurityPolicyWizard,
+  type SecurityPolicyInitOptions,
+  type SecurityPolicyInitResult
+} from './security-policy-wizard.js';
 import type {
   SecurityAttackSurface,
   SecurityTestPlan,
@@ -199,7 +225,7 @@ import fs from 'node:fs';
 
 
 
-export class QAForgeEngine {
+export class VeloProveEngine {
   public readonly guard: WorkspaceGuard;
   public readonly storage: LocalStorage;
   public readonly configLoader: ConfigLoader;
@@ -279,7 +305,7 @@ export class QAForgeEngine {
   }
 
   public async exportPostmanCollection(
-    outputPath = 'qaforge_postman_collection.json',
+    outputPath = 'veloprove_postman_collection.json',
     collectionName?: string
   ): Promise<{ collection: PostmanCollection; savedPath: string }> {
     const { profile, requirements } = await this.inspect();
@@ -332,6 +358,20 @@ export class QAForgeEngine {
     return ScenarioRecorderService.synthesizeScenario(this.guard, options);
   }
 
+  public getRecorderBookmarklet(): string {
+    return ScenarioRecorderService.generateBookmarklet();
+  }
+
+  public recordScenarioFromPayload(payload: {
+    title?: string;
+    startUrl?: string;
+    steps?: import('./scenario-recorder.js').RecordedUserStep[];
+    outputFile?: string;
+    framework?: 'playwright' | 'vitest';
+  }): GeneratedScenarioResult {
+    return ScenarioRecorderService.synthesizeFromPayload(this.guard, payload);
+  }
+
   public stabilizeTests(targetFileOrCode: string, saveFix = false): FlakinessAuditResult {
     return FlakinessStabilizerService.stabilize(this.guard, targetFileOrCode, saveFix);
   }
@@ -353,7 +393,7 @@ export class QAForgeEngine {
     return BugFixSynthesizerService.synthesizePatches(this.guard, diagnoses, apply);
   }
 
-  public exportReport(options: StandaloneReportOptions = {}): { filePath: string; format: string; sizeBytes: number } {
+  public exportReport(options: StandaloneReportOptions = {}): StandaloneReportResult {
     return StandaloneReportExporter.export(this.guard, this.storage, options);
   }
 
@@ -375,7 +415,27 @@ export class QAForgeEngine {
   }
 
   public async sendAlert(options: WebhookDispatchOptions): Promise<WebhookDispatchResult> {
-    return WebhookAlertService.sendAlert(options);
+    const history = this.getRunHistory();
+    const enriched = {
+      ...options,
+      payload: {
+        ...options.payload,
+        branch: options.payload.branch ?? history?.aggregates.currentBranch,
+        mttrHours:
+          options.payload.mttrHours !== undefined
+            ? options.payload.mttrHours
+            : history?.aggregates.currentMttrHours,
+        velocityDelta:
+          options.payload.velocityDelta !== undefined
+            ? options.payload.velocityDelta
+            : history?.aggregates.branchStats?.find(
+                (s) => s.branch === (options.payload.branch || history?.aggregates.currentBranch)
+              )?.velocityDelta,
+        regressionAlert:
+          options.payload.regressionAlert ?? history?.aggregates.regressionAlert
+      }
+    };
+    return WebhookAlertService.sendAlert(enriched);
   }
 
   public auditFeatureParity(options: { generateE2ESuite?: boolean } = {}): FeatureParityReport {
@@ -477,14 +537,30 @@ export class QAForgeEngine {
   }
 
   public async runSecurityTests(options: SecurityTestingOptions = {}): Promise<SecurityReport> {
+    if (options.ensureDev === true) {
+      await this.ensureDevServer({
+        baseURL: options.baseURL,
+        reuseExisting: true
+      });
+    }
     const { profile } = await this.inspect();
     const surface = await SecurityEngine.scanSurface(this.guard, profile);
     const plan = SecurityEngine.createPlan(surface, options);
-    return SecurityEngine.runTests(this.guard, plan, options, profile);
+    const report = await SecurityEngine.runTests(this.guard, plan, options, profile);
+    RunHistoryService.recordSecurityScore(this.guard, report.securityScore);
+    return report;
   }
 
   public async generateSecurityReport(options: SecurityTestingOptions = {}): Promise<SecurityReport> {
     return this.runSecurityTests(options);
+  }
+
+  public async ensureDevServer(options: EnsureDevServerOptions = {}): Promise<EnsureDevServerResult> {
+    return SmartDevServerService.ensure(this.guard, options);
+  }
+
+  public initSecurityPolicy(options: SecurityPolicyInitOptions = {}): SecurityPolicyInitResult {
+    return SecurityPolicyWizard.initPolicy(this.guard, options);
   }
 
   public exportSarif(report: SecurityReport, auditReport?: any, outputPath?: string): { sarifPath: string; log: SarifLog } {
@@ -499,7 +575,7 @@ export class QAForgeEngine {
     return TestDeduplicatorService.analyze(this.guard, testFiles);
   }
 
-  public installGitHook(command = 'npx qaforge changed'): HookInstallResult {
+  public installGitHook(command = 'npx veloprove changed'): HookInstallResult {
     return GitHookInstallerService.installPreCommit(this.guard, command);
   }
 
@@ -519,8 +595,16 @@ export class QAForgeEngine {
 
 
 
-  public watch(onIteration?: (info: { changedFile: string; impactedTests: string[]; status: 'passed' | 'failed' }) => void): { close: () => void } {
-    return WatchModeService.startWatch(this, onIteration);
+  public watch(
+    onIteration?: (info: {
+      changedFile: string;
+      impactedTests: string[];
+      status: 'passed' | 'failed';
+      mode?: 'watch' | 'verify' | 'interval';
+    }) => void,
+    options?: import('./watch-mode.js').WatchModeOptions
+  ): { close: () => void } {
+    return WatchModeService.startWatch(this, onIteration, options);
   }
 
   public async startSandbox(port = 8089): Promise<SandboxEnvironment> {
@@ -545,7 +629,15 @@ export class QAForgeEngine {
     return AgentAdaptationService.handshake(this.guard, capabilities);
   }
 
-  public async explore(options: { baseURL?: string } = {}): Promise<SiteExplorationResult> {
+  /** Answer a question using packaged documentation only (no cloud LLM). */
+  public askDocs(question: string): DocsAskResult {
+    return DocsAssistantService.ask(question, this.guard.getRoot());
+  }
+
+  public async explore(options: { baseURL?: string; ensureDev?: boolean } = {}): Promise<SiteExplorationResult> {
+    if (options.ensureDev === true) {
+      await this.ensureDevServer({ baseURL: options.baseURL, reuseExisting: true });
+    }
     const { profile } = await this.inspect();
     return AppExplorationService.explore(profile, this.guard, options);
   }
@@ -555,15 +647,40 @@ export class QAForgeEngine {
     return ApiFuzzingService.generateFuzzProbes(profile.apiEndpoints);
   }
 
-  public async inspect(): Promise<{ profile: ProjectProfile; requirements: DiscoveredRequirement[]; featureMap: FeatureMap }> {
-    const profile = ProjectScanner.scan(this.guard.getRoot());
+  public async inspect(options: { bypassCache?: boolean } = {}): Promise<{ profile: ProjectProfile; requirements: DiscoveredRequirement[]; featureMap: FeatureMap }> {
+    const root = this.guard.getRoot();
+    const cfg = await this.configLoader.loadConfig();
+    const cacheEnabled = cfg.cache?.inspect !== false;
+
+    if (cacheEnabled && !options.bypassCache) {
+      const cached = InspectCache.get(root);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    const profile = ProjectScanner.scan(root);
     const requirements = RequirementDiscovery.discover(profile);
     const featureMap = FeatureMapBuilder.build(requirements, profile);
 
     this.storage.saveProjectProfile(profile);
     this.storage.saveRequirements(requirements);
 
-    return { profile, requirements, featureMap };
+    const result = { profile, requirements, featureMap };
+    if (cacheEnabled) {
+      InspectCache.set(root, result);
+    }
+    return result;
+  }
+
+  /** Invalidate inspect cache (e.g. after large file writes). */
+  public invalidateInspectCache(): void {
+    InspectCache.invalidate();
+  }
+
+  public async getExecutionPolicy() {
+    const cfg = await this.configLoader.loadConfig();
+    return mergeExecutionPolicy(cfg.execution);
   }
 
   public async plan(options: PlanTestsOptions = {}): Promise<TestPlan> {
@@ -577,12 +694,29 @@ export class QAForgeEngine {
         impactedTestFiles = [];
       }
     }
-    const plan = PlanTestsService.createPlan(profile, requirements, { ...options, impactedTestFiles });
+    const plan = PlanTestsService.createPlan(profile, requirements, {
+      ...options,
+      impactedTestFiles,
+      projectRoot: this.guard.getRoot()
+    });
     this.storage.saveTestPlan(plan);
     return plan;
   }
 
-  public async generate(options: { planId?: string; testCaseIds?: string[]; overwritePolicy?: OverwritePolicy } = {}): Promise<{ generatedFiles: GeneratedTestFile[]; skippedFiles: string[]; writtenCount: number }> {
+  public async generate(options: {
+    planId?: string;
+    testCaseIds?: string[];
+    overwritePolicy?: OverwritePolicy;
+    liveGround?: boolean;
+    baseURL?: string;
+    writeFixtures?: boolean;
+  } = {}): Promise<{
+    generatedFiles: GeneratedTestFile[];
+    skippedFiles: string[];
+    writtenCount: number;
+    groundedCount: number;
+    fixturesDir?: string;
+  }> {
     const plan = options.planId
       ? this.storage.getTestPlan(options.planId)
       : this.storage.getLatestTestPlan() || (await this.plan());
@@ -605,20 +739,40 @@ export class QAForgeEngine {
       adapter = new JestAdapter();
     } else if (profile.testFrameworks.includes('playwright')) {
       adapter = new PlaywrightAdapter();
+    } else if (profile.testFrameworks.includes('node:test')) {
+      adapter = new NodeTestAdapter();
     } else {
-      // Fallback adapter
-      adapter = new VitestAdapter();
+      // No supported runner — do not spawn a phantom vitest (Windows EINVAL / missing binary).
+      const empty: TestRunResult = {
+        runId: `run_no_runner_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        scope: request.scope || 'all',
+        status: 'passed',
+        durationMs: 0,
+        summary: { total: 0, passed: 0, failed: 0, skipped: 0, timedOut: 0 },
+        testResults: [],
+        failures: [],
+        artifacts: []
+      };
+      this.storage.saveTestRun(empty);
+      RunHistoryService.recordRun(this.guard, this.storage, empty);
+      return empty;
     }
 
     const result = await adapter.run(request, context);
     this.storage.saveTestRun(result);
 
-    // Update flaky analysis
+    // Update flaky analysis + durable history snapshot
     const allRuns = this.storage.getAllTestRuns();
     const flakyReports = FlakyDetector.analyzeHistory(allRuns);
     this.storage.saveFlakyHistory(flakyReports);
+    RunHistoryService.recordRun(this.guard, this.storage, result);
 
     return result;
+  }
+
+  public getRunHistory() {
+    return RunHistoryService.load(this.guard) || RunHistoryService.rebuild(this.guard, this.storage);
   }
 
   public async diagnose(runId?: string): Promise<DiagnosticResult[]> {
@@ -661,5 +815,14 @@ export class QAForgeEngine {
       diagnoses,
       flakyTests
     });
+  }
+
+  /**
+   * Autonomous change-aware QA orchestrator.
+   * inspect → impact → targeted tests → diagnose → heal TEST_BUG → release gate.
+   */
+  public async verify(options: import('./verify-orchestrator.js').VerifyOptions = {}) {
+    const { VerifyOrchestrator } = await import('./verify-orchestrator.js');
+    return VerifyOrchestrator.execute(this, options);
   }
 }

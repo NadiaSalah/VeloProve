@@ -1,8 +1,8 @@
 import pc from 'picocolors';
-import type { QAForgeEngine } from './engine.js';
+import type { VeloProveEngine } from './engine.js';
 
 export class TuiDashboardService {
-  public static async renderTui(engine: QAForgeEngine): Promise<void> {
+  public static async renderTui(engine: VeloProveEngine): Promise<void> {
     const { profile, requirements } = await engine.inspect();
     const latestRun = engine.storage.getLatestTestRun();
     const secAudit = engine.auditSecurity();
@@ -11,7 +11,7 @@ export class TuiDashboardService {
 
     console.clear();
     console.log(pc.bold(pc.cyan('╔════════════════════════════════════════════════════════════════════╗')));
-    console.log(pc.bold(pc.cyan('║               ⚡ QAForge Autonomous Terminal Command Center         ║')));
+    console.log(pc.bold(pc.cyan('║               ⚡ VeloProve Autonomous Terminal Command Center         ║')));
     console.log(pc.bold(pc.cyan('╚════════════════════════════════════════════════════════════════════╝')));
 
     console.log(pc.dim(` Project: ${pc.bold(profile.projectName)} | Stack: ${profile.frameworks.join(', ') || 'Node.js'} | Runners: ${profile.testFrameworks.join(', ') || 'Vitest'}`));
@@ -39,13 +39,13 @@ export class TuiDashboardService {
 
     console.log('\n───────────────────────────────────────────────────────────────────────');
     console.log(pc.bold(pc.green('🚀 Quick Actions:')));
-    console.log(`  ${pc.cyan('qaforge test')}         Run full test suites`);
-    console.log(`  ${pc.cyan('qaforge changed')}      Run only impacted tests`);
-    console.log(`  ${pc.cyan('qaforge lint --fix')}   Auto-fix ESLint code issues`);
-    console.log(`  ${pc.cyan('qaforge audit')}        Run security vulnerability & secret scan`);
-    console.log(`  ${pc.cyan('qaforge perf')}         Audit Core Web Vitals`);
-    console.log(`  ${pc.cyan('qaforge mock-gen')}     Generate MSW network mocks`);
-    console.log(`  ${pc.cyan('qaforge ui')}           Open browser interactive dashboard`);
+    console.log(`  ${pc.cyan('veloprove test')}         Run full test suites`);
+    console.log(`  ${pc.cyan('veloprove changed')}      Run only impacted tests`);
+    console.log(`  ${pc.cyan('veloprove lint --fix')}   Auto-fix ESLint code issues`);
+    console.log(`  ${pc.cyan('veloprove audit')}        Run security vulnerability & secret scan`);
+    console.log(`  ${pc.cyan('veloprove perf')}         Audit Core Web Vitals`);
+    console.log(`  ${pc.cyan('veloprove mock-gen')}     Generate MSW network mocks`);
+    console.log(`  ${pc.cyan('veloprove ui')}           Open browser interactive dashboard`);
     console.log('───────────────────────────────────────────────────────────────────────\n');
   }
 }

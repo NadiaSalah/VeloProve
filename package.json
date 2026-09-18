@@ -1,9 +1,9 @@
 {
-  "name": "@engnadia/qaforge",
+  "name": "@engnadia/veloprove",
   "version": "1.0.0",
   "description": "Local-first agentic QA toolkit for AI-assisted test generation, automated testing, failure analysis, regression detection, and quality reporting.",
   "keywords": [
-    "qa",
+    "veloprove",
     "testing",
     "mcp",
     "ai",
@@ -12,7 +12,8 @@
     "playwright",
     "vitest",
     "jest",
-    "autonomous-testing"
+    "autonomous-testing",
+    "quality-assurance"
   ],
   "author": "NadiaSalah",
   "license": "MIT",
@@ -28,28 +29,30 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "qaforge": "./dist/cli/index.js"
+    "veloprove": "./dist/cli/index.js"
   },
   "publishConfig": {
     "access": "public"
   },
   "files": [
     "dist",
-    "docs/*.md",
+    "docs/README.md",
+    "docs/AGENTS.md",
+    "docs/guides",
+    "docs/reference",
     "docs/assets",
-    "docs/integrations",
-    "!docs/FINAL_RELEASE_CONSISTENCY_AUDIT.md",
+    "extensions/recorder",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NadiaSalah/qaforge.git"
+    "url": "git+https://github.com/NadiaSalah/VeloProve.git"
   },
-  "homepage": "https://github.com/NadiaSalah/qaforge#readme",
+  "homepage": "https://github.com/NadiaSalah/VeloProve#readme",
   "bugs": {
-    "url": "https://github.com/NadiaSalah/qaforge/issues"
+    "url": "https://github.com/NadiaSalah/VeloProve/issues"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -62,7 +65,10 @@
     "lint": "tsc --noEmit",
     "prepack": "npm run build",
     "release:check": "node scripts/release-check.js",
-    "release:pack": "npm pack"
+    "release:pack": "npm pack",
+    "pack:smoke": "node scripts/pack-smoke.js",
+    "manifest:generate": "node scripts/generate-manifest.js",
+    "audit:tools": "vitest run tests/unit/tool-surface-audit.test.ts tests/integration/tool-smoke-real-project.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",

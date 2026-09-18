@@ -3,7 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
 import { FeatureParityAuditorService } from '../../src/application/feature-parity-auditor.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 
 describe('FeatureParityAuditorService (UI-to-Backend Ghost Feature & Parity Detection)', () => {
   const fixtureDir = path.resolve(process.cwd(), 'fixtures/parity-test-app');
@@ -107,8 +107,8 @@ fn main() {
     expect(report.generatedE2ETestCode).toContain("test('UI Feature Parity: Start Recovery");
   });
 
-  it('integrates seamlessly with QAForgeEngine facade', () => {
-    const engine = new QAForgeEngine(fixtureDir);
+  it('integrates seamlessly with VeloProveEngine facade', () => {
+    const engine = new VeloProveEngine(fixtureDir);
     const report = engine.auditFeatureParity();
 
     expect(report.projectPath).toBe(fixtureDir);

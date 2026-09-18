@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import http from 'node:http';
 import { RemoteBridgeService } from '../../src/application/remote-bridge.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 
 describe('RemoteBridgeService & Live Companion Bridge Engine', () => {
   let mockLiveServer: http.Server;
@@ -15,8 +15,8 @@ describe('RemoteBridgeService & Live Companion Bridge Engine', () => {
         const url = req.url || '';
 
         // Live Probe Endpoint
-        if (url.startsWith('/api/qaforge') || url.startsWith('/.well-known/qaforge.json')) {
-          const authHeader = req.headers['x-qaforge-secret'];
+        if (url.startsWith('/api/veloprove') || url.startsWith('/.well-known/veloprove.json')) {
+          const authHeader = req.headers['x-veloprove-secret'];
           if (authHeader !== validSecret) {
             res.writeHead(401, { 'Content-Type': 'application/json' });
             return res.end(JSON.stringify({ error: 'Unauthorized' }));
@@ -67,20 +67,20 @@ describe('RemoteBridgeService & Live Companion Bridge Engine', () => {
 
   it('generates drop-in probe snippets across multiple stacks (standalone, nextjs, express, html)', () => {
     const standalone = RemoteBridgeService.generateProbeSnippet('standalone_js', { siteName: 'MySite' });
-    expect(standalone.code).toContain('qaforge-probe.js');
-    expect(standalone.filename).toBe('qaforge-probe.js');
+    expect(standalone.code).toContain('veloprove-probe.js');
+    expect(standalone.filename).toBe('veloprove-probe.js');
 
     const nextjs = RemoteBridgeService.generateProbeSnippet('nextjs_route');
-    expect(nextjs.filename).toBe('app/api/qaforge/route.ts');
+    expect(nextjs.filename).toBe('app/api/veloprove/route.ts');
     expect(nextjs.code).toContain('NextResponse.json');
 
     const express = RemoteBridgeService.generateProbeSnippet('express_middleware');
-    expect(express.filename).toBe('qaforge-middleware.js');
-    expect(express.code).toContain('qaforgeBridgeMiddleware');
+    expect(express.filename).toBe('veloprove-middleware.js');
+    expect(express.code).toContain('veloproveBridgeMiddleware');
 
     const html = RemoteBridgeService.generateProbeSnippet('html_snippet');
-    expect(html.filename).toBe('qaforge-client-probe.html');
-    expect(html.code).toContain('__QAFORGE_CLIENT_PROBE__');
+    expect(html.filename).toBe('veloprove-client-probe.html');
+    expect(html.code).toContain('__VELOPROVE_CLIENT_PROBE__');
   });
 
   it('successfully handshakes with live remote probe when valid secret token is provided', async () => {
@@ -109,8 +109,8 @@ describe('RemoteBridgeService & Live Companion Bridge Engine', () => {
     expect(report.overallHealthScore).toBeGreaterThan(0);
   });
 
-  it('QAForgeEngine provides generateRemoteProbe, connectRemoteSite, and auditRemoteSite methods', async () => {
-    const engine = new QAForgeEngine(process.cwd());
+  it('VeloProveEngine provides generateRemoteProbe, connectRemoteSite, and auditRemoteSite methods', async () => {
+    const engine = new VeloProveEngine(process.cwd());
     const snippet = engine.generateRemoteProbe('standalone_js');
     expect(snippet.code).toBeDefined();
 

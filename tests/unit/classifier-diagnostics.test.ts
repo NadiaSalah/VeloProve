@@ -18,6 +18,8 @@ describe('Failure Classifier Engine', () => {
     expect(outcome.classification).toBe('TEST_BUG');
     expect(outcome.canAutoHeal).toBe(true);
     expect(outcome.confidence).toBeGreaterThanOrEqual(0.85);
+    expect(outcome.evidenceSignals.some((s) => /failedSelector|#submit-btn|errorMessage/.test(s))).toBe(true);
+    expect(outcome.speculationNotes.length).toBeGreaterThan(0);
   });
 
   it('should classify value mismatch as APPLICATION_BUG', () => {

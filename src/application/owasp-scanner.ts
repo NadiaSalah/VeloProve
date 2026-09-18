@@ -34,7 +34,7 @@ export class OwaspScannerService {
       const res = await fetch(targetUrl, {
         method: 'GET',
         headers: {
-          'User-Agent': 'QAForge-OWASP-Audit/1.0',
+          'User-Agent': 'VeloProve-OWASP-Audit/1.0',
           'Origin': 'https://evil-attacker.example.com'
         }
       });

@@ -1,4 +1,4 @@
-name: QAForge Release & Distribution
+name: VeloProve Release & Distribution
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   release:
-    name: Build, Verify & Publish QAForge
+    name: Build, Verify & Publish VeloProve
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -42,7 +42,7 @@ jobs:
       - name: Pack Distribution Tarball
         run: |
           npm pack
-          echo "TARBALL=$(ls engnadia-qaforge-*.tgz)" >> $GITHUB_ENV
+          echo "TARBALL=$(ls engnadia-veloprove-*.tgz)" >> $GITHUB_ENV
 
       - name: Create GitHub Release & Attach Tarball
         uses: softprops/action-gh-release@v2

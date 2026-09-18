@@ -51,9 +51,14 @@ export interface DiagnosticResult {
   diagnosisId: string;
   testId: string;
   classification: FailureClassification;
+  /** Model confidence in the classification — not evidence strength. */
   confidence: number; // 0.00 - 1.00
   rootCause: string;
   evidence: FailureEvidence;
+  /** Concrete signals drawn from evidence (facts), separate from speculation. */
+  evidenceSignals: string[];
+  /** Hypotheses that are not directly proven by evidence. */
+  speculationNotes: string[];
   affectedFiles: string[];
   suggestedActions: string[];
   canAutoHealTest: boolean;

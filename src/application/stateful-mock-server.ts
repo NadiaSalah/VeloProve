@@ -33,10 +33,10 @@ export class StatefulMockServerService {
       this.initialSeed = config.initialData || {
         users: [
           { id: '1', name: 'Nadia Developer', email: 'nadia@example.com', role: 'admin' },
-          { id: '2', name: 'Tariq Tester', email: 'tariq@example.com', role: 'qa' }
+          { id: '2', name: 'Tariq Tester', email: 'tariq@example.com', role: 'tester' }
         ],
         products: [
-          { id: 'p101', title: 'QAForge Enterprise License', price: 299, inStock: true },
+          { id: 'p101', title: 'VeloProve Enterprise License', price: 299, inStock: true },
           { id: 'p102', title: 'Local AI Test Agent', price: 99, inStock: true }
         ]
       };
@@ -135,7 +135,7 @@ export class StatefulMockServerService {
 
     if (parts.length === 0) {
       this.sendJson(res, 200, {
-        message: 'QAForge Stateful Mock Server Ready',
+        message: 'VeloProve Stateful Mock Server Ready',
         availableCollections: Array.from(this.stateStore.keys())
       });
       this.logReq(method, rawUrl, 200);

@@ -1,5 +1,5 @@
 import type { TestCaseResult, TestRunResult } from '../../shared/types/tests.js';
-import type { QAForgeConfig } from '../../shared/types/config.js';
+import type { VeloProveConfig } from '../../shared/types/config.js';
 import { DynamicVariableStore } from './dynamic-variables.js';
 import { AutoAuthManager } from './auto-auth.js';
 import { AutoCleanupManager, type CleanupAction } from './auto-cleanup.js';
@@ -25,7 +25,7 @@ export class NativeApiRunner {
 
   public async runSuite(
     steps: ApiTestStep[],
-    config: QAForgeConfig['api'] = {}
+    config: VeloProveConfig['api'] = {}
   ): Promise<TestRunResult> {
     const startTime = Date.now();
     const runId = `api-run-${Date.now()}`;

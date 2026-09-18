@@ -13,11 +13,11 @@ export interface SummaryReportOptions {
 
 export class ReportSummaryService {
   /**
-   * Generates and writes `.qaforge/reports/latest-summary.md` and preserves structured execution log
+   * Generates and writes `.veloprove/reports/latest-summary.md` and preserves structured execution log
    */
   public static writeSummary(options: SummaryReportOptions): string {
     const { projectRoot, commandName, title, verdict, metrics, details, recommendations } = options;
-    const reportsDir = path.join(projectRoot, '.qaforge', 'reports');
+    const reportsDir = path.join(projectRoot, '.veloprove', 'reports');
 
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
@@ -26,8 +26,8 @@ export class ReportSummaryService {
     const timestamp = new Date().toISOString();
     const formattedDate = new Date().toLocaleString();
 
-    let md = `# ⚡ QAForge Execution Summary\n\n`;
-    md += `> **Command:** \`qaforge ${commandName}\`  \n`;
+    let md = `# ⚡ VeloProve Execution Summary\n\n`;
+    md += `> **Command:** \`veloprove ${commandName}\`  \n`;
     md += `> **Timestamp:** \`${formattedDate}\` (\`${timestamp}\`)  \n`;
     if (verdict) {
       const badgeColor = verdict === 'PASSED' || verdict === 'HEALTHY' ? 'brightgreen' : verdict === 'WARNINGS' ? 'yellow' : 'red';
@@ -61,7 +61,7 @@ export class ReportSummaryService {
       md += `\n`;
     }
 
-    md += `---\n*Generated automatically by [QAForge](https://github.com/NadiaSalah/QAForge) — Local-First Agentic QA Engine.*\n`;
+    md += `---\n*Generated automatically by [VeloProve](https://github.com/NadiaSalah/VeloProve) — Local-First Agentic QA Engine.*\n`;
 
     const summaryPath = path.join(reportsDir, 'latest-summary.md');
     try {

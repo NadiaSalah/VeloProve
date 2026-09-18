@@ -11,6 +11,6 @@ export class AnalyzeChangesService {
     const changedFiles = await GitDiffAnalyzer.getChangedFiles(guard);
     const changedRelPaths = changedFiles.map(f => f.relativePath);
 
-    return DependencyGraph.findImpactedTests(changedRelPaths, profile);
+    return DependencyGraph.findImpactedTests(changedRelPaths, profile, guard.getRoot());
   }
 }

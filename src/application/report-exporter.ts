@@ -7,11 +7,79 @@ import { PerformanceProfilerService } from './perf-profiler.js';
 import { CoverageHeatmapService } from './coverage-heatmap.js';
 import { ReleaseCheckService } from './release-check.js';
 import { QuarantineService } from './quarantine-service.js';
+import { JUnitExporter } from './junit-exporter.js';
+import { AllureExporter } from './allure-exporter.js';
+import { buildSimplePdf, writeSimplePdf } from './simple-pdf.js';
 
 export interface StandaloneReportOptions {
   outputPath?: string;
-  format?: 'html' | 'json' | 'markdown';
+  format?: 'html' | 'json' | 'markdown' | 'junit' | 'pdf' | 'allure';
   title?: string;
+  /** When true, build content and return suggested path without writing to disk. */
+  preview?: boolean;
+  /** When true, return full file content for client-side Save As (no write). */
+  download?: boolean;
+}
+
+export interface StandaloneReportFilePart {
+  name: string;
+  content: string;
+}
+
+export interface StandaloneReportResult {
+  filePath: string;
+  format: string;
+  sizeBytes: number;
+  /** False when `preview` / `download` was requested (nothing written yet). */
+  saved: boolean;
+  /** Human-readable or source preview for dashboard / CLI dry-run. */
+  previewText?: string;
+  /** Suggested filename for Save As dialogs. */
+  suggestedName?: string;
+  mimeType?: string;
+  /** Full UTF-8 content for single-file downloads. */
+  content?: string;
+  /** Base64 payload for binary-ish formats (PDF). */
+  contentBase64?: string;
+  /** Multi-file bundle (Allure). */
+  files?: StandaloneReportFilePart[];
+  /** True when the export is a directory of files. */
+  isDirectory?: boolean;
+}
+
+function suggestedNameFor(format: string, outputPath?: string): string {
+  if (outputPath) return path.basename(outputPath);
+  switch (format) {
+    case 'junit':
+      return 'veloprove-junit.xml';
+    case 'allure':
+      return 'allure-results';
+    case 'json':
+      return 'veloprove-report.json';
+    case 'pdf':
+      return 'veloprove-executive-report.pdf';
+    case 'markdown':
+      return 'veloprove-report.md';
+    default:
+      return 'veloprove-executive-report.html';
+  }
+}
+
+function mimeFor(format: string): string {
+  switch (format) {
+    case 'junit':
+      return 'application/xml';
+    case 'json':
+      return 'application/json';
+    case 'pdf':
+      return 'application/pdf';
+    case 'markdown':
+      return 'text/markdown';
+    case 'allure':
+      return 'application/json';
+    default:
+      return 'text/html';
+  }
 }
 
 export class StandaloneReportExporter {
@@ -19,20 +87,112 @@ export class StandaloneReportExporter {
     guard: WorkspaceGuard,
     storage: LocalStorage,
     options: StandaloneReportOptions = {}
-  ): { filePath: string; format: string; sizeBytes: number } {
+  ): StandaloneReportResult {
     const format = options.format || 'html';
-    const filename = options.outputPath || (format === 'html' ? 'qaforge-executive-report.html' : format === 'json' ? 'qaforge-report.json' : 'qaforge-report.md');
+    const preview = Boolean(options.preview);
+    const download = Boolean(options.download);
+    const latestRun = storage.getLatestTestRun();
+    const suggestedName = suggestedNameFor(format, options.outputPath);
+    const mimeType = mimeFor(format);
+
+    if (format === 'junit') {
+      if (!latestRun) {
+        throw new Error('No test run available to export as JUnit XML. Run `veloprove test` first.');
+      }
+      const suggested = guard.resolveSafePath(options.outputPath || suggestedName);
+      const built = JUnitExporter.buildXml(latestRun);
+      if (preview || download) {
+        const previewText = preview
+          ? `JUnit XML export preview\n` +
+            `Suggested name: ${suggestedName}\n` +
+            `Run status: ${latestRun.status} · ${latestRun.summary.passed}/${latestRun.summary.total} passed\n\n` +
+            (built.xml.length > 8000 ? built.xml.slice(0, 8000) + '\n\n… [preview truncated]' : built.xml)
+          : undefined;
+        return {
+          filePath: suggested,
+          format: 'junit',
+          sizeBytes: Buffer.byteLength(built.xml, 'utf8'),
+          saved: false,
+          previewText,
+          suggestedName,
+          mimeType,
+          content: download ? built.xml : undefined
+        };
+      }
+      const out = JUnitExporter.fromTestRun(
+        guard,
+        latestRun,
+        options.outputPath || suggestedName
+      );
+      return {
+        filePath: out.filePath,
+        format: 'junit',
+        sizeBytes: out.sizeBytes,
+        saved: true,
+        suggestedName,
+        mimeType
+      };
+    }
+
+    if (format === 'allure') {
+      if (!latestRun) {
+        throw new Error('No test run available to export as Allure results. Run `veloprove test` first.');
+      }
+      const suggested = guard.resolveSafePath(options.outputPath || suggestedName);
+      const built = AllureExporter.buildFiles(latestRun);
+      if (preview || download) {
+        const previewText =
+          `Allure results directory preview\n` +
+          `Suggested folder: ${suggestedName}\n` +
+          `Files: ${built.files.length} · Run: ${latestRun.status} · ${latestRun.summary.total} tests\n` +
+          built.files.map((f) => `• ${f.name}`).join('\n');
+        return {
+          filePath: suggested,
+          format: 'allure',
+          sizeBytes: built.files.reduce((n, f) => n + Buffer.byteLength(f.content, 'utf8'), 0),
+          saved: false,
+          previewText,
+          suggestedName,
+          mimeType,
+          isDirectory: true,
+          files: download ? built.files : undefined
+        };
+      }
+      const out = AllureExporter.fromTestRun(
+        guard,
+        latestRun,
+        options.outputPath || suggestedName
+      );
+      return {
+        filePath: out.dirPath,
+        format: 'allure',
+        sizeBytes: out.resultFiles,
+        saved: true,
+        suggestedName,
+        mimeType,
+        isDirectory: true
+      };
+    }
+
+    const filename =
+      options.outputPath ||
+      (format === 'html'
+        ? 'veloprove-executive-report.html'
+        : format === 'json'
+          ? 'veloprove-report.json'
+          : format === 'pdf'
+            ? 'veloprove-executive-report.pdf'
+            : 'veloprove-report.md');
     const resolvedPath = guard.resolveSafePath(filename);
 
     const profile = storage.getProjectProfile() || {
       projectName: 'ActiveProject',
-      frameworks: ['Node.js'],
-      testFrameworks: ['Vitest'],
+      frameworks: ['nodejs'],
+      testFrameworks: [],
       routes: [],
       apiEndpoints: []
     } as any;
     const reqs = storage.getRequirements() || [];
-    const latestRun = storage.getLatestTestRun();
     const flakyHistory = storage.getFlakyHistory() || [];
     const secAudit = SecurityAuditService.audit(guard);
     const perfAudit = PerformanceProfilerService.profile(profile, guard);
@@ -44,6 +204,51 @@ export class StandaloneReportExporter {
       flakyTests: flakyHistory
     });
     const quarantined = QuarantineService.getQuarantined(guard);
+
+    if (format === 'pdf') {
+      const lines = [
+        `Generated: ${new Date().toUTCString()}`,
+        `Project: ${profile.projectName}`,
+        `Verdict: ${release.verdict} (${release.confidenceScore}/100)`,
+        '',
+        `Requirements coverage: ${heatmap.overallCoverageScore}%`,
+        `Latest tests: ${latestRun?.summary.passed || 0}/${latestRun?.summary.total || 0} passed`,
+        `Security health: ${secAudit.score}/100 (${secAudit.totalVulnerabilities} issues)`,
+        `Performance: ${perfAudit.overallScore}/100 (${perfAudit.rating})`,
+        `Quarantined: ${quarantined.length}`,
+        '',
+        ...release.blockers.map((b: string) => `Blocker: ${b}`),
+        ...release.recommendations.slice(0, 8).map((r: string) => `Rec: ${r}`)
+      ];
+      const previewText = lines.join('\n');
+      const pdfBody = buildSimplePdf(options.title || 'VeloProve Executive Report', lines);
+      if (preview || download) {
+        return {
+          filePath: resolvedPath,
+          format: 'pdf',
+          sizeBytes: Buffer.byteLength(pdfBody, 'utf8'),
+          saved: false,
+          previewText,
+          suggestedName,
+          mimeType,
+          contentBase64: download ? Buffer.from(pdfBody, 'utf8').toString('base64') : undefined
+        };
+      }
+      const sizeBytes = writeSimplePdf(
+        resolvedPath,
+        options.title || 'VeloProve Executive Report',
+        lines
+      );
+      return {
+        filePath: resolvedPath,
+        format: 'pdf',
+        sizeBytes,
+        saved: true,
+        previewText,
+        suggestedName,
+        mimeType
+      };
+    }
 
     let outputContent = '';
 
@@ -59,7 +264,7 @@ export class StandaloneReportExporter {
         latestRun
       }, null, 2);
     } else if (format === 'markdown') {
-      outputContent = `# QAForge Executive QA & Security Audit Report
+      outputContent = `# VeloProve Executive QA & Security Audit Report
 **Generated:** ${new Date().toUTCString()}  
 **Project:** ${profile.projectName}  
 **Verdict:** **${release.verdict}** (Score: ${release.confidenceScore}/100)
@@ -80,7 +285,7 @@ ${(profile.apiEndpoints || []).map((ep: any) => `- **${ep.method}** \`${ep.path}
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${options.title || 'QAForge Executive QA Audit Report'}</title>
+  <title>${options.title || 'VeloProve Executive QA Audit Report'}</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -112,7 +317,7 @@ ${(profile.apiEndpoints || []).map((ep: any) => `- **${ep.method}** \`${ep.path}
 <body>
   <header>
     <div>
-      <h1 style="margin: 0; font-size: 1.8rem; color: #fff;">⚡ QAForge Executive Quality & Security Audit</h1>
+      <h1 style="margin: 0; font-size: 1.8rem; color: #fff;">⚡ VeloProve Executive Quality & Security Audit</h1>
       <p style="color: var(--text-muted); margin-top: 0.25rem;">Project: <strong>${profile.projectName}</strong> | Generated: ${new Date().toUTCString()}</p>
     </div>
     <div style="text-align: right;">
@@ -170,6 +375,25 @@ ${(profile.apiEndpoints || []).map((ep: any) => `- **${ep.method}** \`${ep.path}
 </html>`;
     }
 
+    const sizeBytes = Buffer.byteLength(outputContent, 'utf8');
+    const previewText =
+      outputContent.length > 14000
+        ? outputContent.slice(0, 14000) + '\n\n… [preview truncated]'
+        : outputContent;
+
+    if (preview || download) {
+      return {
+        filePath: resolvedPath,
+        format,
+        sizeBytes,
+        saved: false,
+        previewText,
+        suggestedName,
+        mimeType,
+        content: download ? outputContent : undefined
+      };
+    }
+
     const dir = path.dirname(resolvedPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -179,7 +403,11 @@ ${(profile.apiEndpoints || []).map((ep: any) => `- **${ep.method}** \`${ep.path}
     return {
       filePath: resolvedPath,
       format,
-      sizeBytes: Buffer.byteLength(outputContent, 'utf8')
+      sizeBytes,
+      saved: true,
+      previewText,
+      suggestedName,
+      mimeType
     };
   }
 }

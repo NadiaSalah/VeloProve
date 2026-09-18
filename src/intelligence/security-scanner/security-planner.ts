@@ -344,28 +344,73 @@ export class SecurityPlanner {
       });
     }
 
-    // 6. Sessions & Tokens Test Cases
+    // 6. Sessions & Tokens Test Cases (includes session theft / hijacking suite)
     if (enabledCategories.has('sessions_tokens')) {
       testCases.push({
         id: 'sec_session_cookie_flags',
-        title: 'Sessions & Tokens - Cookie Security Attributes (HttpOnly, Secure, SameSite)',
+        title: 'Session Theft - Cookie Flags (HttpOnly, Secure, SameSite)',
         category: 'sessions_tokens',
-        subcategory: 'cookie_flags',
-        risk: 'MEDIUM',
+        subcategory: 'session_theft_cookie_flags',
+        risk: 'HIGH',
         safeModeCompatible: true,
         requiresAuthentication: false,
         requiresBrowser: false,
         requiresApi: true,
         requiresFixtureData: false,
         destructive: false,
-        description: 'Inspect session and authentication cookies for HttpOnly, Secure, and SameSite protection.'
+        description: 'Detect session cookies missing HttpOnly/Secure/SameSite that enable XSS and cross-site cookie theft.'
+      });
+
+      testCases.push({
+        id: 'sec_session_id_url_exposure',
+        title: 'Session Theft - Session ID Exposure in URLs',
+        category: 'sessions_tokens',
+        subcategory: 'session_theft_url_leak',
+        risk: 'HIGH',
+        safeModeCompatible: true,
+        requiresAuthentication: false,
+        requiresBrowser: false,
+        requiresApi: false,
+        requiresFixtureData: false,
+        destructive: false,
+        description: 'Detect session identifiers placed in query strings or URL rewriting (Referer/history leakage).'
+      });
+
+      testCases.push({
+        id: 'sec_session_fixation',
+        title: 'Session Theft - Session Fixation (ID Regeneration on Login)',
+        category: 'sessions_tokens',
+        subcategory: 'session_theft_fixation',
+        risk: 'HIGH',
+        safeModeCompatible: true,
+        requiresAuthentication: false,
+        requiresBrowser: false,
+        requiresApi: false,
+        requiresFixtureData: false,
+        destructive: false,
+        description: 'Verify session IDs are regenerated after authentication to prevent fixation-based account takeover.'
+      });
+
+      testCases.push({
+        id: 'sec_session_client_storage_theft',
+        title: 'Session Theft - Client-Side Token Storage (XSS Exfiltration)',
+        category: 'sessions_tokens',
+        subcategory: 'session_theft_client_store',
+        risk: 'HIGH',
+        safeModeCompatible: true,
+        requiresAuthentication: false,
+        requiresBrowser: false,
+        requiresApi: false,
+        requiresFixtureData: false,
+        destructive: false,
+        description: 'Detect auth tokens stored in localStorage/sessionStorage/document.cookie where XSS can steal them.'
       });
 
       testCases.push({
         id: 'sec_session_logout_invalidation',
-        title: 'Sessions & Tokens - Server-Side Session Invalidation on Logout',
+        title: 'Session Theft - Logout Invalidates Stolen Sessions',
         category: 'sessions_tokens',
-        subcategory: 'session_lifecycle',
+        subcategory: 'session_theft_logout',
         targetEndpoint: surface.authEndpoints.find(e => e.type === 'logout')?.path || '/api/auth/logout',
         targetMethod: 'POST',
         risk: 'HIGH',
@@ -375,7 +420,7 @@ export class SecurityPlanner {
         requiresApi: true,
         requiresFixtureData: true,
         destructive: false,
-        description: 'Verify invalidated session token cannot be reused to access protected resources after logout.'
+        description: 'Verify logout destroys/revokes server-side sessions so stolen cookies cannot be reused.'
       });
 
       if (surface.sessionAndTokenMechanisms.jwtDetected || true) {

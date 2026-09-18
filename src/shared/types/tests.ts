@@ -22,6 +22,17 @@ export interface PlannedTestCase {
   riskScore: number; // 0 - 100
   generatedFilePath?: string;
   isExisting?: boolean;
+  /** Live-observed HTTP status (GET grounding); omit when offline */
+  observedStatus?: number;
+  observedPath?: string;
+  observedUrl?: string;
+  observedContentType?: string;
+  /** Top-level JSON keys from live body preview */
+  observedJsonKeys?: string[];
+  /** Route path from site exploration for E2E generation */
+  exploreRoute?: string;
+  /** Relative fixture file used by generated test */
+  fixturePath?: string;
 }
 
 export interface TestPlan {

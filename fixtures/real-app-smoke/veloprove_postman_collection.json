@@ -1,0 +1,22 @@
+{
+  "info": {
+    "name": "real-app-smoke API Collection",
+    "_postman_id": "veloprove-col-1789744847063",
+    "description": "Generated autonomously by VeloProve for real-app-smoke",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

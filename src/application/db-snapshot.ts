@@ -12,7 +12,7 @@ export interface DatabaseSnapshotInfo {
 
 export class DatabaseSnapshotService {
   private static getSnapshotDir(guard: WorkspaceGuard): string {
-    const dir = guard.resolveSafePath('.qaforge/snapshots');
+    const dir = guard.resolveSafePath('.veloprove/snapshots');
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }

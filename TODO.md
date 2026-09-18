@@ -1,86 +1,22 @@
-# 🚀 QAForge Future Roadmap & Next-Gen TODOs
+# VeloProve Roadmap
 
-This document tracks planned features, architectural innovations, and upcoming improvements for QAForge across the current stability cycle (**v1.0.x**), upcoming feature releases (**v1.1.0**, **v1.2.0**), and the future platform vision (**v2.0.0+**).
+**Current release line: `v1.0.0`**
 
----
+Completed backlog lives in [docs/internal/roadmap.md](docs/internal/roadmap.md).
 
-## 📌 Milestone: QAForge v1.0.x — Stability, Developer Experience & Refinements
-
-### 1. ⚡ Live Telemetry & Real-Time Dashboard Feedback
-- [x] **SARIF Report Exporter**: Generate GitHub Code Scanning compatible SARIF (`.sarif`) files from `qaforge security` and `qaforge audit` for native security tab integration (`qa.exportSarif` / `qaforge security --sarif`).
-- [ ] **Server-Sent Events (SSE) / WebSocket Streaming**: Stream test run logs, terminal output, and security scan progression to the Dashboard UI in real-time without polling.
-- [ ] **Smart DevServer Auto-Launcher**: Automatically detect, spawn, and healthcheck the local application dev server (e.g. `npm run dev`) before running live E2E or security tests if `baseURL` is offline.
-
-### 2. 🛡️ Security Engine Enhancements
-- [x] **Subresource Integrity (SRI), CSRF & CORS Validator**: Audit external CDN assets, mutating form CSRF token presence, and wildcard CORS policies (`qa.auditSriCsrf` / `qaforge web-sec`).
-- [ ] **Interactive Security Policy Wizard (`qaforge security --init-policy`)**: CLI prompt to generate customized security configurations for specific compliance frameworks (OWASP ASVS, SOC2, HIPAA).
-
-### 3. 🎯 Test Suite Optimization & Deduplication
-- [x] **AST Test Deduplication Engine**: Detect redundant or overlapping assertions across generated and developer-written tests to keep test runs fast (`qa.dedupTests` / `qaforge dedup`).
-- [x] **Automated Git Pre-Commit Hook (`qaforge hook install`)**: One-command setup for `husky` / `.git/hooks/pre-commit` to execute fast change-impact tests (`qaforge changed`) before commits (`qaforge hook install`).
+Do **not** bump to v2 unless a breaking major rewrite is explicitly approved.
 
 ---
 
-## 📌 Milestone: QAForge v1.1.0 — Smart Insights & Interactive Experience
+## Needs human approval
 
-### 1. 📊 QA Trends, Historical Metrics & Quality Analytics
-- [ ] **Historical Execution Persistence**: Automatically store structured test results, security findings, and health metrics in `.qaforge/state/history.json` over time.
-- [ ] **Dashboard Trend Visualizer**: Add interactive charts (Recharts / Chart.js) in the Dashboard UI displaying pass rates, execution duration, flakiness variance, and code coverage over time.
-- [ ] **Regression Velocity & Flakiness Alerts**: Highlight regressions that occurred across Git branches or recent pull requests with MTTR (Mean Time to Repair) metrics.
-
-### 2. 🎬 Visual Scenario Recorder Extension & Bookmarklet
-- [ ] **Browser Event Interceptor**: Create a lightweight browser snippet / bookmarklet or Chrome extension that listens to user interactions (clicks, inputs, navigations).
-- [ ] **Direct Playwright Spec Generator**: Synthesize recorded browser actions into robust Playwright test files directly from the Live Dashboard UI with one click.
-- [ ] **Accessibility-First Selector Synthesizer**: Auto-map recorded DOM elements to ARIA roles (`getByRole`, `getByLabelText`) during recording.
-
-### 3. 📄 Enterprise Reporting Standards (JUnit XML / Allure / PDF)
-- [ ] **JUnit XML Exporter**: Generate standard `junit.xml` test reports compatible with Jenkins, GitLab CI, CircleCI, and Azure DevOps.
-- [ ] **Allure Report Integration**: Support Allure lifecycle data generation for visual enterprise test dashboards.
-- [ ] **Printable PDF QA Executive Summary**: Add a button in the Dashboard and CLI (`qaforge export-report -f pdf`) for clean PDF generation.
-
-### 4. 📬 Advanced API Studio & Environment Management
-- [ ] **Multi-Environment Variables**: Support environment switcher in the Dashboard (Local, Staging, Production) with secure secret masking.
-- [ ] **API Response Mocking from Schema**: One-click generate realistic mock responses directly from OpenAPI / Swagger definitions.
-- [ ] **Chained Request Flows & Assertions**: Allow building multi-step API workflows where response tokens from step 1 automatically feed into headers for step 2.
+- [ ] **Publish to npm / push GitHub tags** — requires explicit user publish/push approval
+- [ ] Upload marketplace screenshots to Cursor/Claude listings (local PNGs ready under `_local_demo/screenshots/` — do not commit)
 
 ---
 
-## 📌 Milestone: QAForge v1.2.0 — Multi-Model AI Benchmarks & Distributed Testing
+## Explicitly deferred (out of scope / anti-positioning)
 
-### 1. 🤖 Multi-LLM Benchmark & Comparative QA Evaluator
-- [ ] **LLM Evaluation Matrix**: Run side-by-side test generation and failure diagnosis comparisons across different models (Local Ollama, OpenAI GPT, Claude, Gemini).
-- [ ] **Token & Cost Efficiency Tracker**: Measure prompt latency, token consumption, and generation accuracy per AI model.
-- [ ] **Local Offline LLM Provider**: Native integration with local Ollama models for 100% offline air-gapped test synthesis.
-
-### 2. ⚡ Distributed Load & Stress Testing Script Exporter
-- [ ] **k6 Script Compiler**: Automatically compile discovered routes and `qaforge load-test` scenarios into standard k6 JavaScript scripts.
-- [ ] **Artillery / Locust Export**: Export API stress test scenarios to YAML/Python configurations for distributed cloud load testing.
-- [ ] **SLO & Latency Gate Enforcement**: Fail CI pipelines if p95 latency exceeds user-defined service-level objectives (SLOs).
-
-### 3. 🛡️ Advanced Dynamic Security & DAST Probing
-- [x] **Comprehensive Security Testing Suite**: Autonomous vulnerability testing for Authentication, Authorization (IDOR, role escalation), Forms & Inputs (parameter tampering), Injections (SQLi, NoSQLi, XSS, Command, Path Traversal), API Security, Sessions & JWT tampering, and File Upload sanitization (`qa.securityScan`, `qa.securityPlan`, `qa.securityRun`, `qa.securityReport` / `qaforge security`).
-- [ ] **Dynamic OIDC / OAuth2 Consent Flow Simulator**: Autonomous verification of PKCE and OAuth callback state validation.
-- [ ] **GraphQL Introspection & Depth-Limit Abuse Auditor**: Check GraphQL endpoints for unauthorized schema exposure and cyclic nested query vulnerabilities.
-
----
-
-## 📌 Milestone: QAForge v2.0.0 — Autonomous Self-Operating QA Platform
-
-### 1. 🔄 Continuous Background Autonomous Healing Daemon
-- [ ] **Zero-Intervention Watcher**: Run background daemon that automatically patches brittle locators upon detecting application DOM updates.
-- [ ] **AI Pull Request Bot**: Generate ready-to-merge GitHub pull requests with healed tests and bug fix patches.
-- [ ] **Interactive Visual Regression Canvas**: Visual side-by-side pixel diff slider in the Dashboard for reviewing UI changes with one-click baseline approvals.
-
-### 2. 🌐 Multi-Language Engine Support (Beyond JS/TS)
-- [ ] **Python Ecosystem**: Native test generation and execution for `pytest` and `unittest` (FastAPI, Django, Flask).
-- [ ] **Java & Go Ecosystems**: Native adapters for JUnit 5 (Spring Boot) and `go test` (Gin, Fiber).
-- [ ] **Rust & C# Ecosystems**: Native adapters for `cargo test` (Actix, Axum) and `xUnit / NUnit` (ASP.NET Core).
-- [ ] **Universal Tree-sitter AST Parser**: Tree-sitter powered multilingual route, type, and requirement extraction across all major programming languages.
-
-### 3. 🧩 Plugin & Custom Adapter SDK
-- [ ] **Custom Adapter SDK**: Allow developers to write custom adapters for proprietary in-house test runners and private cloud infrastructures.
-- [ ] **Community Plugin Marketplace**: Modular plugin architecture for custom security checkers, linter rules, and export formats.
-
----
-
-*Last Updated: August 2026 — Maintained by NadiaSalah & the QAForge Community.*
+- Multi-LLM matrix, k6 exporters, multi-language engines, plugin marketplace, autonomous PR bot
+- Cloud LLM-backed chat; vendor cloud test sandboxes / API-key SaaS execution
+- Cloud parallel agent fleets / SaaS monitoring dashboards

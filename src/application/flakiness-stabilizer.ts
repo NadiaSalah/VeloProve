@@ -56,7 +56,7 @@ export class FlakinessStabilizerService {
           recommendation: 'Replace static waitForTimeout with auto-waiting web-first assertion (toBeVisible / expect.poll).'
         });
         // Transform: replace with resilient assertion hint or poll
-        line = line.replace(/await\s+page\.waitForTimeout\s*\(\s*(\d+)\s*\);?/, '// [QAForge Stabilized: Auto-wait converted]\n    await page.waitForLoadState("networkidle").catch(() => {});');
+        line = line.replace(/await\s+page\.waitForTimeout\s*\(\s*(\d+)\s*\);?/, '// [VeloProve Stabilized: Auto-wait converted]\n    await page.waitForLoadState("networkidle").catch(() => {});');
       } else if (/new\s+Promise\s*\(\s*r\s*=>\s*setTimeout\s*\(\s*r\s*,\s*\d+\s*\)\s*\)/.test(line)) {
         issues.push({
           type: 'HARDCODED_SLEEP',
@@ -64,7 +64,7 @@ export class FlakinessStabilizerService {
           snippet: line.trim(),
           recommendation: 'Avoid hardcoded Promise timeout sleeps in async tests.'
         });
-        line = line.replace(/await\s+new\s+Promise\s*\(\s*r\s*=>\s*setTimeout\s*\(\s*r\s*,\s*\d+\s*\)\s*\);?/, '// [QAForge Stabilized: Replaced hardcoded sleep with auto-poll]');
+        line = line.replace(/await\s+new\s+Promise\s*\(\s*r\s*=>\s*setTimeout\s*\(\s*r\s*,\s*\d+\s*\)\s*\);?/, '// [VeloProve Stabilized: Replaced hardcoded sleep with auto-poll]');
       }
 
       // Pattern 2: expect(await locator.isVisible()).toBe(true) -> await expect(locator).toBeVisible()

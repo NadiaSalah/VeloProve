@@ -9,12 +9,12 @@ import { TestDeduplicatorService } from '../../src/domain/tests/test-deduplicato
 import { GitHookInstallerService } from '../../src/application/git-hook-installer.js';
 import type { SecurityReport } from '../../src/shared/types/security.js';
 
-describe('QAForge v1.0.x Stability & First-Class DX Suite', () => {
+describe('VeloProve v1.0.x Stability & First-Class DX Suite', () => {
   let tmpDir: string;
   let guard: WorkspaceGuard;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-stability-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-stability-test-'));
     guard = new WorkspaceGuard(tmpDir);
   });
 
@@ -77,7 +77,7 @@ describe('QAForge v1.0.x Stability & First-Class DX Suite', () => {
 
       expect(fs.existsSync(sarifPath)).toBe(true);
       expect(log.version).toBe('2.1.0');
-      expect(log.runs[0].tool.driver.name).toBe('QAForge Security Engine');
+      expect(log.runs[0].tool.driver.name).toBe('VeloProve Security Engine');
       expect(log.runs[0].results.length).toBe(1);
       expect(log.runs[0].results[0].level).toBe('error'); // High maps to error in SARIF
       expect(log.runs[0].results[0].locations![0].physicalLocation.artifactLocation.uri).toBe('src/components/Search.tsx');
@@ -159,12 +159,12 @@ describe('QAForge v1.0.x Stability & First-Class DX Suite', () => {
       const gitDir = path.join(tmpDir, '.git');
       fs.mkdirSync(gitDir, { recursive: true });
 
-      const installRes = GitHookInstallerService.installPreCommit(guard, 'npx qaforge changed');
+      const installRes = GitHookInstallerService.installPreCommit(guard, 'npx veloprove changed');
       expect(installRes.installed).toBe(true);
       expect(fs.existsSync(installRes.hookPath)).toBe(true);
 
       const content = fs.readFileSync(installRes.hookPath, 'utf8');
-      expect(content).toContain('npx qaforge changed');
+      expect(content).toContain('npx veloprove changed');
 
       const uninstallRes = GitHookInstallerService.uninstallPreCommit(guard);
       expect(uninstallRes.uninstalled).toBe(true);

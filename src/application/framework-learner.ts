@@ -22,13 +22,13 @@ export interface LearnFrameworkResult {
 export class FrameworkLearnerService {
   /**
    * Discovers and parses custom framework definitions from AGENTS.md,
-   * qaforge.framework.json, qaforge.config.json or explicit agent prompts.
+   * veloprove.framework.json, veloprove.config.json or explicit agent prompts.
    */
   public static loadCustomFramework(guard: WorkspaceGuard): CustomFrameworkDefinition | null {
     const root = guard.getRoot();
 
-    // 1. Check qaforge.framework.json
-    const dedicatedConfig = path.join(root, 'qaforge.framework.json');
+    // 1. Check veloprove.framework.json
+    const dedicatedConfig = path.join(root, 'veloprove.framework.json');
     if (fs.existsSync(dedicatedConfig)) {
       try {
         return JSON.parse(fs.readFileSync(dedicatedConfig, 'utf8'));
@@ -37,8 +37,8 @@ export class FrameworkLearnerService {
       }
     }
 
-    // 2. Check .qaforge/framework.json
-    const localStoreConfig = path.join(guard.getQAForgeDirectory(), 'framework.json');
+    // 2. Check .veloprove/framework.json
+    const localStoreConfig = path.join(guard.getVeloProveDirectory(), 'framework.json');
     if (fs.existsSync(localStoreConfig)) {
       try {
         return JSON.parse(fs.readFileSync(localStoreConfig, 'utf8'));
@@ -64,7 +64,7 @@ export class FrameworkLearnerService {
   }
 
   /**
-   * Teaches QAForge a new framework dynamically and persists the definition.
+   * Teaches VeloProve a new framework dynamically and persists the definition.
    */
   public static learn(guard: WorkspaceGuard, request: LearnFrameworkRequest = {}): LearnFrameworkResult {
     let definition: CustomFrameworkDefinition;
@@ -87,16 +87,16 @@ export class FrameworkLearnerService {
     } else {
       const discovered = this.loadCustomFramework(guard);
       if (!discovered) {
-        throw new Error('No custom framework definition found in AGENTS.md, qaforge.framework.json, or instructions.');
+        throw new Error('No custom framework definition found in AGENTS.md, veloprove.framework.json, or instructions.');
       }
       definition = discovered;
     }
 
-    // Persist to qaforge.framework.json in project root and .qaforge directory
-    const targetFile = path.join(guard.getRoot(), 'qaforge.framework.json');
+    // Persist to veloprove.framework.json in project root and .veloprove directory
+    const targetFile = path.join(guard.getRoot(), 'veloprove.framework.json');
     fs.writeFileSync(targetFile, JSON.stringify(definition, null, 2), 'utf8');
 
-    const localTarget = path.join(guard.getQAForgeDirectory(), 'framework.json');
+    const localTarget = path.join(guard.getVeloProveDirectory(), 'framework.json');
     fs.writeFileSync(localTarget, JSON.stringify(definition, null, 2), 'utf8');
 
     const scanned = this.scanWithCustomFramework(guard, definition);
@@ -137,7 +137,7 @@ export class FrameworkLearnerService {
       for (const e of entries) {
         const full = path.join(dir, e.name);
         if (e.isDirectory()) {
-          if (!['node_modules', '.git', 'dist', '.qaforge'].includes(e.name)) {
+          if (!['node_modules', '.git', 'dist', '.veloprove'].includes(e.name)) {
             walk(full);
           }
         } else if (extensions.some(ext => e.name.endsWith(ext))) {
@@ -199,8 +199,8 @@ export class FrameworkLearnerService {
    * Heuristically parses structured YAML/JSON or Markdown blocks inside AGENTS.md
    */
   private static parseFromMarkdown(markdown: string): CustomFrameworkDefinition | null {
-    // Look for ```json qaforge-framework or ```json framework block
-    const jsonMatch = markdown.match(/```(?:json|qaforge-framework|framework)\s*([\s\S]*?)```/i);
+    // Look for ```json veloprove-framework or ```json framework block
+    const jsonMatch = markdown.match(/```(?:json|veloprove-framework|framework)\s*([\s\S]*?)```/i);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[1].trim());

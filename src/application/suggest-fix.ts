@@ -28,7 +28,7 @@ export class SuggestFixService {
           ? [`Expected: ${diagnosis.evidence.assertionDiff.expected}, Actual: ${diagnosis.evidence.assertionDiff.actual}`]
           : [])
       ],
-      recommendedValidation: `Run \`qaforge test --paths ${diagnosis.evidence.testFile}\` after applying the fix.`
+      recommendedValidation: `Run \`veloprove test --paths ${diagnosis.evidence.testFile}\` after applying the fix.`
     };
   }
 }

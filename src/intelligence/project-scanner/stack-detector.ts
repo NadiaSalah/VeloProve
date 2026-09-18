@@ -30,7 +30,7 @@ export class StackDetector {
 
     if (fs.existsSync(pkgJsonPath)) {
       try {
-        pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+        pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8').replace(/^\uFEFF/, ''));
       } catch {
         // ignore invalid json
       }
@@ -87,7 +87,7 @@ export class StackDetector {
 
     // Check for custom framework definition
     let customDef: any = null;
-    const customFrameworkConfig = path.join(projectRoot, 'qaforge.framework.json');
+    const customFrameworkConfig = path.join(projectRoot, 'veloprove.framework.json');
     if (fs.existsSync(customFrameworkConfig)) {
       try {
         customDef = JSON.parse(fs.readFileSync(customFrameworkConfig, 'utf8'));
@@ -113,14 +113,25 @@ export class StackDetector {
     if (dependencies['esbuild']) buildTools.push('esbuild');
     if (dependencies['rollup']) buildTools.push('rollup');
 
+    const scripts = pkg.scripts || {};
+
     // Test Frameworks
     const testFrameworks: TestFrameworkType[] = [];
     if (dependencies['vitest']) testFrameworks.push('vitest');
     if (dependencies['jest'] || dependencies['@types/jest']) testFrameworks.push('jest');
     if (dependencies['@playwright/test'] || dependencies['playwright']) testFrameworks.push('playwright');
 
+    // Built-in Node test runner (only when no major runner dep is present)
+    if (testFrameworks.length === 0) {
+      const testScript = String(scripts.test || '');
+      const usesNodeTest =
+        /\bnode\b.*--test\b/.test(testScript) ||
+        /\bnode:test\b/.test(testScript) ||
+        hasNodeTestImport(projectRoot);
+      if (usesNodeTest) testFrameworks.push('node:test');
+    }
+
     // Dev command detection
-    const scripts = pkg.scripts || {};
     let devCommand: string | undefined;
     if (scripts.dev) devCommand = 'npm run dev';
     else if (scripts.start) devCommand = 'npm start';
@@ -139,7 +150,10 @@ export class StackDetector {
       },
       {
         name: 'unit-testing',
-        supported: testFrameworks.includes('vitest') || testFrameworks.includes('jest'),
+        supported:
+          testFrameworks.includes('vitest') ||
+          testFrameworks.includes('jest') ||
+          testFrameworks.includes('node:test'),
         details: 'Fast unit and component testing'
       },
       {
@@ -153,7 +167,7 @@ export class StackDetector {
     if (testFrameworks.length === 0) {
       warnings.push({
         code: 'NO_TEST_RUNNER',
-        message: 'No test runner (Vitest, Jest, Playwright) detected in dependencies.',
+        message: 'No test runner (Vitest, Jest, Playwright, or node --test) detected.',
         severity: 'medium'
       });
     }
@@ -172,4 +186,19 @@ export class StackDetector {
       warnings
     };
   }
+}
+
+function hasNodeTestImport(projectRoot: string): boolean {
+  const testsDir = path.join(projectRoot, 'tests');
+  if (!fs.existsSync(testsDir)) return false;
+  try {
+    for (const name of fs.readdirSync(testsDir)) {
+      if (!/\.(test|spec)\.(js|mjs|cjs|ts)$/.test(name)) continue;
+      const src = fs.readFileSync(path.join(testsDir, name), 'utf8').slice(0, 2000);
+      if (/from\s+['"]node:test['"]|require\(['"]node:test['"]\)/.test(src)) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }

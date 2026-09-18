@@ -8,13 +8,14 @@ import { SecurityPlanner } from '../../src/intelligence/security-scanner/securit
 import { SecurityEngine } from '../../src/application/security-engine.js';
 import { SecretRedactor } from '../../src/shared/secret-redactor.js';
 import { ConfigLoader, DEFAULT_CONFIG } from '../../src/shared/config-loader.js';
+import { SessionTheftAuditor } from '../../src/application/session-theft-auditor.js';
 
-describe('QAForge Security Testing Domain & Engines', () => {
+describe('VeloProve Security Testing Domain & Engines', () => {
   let tmpDir: string;
   let guard: WorkspaceGuard;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-sec-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-sec-test-'));
     guard = new WorkspaceGuard(tmpDir);
   });
 
@@ -22,6 +23,22 @@ describe('QAForge Security Testing Domain & Engines', () => {
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     } catch {}
+  });
+
+  describe('0. Session Theft Cookie Parser', () => {
+    it('flags auth cookies missing HttpOnly/Secure/SameSite', () => {
+      const parsed = SessionTheftAuditor.parseSetCookieHeader('connect.sid=s%3Aabc; Path=/');
+      expect(parsed.httpOnly).toBe(false);
+      expect(parsed.secure).toBe(false);
+      expect(parsed.issues.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('accepts hardened session cookies', () => {
+      const parsed = SessionTheftAuditor.parseSetCookieHeader(
+        'session=xyz; Path=/; HttpOnly; Secure; SameSite=Lax'
+      );
+      expect(parsed.issues).toEqual([]);
+    });
   });
 
   describe('1. Secret Redaction Utility', () => {
@@ -228,6 +245,47 @@ describe('QAForge Security Testing Domain & Engines', () => {
 
       expect(report.findings.some(f => f.category === 'injection' && f.status === 'WARN')).toBe(true);
       expect(report.remediationRoadmap.length).toBeGreaterThan(0);
+    });
+
+    it('detects session theft vectors: httpOnly:false, URL session ids, fixation, and client storage', async () => {
+      const srcDir = path.join(tmpDir, 'src');
+      fs.mkdirSync(srcDir, { recursive: true });
+
+      fs.writeFileSync(path.join(srcDir, 'auth-session.ts'), `
+        import session from 'express-session';
+        export function login(req: any, res: any) {
+          // vulnerable: session id is never rotated after auth
+          req.session.userId = 1;
+          res.cookie('connect.sid', 'abc', { httpOnly: false });
+        }
+        export function logout(req: any, res: any) {
+          res.redirect('/logout');
+        }
+        export function openSession(req: any) {
+          const sid = req.query.session_id;
+          return sid;
+        }
+      `);
+
+      fs.writeFileSync(path.join(srcDir, 'client-auth.ts'), `
+        export function persistToken(token: string) {
+          localStorage.setItem('authToken', token);
+        }
+      `);
+
+      const surface = SecuritySurfaceScanner.scan(guard);
+      const plan = SecurityPlanner.createPlan(surface, { categories: ['sessions_tokens'] });
+      expect(plan.testCases.some(t => t.id === 'sec_session_fixation')).toBe(true);
+      expect(plan.testCases.some(t => t.id === 'sec_session_client_storage_theft')).toBe(true);
+      expect(plan.testCases.some(t => t.id === 'sec_session_id_url_exposure')).toBe(true);
+
+      const report = await SecurityEngine.runTests(guard, plan, { safeMode: true });
+      const kinds = report.findings.map(f => f.title + '|' + f.evidence);
+      expect(report.findings.some(f => /HttpOnly|httpOnly/i.test(f.evidence) || /HttpOnly/i.test(f.title))).toBe(true);
+      expect(report.findings.some(f => /URL|session_id|query/i.test(f.evidence))).toBe(true);
+      expect(report.findings.some(f => /fixation|regenerat/i.test(f.evidence + f.impact))).toBe(true);
+      expect(report.findings.some(f => /localStorage|Client-Side/i.test(f.evidence + f.title))).toBe(true);
+      expect(kinds.length).toBeGreaterThan(0);
     });
   });
 });

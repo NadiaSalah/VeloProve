@@ -9,9 +9,9 @@ import { FeatureMapBuilder } from '../../src/intelligence/feature-map/feature-bu
 describe('Project Scanner & Requirement Discovery', () => {
   const root = path.resolve(process.cwd());
 
-  it('should inspect and scan QAForge repository structure', () => {
+  it('should inspect and scan VeloProve repository structure', () => {
     const profile = ProjectScanner.scan(root);
-    expect(profile.projectName).toContain('qaforge');
+    expect(profile.projectName).toContain('veloprove');
     expect(profile.languages).toContain('typescript');
     expect(profile.sourceFiles.length).toBeGreaterThan(0);
   });
@@ -35,7 +35,7 @@ Priority: medium
 Category: integration
 `;
 
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-prd-test-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-prd-test-'));
     try {
       const prdPath = path.join(tempDir, 'PRD.md');
       fs.writeFileSync(prdPath, samplePrdContent, 'utf8');
@@ -61,7 +61,7 @@ Priority: high
 Category: auth
 `;
 
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qaforge-featmap-test-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'veloprove-featmap-test-'));
     try {
       const prdPath = path.join(tempDir, 'PRD.md');
       fs.writeFileSync(prdPath, samplePrdContent, 'utf8');

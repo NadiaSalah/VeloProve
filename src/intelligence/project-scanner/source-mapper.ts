@@ -42,7 +42,7 @@ export class SourceMapper {
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (!['node_modules', 'dist', '.git', '.qaforge', '.next', 'coverage', 'build'].includes(entry.name)) {
+        if (!['node_modules', 'dist', '.git', '.veloprove', '.next', 'coverage', 'build'].includes(entry.name)) {
           this.walkDirectory(fullPath, root, sourceFiles, testFiles);
         }
       } else if (entry.isFile() && /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(entry.name)) {
@@ -111,6 +111,8 @@ export class SourceMapper {
       runner = 'playwright';
     } else if (content.includes('jest') || content.includes('@jest/globals')) {
       runner = 'jest';
+    } else if (/from\s+['"]node:test['"]|require\(['"]node:test['"]\)/.test(content)) {
+      runner = 'node:test';
     }
 
     let level: TestModule['level'] = 'unit';

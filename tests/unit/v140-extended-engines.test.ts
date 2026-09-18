@@ -8,7 +8,7 @@ import { FlakinessStabilizerService } from '../../src/application/flakiness-stab
 import { DatabaseSnapshotService } from '../../src/application/db-snapshot.js';
 import { BugFixSynthesizerService } from '../../src/application/bugfix-synthesizer.js';
 import { StandaloneReportExporter } from '../../src/application/report-exporter.js';
-import { QAForgeEngine } from '../../src/application/engine.js';
+import { VeloProveEngine } from '../../src/application/engine.js';
 import type { DiagnosticResult } from '../../src/shared/types/index.js';
 
 describe('v1.4.0 Extended Autonomous Engines (Scenario Recorder, Stabilizer, DB Snapshot, BugFix, Report Exporter)', () => {
@@ -117,7 +117,9 @@ export function formatUserProfile(user: any) {
         },
         affectedFiles: ['user-service.ts'],
         suggestedActions: ['Add optional chaining guard for user.profile.name'],
-        canAutoHealTest: false
+        canAutoHealTest: false,
+        evidenceSignals: ['errorMessage mentions undefined property name'],
+        speculationNotes: []
       }
     ];
 
@@ -126,15 +128,21 @@ export function formatUserProfile(user: any) {
     expect(report.diagnosedBugCount).toBe(1);
     expect(report.patches.length).toBe(1);
     expect(report.unifiedDiff).toContain('+');
+    expect(report.patches[0].safety).toBe('REVIEW_REQUIRED');
+    expect(report.applied).toBe(false);
+    expect(report.blockedByPolicy.some((b) => /REVIEW_REQUIRED/.test(b))).toBe(true);
 
+    // Application patches are proposed, not silently written
     const fixedContent = fs.readFileSync(buggyFilePath, 'utf8');
-    expect(fixedContent).toContain('?.name');
+    expect(fixedContent).toContain('user.profile.name');
+    expect(fixedContent).not.toContain('?.name');
+    expect(report.patches[0].repairedCodeSnippet).toContain('?.name');
   });
 
   it('StandaloneReportExporter exports single-file executive HTML and JSON reports', () => {
     const htmlExport = StandaloneReportExporter.export(guard, storage, {
       format: 'html',
-      outputPath: 'qaforge-executive-report.html'
+      outputPath: 'veloprove-executive-report.html'
     });
 
     expect(fs.existsSync(htmlExport.filePath)).toBe(true);
@@ -142,7 +150,7 @@ export function formatUserProfile(user: any) {
 
     const jsonExport = StandaloneReportExporter.export(guard, storage, {
       format: 'json',
-      outputPath: 'qaforge-executive-report.json'
+      outputPath: 'veloprove-executive-report.json'
     });
 
     expect(fs.existsSync(jsonExport.filePath)).toBe(true);
@@ -151,8 +159,8 @@ export function formatUserProfile(user: any) {
     expect(parsed.release).toBeDefined();
   });
 
-  it('QAForgeEngine provides full method wrappers for all extended engines', () => {
-    const engine = new QAForgeEngine(testDir);
+  it('VeloProveEngine provides full method wrappers for all extended engines', () => {
+    const engine = new VeloProveEngine(testDir);
     const scenario = engine.recordScenario({
       title: 'Home Test',
       startUrl: 'http://localhost:3000',

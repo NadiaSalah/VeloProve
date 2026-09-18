@@ -61,7 +61,7 @@ export class SarifExporterService {
     // Map security report findings
     for (const finding of report.findings) {
       const level = this.mapSeverityToSarifLevel(finding.severity);
-      const ruleId = finding.category ? `QAFORGE-SEC-${finding.category.toUpperCase()}` : 'QAFORGE-SEC-GENERAL';
+      const ruleId = finding.category ? `VELOPROVE-SEC-${finding.category.toUpperCase()}` : 'VELOPROVE-SEC-GENERAL';
 
       if (!rulesMap.has(ruleId)) {
         rulesMap.set(ruleId, {
@@ -70,7 +70,7 @@ export class SarifExporterService {
           shortDescription: { text: finding.title || ruleId },
           fullDescription: { text: finding.impact || finding.title },
           defaultConfiguration: { level },
-          help: { text: finding.remediation || 'Inspect finding details in QAForge report.' },
+          help: { text: finding.remediation || 'Inspect finding details in VeloProve report.' },
           properties: {
             category: finding.category,
             confidence: finding.confidence
@@ -111,7 +111,7 @@ export class SarifExporterService {
     if (auditReport && auditReport.vulnerabilities) {
       for (const vuln of auditReport.vulnerabilities) {
         const level = this.mapSeverityToSarifLevel(vuln.severity.toUpperCase() as any);
-        const ruleId = vuln.cveId || `QAFORGE-CVE-${vuln.packageName.toUpperCase()}`;
+        const ruleId = vuln.cveId || `VELOPROVE-CVE-${vuln.packageName.toUpperCase()}`;
 
         if (!rulesMap.has(ruleId)) {
           rulesMap.set(ruleId, {
@@ -153,9 +153,9 @@ export class SarifExporterService {
         {
           tool: {
             driver: {
-              name: 'QAForge Security Engine',
+              name: 'VeloProve Security Engine',
               version: '1.0.0',
-              informationUri: 'https://github.com/NadiaSalah/QAForge',
+              informationUri: 'https://github.com/NadiaSalah/VeloProve',
               rules: Array.from(rulesMap.values())
             }
           },
@@ -164,7 +164,7 @@ export class SarifExporterService {
       ]
     };
 
-    const defaultPath = path.join(root, '.qaforge', 'reports', 'security.sarif');
+    const defaultPath = path.join(root, '.veloprove', 'reports', 'security.sarif');
     const targetPath = outputPath ? (path.isAbsolute(outputPath) ? outputPath : path.join(root, outputPath)) : defaultPath;
 
     const dir = path.dirname(targetPath);

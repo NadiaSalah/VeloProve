@@ -97,47 +97,47 @@ export class DoctorService {
         status: 'WARNING',
         title: 'Project Manifest',
         message: 'No package.json found in current directory',
-        remediation: 'Run "npm init -y" or "qaforge init" to initialize project'
+        remediation: 'Run "npm init -y" or "veloprove init" to initialize project'
       });
     }
 
-    // 4. QAForge Config & Storage check
-    const configPath = path.join(root, 'qaforge.config.json');
-    const qaDir = path.join(root, '.qaforge');
+    // 4. VeloProve Config & Storage check
+    const configPath = path.join(root, 'veloprove.config.json');
+    const qaDir = path.join(root, '.veloprove');
     if (fs.existsSync(configPath)) {
       checks.push({
-        id: 'qaforge-config',
+        id: 'veloprove-config',
         category: 'CONFIG',
         status: 'PASS',
-        title: 'QAForge Configuration',
-        message: 'qaforge.config.json is present and recognized'
+        title: 'VeloProve Configuration',
+        message: 'veloprove.config.json is present and recognized'
       });
     } else {
       checks.push({
-        id: 'qaforge-config',
+        id: 'veloprove-config',
         category: 'CONFIG',
         status: 'INFO',
-        title: 'QAForge Configuration',
-        message: 'qaforge.config.json not found (default configuration will be used)',
-        remediation: 'Run "npx qaforge init" to scaffold a customized configuration file'
+        title: 'VeloProve Configuration',
+        message: 'veloprove.config.json not found (default configuration will be used)',
+        remediation: 'Run "npx veloprove init" to scaffold a customized configuration file'
       });
     }
 
     if (fs.existsSync(qaDir)) {
       checks.push({
-        id: 'qaforge-storage',
+        id: 'veloprove-storage',
         category: 'CONFIG',
         status: 'PASS',
         title: 'Local Storage State',
-        message: '.qaforge/ state directory is initialized'
+        message: '.veloprove/ state directory is initialized'
       });
     } else {
       checks.push({
-        id: 'qaforge-storage',
+        id: 'veloprove-storage',
         category: 'CONFIG',
         status: 'INFO',
         title: 'Local Storage State',
-        message: '.qaforge/ state directory will be created automatically on first run'
+        message: '.veloprove/ state directory will be created automatically on first run'
       });
     }
 
@@ -151,6 +151,13 @@ export class DoctorService {
     if (allDeps['vitest']) detectedRunners.push('Vitest');
     if (allDeps['jest']) detectedRunners.push('Jest');
     if (allDeps['@playwright/test'] || allDeps['playwright']) detectedRunners.push('Playwright');
+    const testScript = String(pkgJson?.scripts?.test || '');
+    if (
+      detectedRunners.length === 0 &&
+      (/\bnode\b.*--test\b/.test(testScript) || /\bnode:test\b/.test(testScript))
+    ) {
+      detectedRunners.push('node:test');
+    }
 
     if (detectedRunners.length > 0) {
       checks.push({
@@ -166,8 +173,8 @@ export class DoctorService {
         category: 'TEST_RUNNER',
         status: 'WARNING',
         title: 'Installed Test Frameworks',
-        message: 'No test runners (Vitest, Jest, Playwright) detected in dependencies',
-        remediation: 'Run "npm install -D vitest @playwright/test" or let "qaforge generate" scaffold tests'
+        message: 'No test runners (Vitest, Jest, Playwright, or node --test) detected',
+        remediation: 'Run "npm install -D vitest" or set scripts.test to "node --test …"'
       });
     }
 
@@ -188,14 +195,14 @@ export class DoctorService {
         category: 'MCP',
         status: 'INFO',
         title: 'AI Editor MCP Integration',
-        message: 'No local .cursor/mcp.json found (AI agents can connect via stdio: npx qaforge mcp)',
-        remediation: 'Add qaforge MCP entry in .cursor/mcp.json or your editor MCP settings'
+        message: 'No local .cursor/mcp.json found (AI agents can connect via stdio: npx veloprove mcp)',
+        remediation: 'Add veloprove MCP entry in .cursor/mcp.json or your editor MCP settings'
       });
     }
 
     // 7. Filesystem write permissions
     try {
-      const testFile = path.join(root, '.qaforge-perm-test.tmp');
+      const testFile = path.join(root, '.veloprove-perm-test.tmp');
       fs.writeFileSync(testFile, 'test', 'utf8');
       fs.unlinkSync(testFile);
       checks.push({
