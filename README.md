@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  <em>Overview — sidebar · workspace · Results (full 1440×900)</em>
+  <em>Overview — full window 1920×1080 (sidebar · workspace · Results)</em>
 </p>
 
 <p align="center">
