@@ -22,37 +22,35 @@
 <p align="center">
   <img
     src="docs/assets/screenshots/01-dashboard-overview.png"
-    alt="VeloProve Command Center — Project Overview"
-    width="920"
+    alt="VeloProve Command Center — Overview (sidebar, workspace, Results)"
   />
 </p>
 
 <p align="center">
-  <em>Local Command Center — stack discovery, health metrics, and one-click Quick Actions</em>
+  <em>Overview — sidebar · workspace · Results (full 1440×900)</em>
 </p>
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img
-        src="docs/assets/screenshots/02-dashboard-verify.png"
-        alt="VeloProve Verify — change-aware QA presets"
-        width="100%"
-      />
-      <br />
-      <sub><b>Verify</b> — change-aware QA with sandbox / Docker / full-suite presets</sub>
-    </td>
-    <td align="center" width="50%">
-      <img
-        src="docs/assets/screenshots/03-dashboard-docs-chat.png"
-        alt="VeloProve Docs Chat — packaged docs Q&A"
-        width="100%"
-      />
-      <br />
-      <sub><b>Docs Chat</b> — answers from packaged docs only (no cloud LLM)</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img
+    src="docs/assets/screenshots/02-dashboard-verify.png"
+    alt="VeloProve Command Center — Verify (sidebar, workspace, Results)"
+  />
+</p>
+
+<p align="center">
+  <em>Verify — change-aware QA presets with live Results output</em>
+</p>
+
+<p align="center">
+  <img
+    src="docs/assets/screenshots/03-dashboard-docs-chat.png"
+    alt="VeloProve Command Center — Docs Chat (sidebar, workspace, Results)"
+  />
+</p>
+
+<p align="center">
+  <em>Docs Chat — packaged-docs Q&amp;A (no cloud LLM) with Results pane</em>
+</p>
 
 ---
 
@@ -210,14 +208,6 @@ npx veloprove ui -p 4000 -o
 * 🛡️ **Security & Accessibility Center**: Run OWASP Top 10 scans, audit WCAG 2.1 rules, and simulate screen reader speech flows.
 
 👉 **[Read the Full Dashboard UI Documentation](docs/guides/dashboard.md)**
-
-<p align="center">
-  <img
-    src="docs/assets/screenshots/01-dashboard-overview.png"
-    alt="Dashboard Overview"
-    width="860"
-  />
-</p>
 
 ---
 
