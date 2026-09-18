@@ -37,3 +37,6 @@ _e2e_consumer/
 *.tsbuildinfo
 .DS_Store
 Thumbs.db
+
+# GitHub README screenshots (keep in git; omit from npm pack size)
+docs/assets/screenshots/

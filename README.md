@@ -14,7 +14,45 @@
   <img src="https://img.shields.io/badge/tests-passing-brightgreen.svg" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg" alt="Node Version" />
   <img src="https://img.shields.io/badge/Privacy-Local--First-purple.svg" alt="Local First" />
+  <img src="https://img.shields.io/badge/MCP-75%20tools-0a7a3e.svg" alt="75 MCP tools" />
 </p>
+
+---
+
+<p align="center">
+  <img
+    src="docs/assets/screenshots/01-dashboard-overview.png"
+    alt="VeloProve Command Center — Project Overview"
+    width="920"
+  />
+</p>
+
+<p align="center">
+  <em>Local Command Center — stack discovery, health metrics, and one-click Quick Actions</em>
+</p>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img
+        src="docs/assets/screenshots/02-dashboard-verify.png"
+        alt="VeloProve Verify — change-aware QA presets"
+        width="100%"
+      />
+      <br />
+      <sub><b>Verify</b> — change-aware QA with sandbox / Docker / full-suite presets</sub>
+    </td>
+    <td align="center" width="50%">
+      <img
+        src="docs/assets/screenshots/03-dashboard-docs-chat.png"
+        alt="VeloProve Docs Chat — packaged docs Q&A"
+        width="100%"
+      />
+      <br />
+      <sub><b>Docs Chat</b> — answers from packaged docs only (no cloud LLM)</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -172,6 +210,14 @@ npx veloprove ui -p 4000 -o
 * 🛡️ **Security & Accessibility Center**: Run OWASP Top 10 scans, audit WCAG 2.1 rules, and simulate screen reader speech flows.
 
 👉 **[Read the Full Dashboard UI Documentation](docs/guides/dashboard.md)**
+
+<p align="center">
+  <img
+    src="docs/assets/screenshots/01-dashboard-overview.png"
+    alt="Dashboard Overview"
+    width="860"
+  />
+</p>
 
 ---
 
