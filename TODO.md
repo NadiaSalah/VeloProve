@@ -10,7 +10,7 @@ Do **not** bump to v2 unless a breaking major rewrite is explicitly approved.
 
 ## Needs human approval
 
-- [ ] **Publish to npm / push GitHub tags** — requires explicit user publish/push approval
+- [x] **Publish to npm / push GitHub tags** — `@engnadia/veloprove@1.0.0` on [npm](https://www.npmjs.com/package/@engnadia/veloprove)
 - [ ] Upload marketplace screenshots to Cursor/Claude listings (local PNGs ready under `_local_demo/screenshots/` — do not commit)
 
 ---

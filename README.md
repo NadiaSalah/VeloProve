@@ -11,6 +11,8 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
+  <a href="https://www.npmjs.com/package/@engnadia/veloprove"><img src="https://img.shields.io/npm/v/@engnadia/veloprove.svg" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/@engnadia/veloprove"><img src="https://img.shields.io/badge/npm-%40engnadia%2Fveloprove-cb3837.svg" alt="npm package" /></a>
   <img src="https://img.shields.io/badge/tests-passing-brightgreen.svg" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg" alt="Node Version" />
   <img src="https://img.shields.io/badge/Privacy-Local--First-purple.svg" alt="Local First" />

@@ -5,7 +5,8 @@ All notable changes to VeloProve will be documented in this file.
 ## [1.0.0] - 2026-08-28
 
 ### Status
-- **VeloProve v1.0.0 feature set is complete in this repository.** Remaining publish/push is gated on explicit human approval (no automatic npm publish).
+- **VeloProve v1.0.0 is published:** [`@engnadia/veloprove`](https://www.npmjs.com/package/@engnadia/veloprove) on npm (`npx @engnadia/veloprove`).
+- **VeloProve v1.0.0 feature set is complete in this repository.** Remaining marketplace screenshot upload is gated on explicit human approval.
 - No v2 version bump: continued work stays on the **1.0.x / 1.x** line unless a breaking major rewrite is explicitly approved.
 
 ### Unreleased / v1.0.x follow-ups (folded into 1.0.0 line)
