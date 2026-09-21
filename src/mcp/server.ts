@@ -1,7 +1,7 @@
 /**
  * VeloProve MCP server (stdio).
  *
- * Exposes the same VeloProveEngine as the CLI/Dashboard via 75 `vp.*` tools.
+ * Exposes the same VeloProveEngine as the CLI/Dashboard via catalogMcpTools() `vp.*` tools.
  * Argument parsing goes through `arg-utils` so agent JSON stays type-safe.
  * Resources use the `vp://…` scheme only (no legacy aliases).
  */
@@ -14,6 +14,7 @@ import {
   ReadResourceRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { VeloProveEngine } from '../application/engine.js';
+import { getPackageVersion } from '../shared/package-meta.js';
 import { asRecord, boolFlag, boolOpt, numOpt, objOpt, strArrayOpt, strOpt, unknownOpt } from './arg-utils.js';
 
 export async function runMcpServer(projectRoot: string = process.cwd()): Promise<void> {
@@ -26,7 +27,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
   const server = new Server(
     {
       name: 'veloprove',
-      version: '1.0.0'
+      version: getPackageVersion()
     },
     {
       capabilities: {
@@ -129,7 +130,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
         },
         {
           name: 'vp.accessibility',
-          description: 'Run automated WCAG 2.1 accessibility audit across project components and routes.',
+          description: 'Run static WCAG-oriented accessibility heuristics across project components and routes (not a certified WCAG audit).',
           inputSchema: {
             type: 'object',
             properties: {}
@@ -283,7 +284,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
         },
         {
           name: 'vp.suggestFix',
-          description: 'Generate specific code fix recommendation and diff for the coding agent to resolve an application bug.',
+          description: 'Generate application-bug fix guidance for the coding agent. Honesty: prose recommendations only (PARTIAL) until real diffs ship — no guaranteed patch.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -503,7 +504,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
         },
         {
           name: 'vp.autoBugFix',
-          description: 'Synthesize code repair patches for APPLICATION_BUG failures and generate unified Git diff.',
+          description: 'Propose reviewable APPLICATION_BUG patches / unified diffs under FixSafetyPolicy (REVIEW_REQUIRED — not guaranteed auto-apply).',
           inputSchema: {
             type: 'object',
             properties: {
@@ -667,7 +668,7 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
         },
         {
           name: 'vp.screenReaderSim',
-          description: 'Simulate screen reader (NVDA/VoiceOver) auditory speech order, detect unlabelled buttons/inputs, redundant image text, and heading hierarchy skips.',
+          description: 'Approximate screen-reader reading-order heuristics (not a live NVDA/VoiceOver run); flag unlabelled controls, redundant image text, and heading skips.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -873,6 +874,47 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
             type: 'object',
             properties: {
               limit: { type: 'number', description: 'Max history points to return (1-50)' }
+            }
+          }
+        },
+        {
+          name: 'vp.twin',
+          description:
+            'Build or read Project Twin (local composition over inspect SSOT). PARTIAL MVP — evidence classes VERIFIED/OBSERVED/INFERRED; not AI assumptions.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              action: {
+                type: 'string',
+                description: 'build | status | inspect (default status)'
+              },
+              featureId: { type: 'string', description: 'Feature id/title for inspect' },
+              withImpact: { type: 'boolean', description: 'Attach change-impact facet (wraps changed)' },
+              withDrift: { type: 'boolean', description: 'Attach aggregated drift facet' },
+              incremental: { type: 'boolean', description: 'Reuse graph when fingerprint unchanged' },
+              force: { type: 'boolean', description: 'Force full Twin rebuild' },
+              bypassCache: { type: 'boolean', description: 'Bypass inspect cache on build' }
+            }
+          }
+        },
+        {
+          name: 'vp.impact',
+          description:
+            'Change impact analysis wrapping vp.changed / AnalyzeChanges; attaches Twin feature hits when a Twin snapshot exists.',
+          inputSchema: {
+            type: 'object',
+            properties: {}
+          }
+        },
+        {
+          name: 'vp.drift',
+          description:
+            'Aggregated drift wrapping contract-drift, feature-parity, env-drift, and docs API-mention hints. Marks STALE when Twin fingerprint disagrees.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              feature: { type: 'string', description: 'Optional feature/path filter' },
+              changed: { type: 'boolean', description: 'Limit to git-changed paths' }
             }
           }
         }
@@ -1102,7 +1144,22 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           }
           const suggestion = engine.suggestFix(target);
           return {
-            content: [{ type: 'text', text: JSON.stringify(suggestion, null, 2) }]
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    ...suggestion,
+                    note:
+                      suggestion.completeness === 'PARTIAL'
+                        ? 'PARTIAL: guidance only — no unified diff/patch. Use coding agent to implement; heal covers TEST_BUG locators separately.'
+                        : undefined
+                  },
+                  null,
+                  2
+                )
+              }
+            ]
           };
         }
 
@@ -1646,6 +1703,44 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
           };
         }
 
+        case 'vp.twin': {
+          const action = (strOpt(args, 'action') || 'status').toLowerCase();
+          if (action === 'build' || action === 'update') {
+            const result = await engine.twinBuild({
+              withImpact: boolFlag(args, 'withImpact'),
+              withDrift: boolFlag(args, 'withDrift'),
+              incremental: args.incremental === undefined ? true : boolFlag(args, 'incremental'),
+              force: boolFlag(args, 'force'),
+              bypassCache: boolFlag(args, 'bypassCache')
+            });
+            return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+          }
+          if (action === 'inspect') {
+            const featureId = strOpt(args, 'featureId') || '';
+            if (!engine.twinStatus()) {
+              await engine.twinBuild({});
+            }
+            const found = engine.twinInspect(featureId);
+            return { content: [{ type: 'text', text: JSON.stringify(found, null, 2) }] };
+          }
+          return {
+            content: [{ type: 'text', text: JSON.stringify(engine.twinStatus(), null, 2) }]
+          };
+        }
+
+        case 'vp.impact': {
+          const result = await engine.impactAnalysis();
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+
+        case 'vp.drift': {
+          const result = await engine.drift({
+            feature: strOpt(args, 'feature'),
+            changed: boolFlag(args, 'changed')
+          });
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+
         default:
           throw new Error(`Unknown VeloProve tool: ${name}`);
       }
@@ -1664,7 +1759,10 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
       { path: 'requirements', name: 'Discovered Requirements' },
       { path: 'test-plan/latest', name: 'Latest Test Plan' },
       { path: 'runs/latest', name: 'Latest Test Run Results' },
-      { path: 'release/confidence', name: 'Release Confidence' }
+      { path: 'release/confidence', name: 'Release Confidence' },
+      { path: 'twin/latest', name: 'Project Twin Latest' },
+      { path: 'twin/evidence', name: 'Project Twin Evidence Classes' },
+      { path: 'twin/graph', name: 'Project Twin Graph Summary' }
     ];
     return {
       resources: catalog.map((r) => ({
@@ -1703,6 +1801,68 @@ export async function runMcpServer(projectRoot: string = process.cwd()): Promise
     if (key === 'release/confidence') {
       const report = await engine.releaseCheck();
       return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(report, null, 2) }] };
+    }
+    if (key === 'twin/latest') {
+      const twin = engine.twinStatus();
+      return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(twin || {}, null, 2) }] };
+    }
+    if (key === 'twin/evidence') {
+      const summary = engine.twinEvidenceSummary();
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: 'application/json',
+            text: JSON.stringify(
+              {
+                verificationStatus: summary.verificationStatus,
+                evidenceClasses: summary.evidenceClasses,
+                fingerprint: summary.twin?.fingerprint ?? null,
+                generatedAt: summary.twin?.generatedAt ?? null,
+                note: 'PARTIAL MVP — INFERRED is not confirmed fact'
+              },
+              null,
+              2
+            )
+          }
+        ]
+      };
+    }
+    if (key === 'twin/graph') {
+      const twin = engine.twinStatus();
+      if (!twin) {
+        return { contents: [{ uri, mimeType: 'application/json', text: '{}' }] };
+      }
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: 'application/json',
+            text: JSON.stringify(
+              {
+                fingerprint: twin.fingerprint,
+                summary: twin.summary,
+                nodeCount: twin.nodes.length,
+                edgeCount: twin.edges.length,
+                nodes: twin.nodes.map((n) => ({
+                  id: n.id,
+                  kind: n.kind,
+                  title: n.title,
+                  evidenceClasses: n.evidence.map((e) => e.class)
+                })),
+                edges: twin.edges.map((e) => ({
+                  from: e.from,
+                  to: e.to,
+                  kind: e.kind,
+                  evidenceClass: e.evidenceClass
+                }))
+              },
+              null,
+              2
+            )
+          }
+        ]
+      };
     }
 
     throw new Error(`Resource not found: ${uri}`);

@@ -1,0 +1,7 @@
+{
+  "name": "veloprove-release-clean",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Synthetic release-clean inputs live in tests; this package is a minimal inspect target."
+}

@@ -1,5 +1,12 @@
 import type { DiagnosticResult, SourceFixSuggestion } from '../shared/types/diagnostics.js';
 
+/**
+ * Application-bug fix suggestions.
+ *
+ * Honesty note (trust hardening): `suggestedChange.diffOrPatch` is PARTIAL —
+ * this service returns prose guidance only until real unified diffs/patches ship.
+ * Do not claim "guaranteed fix" or auto-apply patches from suggest alone.
+ */
 export class SuggestFixService {
   public static suggest(diagnosis: DiagnosticResult): SourceFixSuggestion {
     const errorMsg = diagnosis.evidence.errorMessage;
@@ -13,20 +20,27 @@ export class SuggestFixService {
       suggestedDescription = `Verify authentication / authorization handler in ${affectedFile}. Ensure tokens/credentials are parsed and validated correctly.`;
     }
 
+    const suggestedChange: SourceFixSuggestion['suggestedChange'] = {
+      file: affectedFile,
+      description: suggestedDescription
+      // diffOrPatch omitted on purpose — PARTIAL until real patch synthesis exists
+    };
+
     return {
       problem: errorMsg,
       probableRootCause: diagnosis.rootCause,
       affectedFiles: diagnosis.affectedFiles,
-      suggestedChange: {
-        file: affectedFile,
-        description: suggestedDescription
-      },
+      suggestedChange,
+      completeness: suggestedChange.diffOrPatch ? 'COMPLETE' : 'PARTIAL',
       confidence: diagnosis.confidence,
       evidence: [
         diagnosis.evidence.errorMessage,
         ...(diagnosis.evidence.assertionDiff
-          ? [`Expected: ${diagnosis.evidence.assertionDiff.expected}, Actual: ${diagnosis.evidence.assertionDiff.actual}`]
-          : [])
+          ? [
+              `Expected: ${diagnosis.evidence.assertionDiff.expected}, Actual: ${diagnosis.evidence.assertionDiff.actual}`
+            ]
+          : []),
+        'completeness=PARTIAL: guidance only — no unified diff/patch'
       ],
       recommendedValidation: `Run \`veloprove test --paths ${diagnosis.evidence.testFile}\` after applying the fix.`
     };

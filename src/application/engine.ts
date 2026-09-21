@@ -14,6 +14,17 @@ import type { TestPlan, TestRunRequest, TestRunResult, GeneratedTestFile, Overwr
 import type { DiagnosticResult, HealResult, SourceFixSuggestion } from '../shared/types/diagnostics.js';
 import type { ReleaseConfidenceReport, FlakyTestReport } from '../shared/types/release.js';
 import type { ImpactAnalysisResult } from '../intelligence/change-impact/dependency-graph.js';
+import { ProjectTwinService } from './project-twin.js';
+import type { TwinBuildOptions, TwinInspectResult, TwinLatestDocument } from '../shared/types/project-twin.js';
+import type { OperationResult } from '../shared/types/operation.js';
+import {
+  aggregateDrift,
+  toTwinDriftFacet,
+  type AggregatedDriftReport
+} from './twin-drift-aggregator.js';
+import { planAffectedTests } from './twin-affected-tests.js';
+import { SafeProcessRunner } from '../execution/process-runner.js';
+import { collectSecuritySurfaceHints } from './twin-security-hooks.js';
 
 import { WorkspaceGuard } from '../execution/workspace-guard.js';
 import { LocalStorage } from '../storage/local-store.js';
@@ -665,6 +676,7 @@ export class VeloProveEngine {
 
     this.storage.saveProjectProfile(profile);
     this.storage.saveRequirements(requirements);
+    this.storage.saveFeatureMap(featureMap);
 
     const result = { profile, requirements, featureMap };
     if (cacheEnabled) {
@@ -732,6 +744,41 @@ export class VeloProveEngine {
     const { profile } = await this.inspect();
     const context = { projectRoot: this.guard.getRoot() };
 
+    let resolved: TestRunRequest = { ...request };
+    const scope = request.scope || 'all';
+
+    if (
+      (scope === 'changed' || scope === 'affected') &&
+      (!request.paths || request.paths.length === 0)
+    ) {
+      const impact = await AnalyzeChangesService.analyze(profile, this.guard);
+      const allTestPaths = profile.testFiles.map((t) => t.relativePath);
+
+      if (scope === 'affected') {
+        const plan = planAffectedTests(impact, this.storage.getTwinLatest(), allTestPaths);
+        resolved = {
+          ...request,
+          scope: plan.expandedToAll ? 'all' : 'paths',
+          paths: plan.expandedToAll ? undefined : plan.paths,
+          selectionRationale: plan.rationale
+        };
+      } else {
+        // changed: never shrink below graph; empty → all
+        const paths =
+          impact.impactedTestFiles.length > 0 ? impact.impactedTestFiles : allTestPaths;
+        resolved = {
+          ...request,
+          scope: impact.impactedTestFiles.length > 0 ? 'paths' : 'all',
+          paths: impact.impactedTestFiles.length > 0 ? paths : undefined,
+          selectionRationale: [
+            impact.impactedTestFiles.length > 0
+              ? `changed scope: ${impact.impactedTestFiles.length} impacted test(s) from DependencyGraph`
+              : 'changed scope: no mapped tests — expanded to full suite'
+          ]
+        };
+      }
+    }
+
     let adapter;
     if (profile.testFrameworks.includes('vitest')) {
       adapter = new VitestAdapter();
@@ -746,7 +793,7 @@ export class VeloProveEngine {
       const empty: TestRunResult = {
         runId: `run_no_runner_${Date.now()}`,
         timestamp: new Date().toISOString(),
-        scope: request.scope || 'all',
+        scope: resolved.scope || 'all',
         status: 'passed',
         durationMs: 0,
         summary: { total: 0, passed: 0, failed: 0, skipped: 0, timedOut: 0 },
@@ -759,7 +806,10 @@ export class VeloProveEngine {
       return empty;
     }
 
-    const result = await adapter.run(request, context);
+    const result = await adapter.run(resolved, context);
+    if (resolved.selectionRationale?.length) {
+      result.selectionRationale = resolved.selectionRationale;
+    }
     this.storage.saveTestRun(result);
 
     // Update flaky analysis + durable history snapshot
@@ -797,6 +847,239 @@ export class VeloProveEngine {
   public async changed(): Promise<ImpactAnalysisResult> {
     const { profile } = await this.inspect();
     return AnalyzeChangesService.analyze(profile, this.guard);
+  }
+
+  /**
+   * Build / refresh Project Twin (composition over inspect SSOT).
+   * Optional facets wrap existing `changed` and drift aggregator — no parallel engines.
+   */
+  public async twinBuild(options: TwinBuildOptions = {}): Promise<OperationResult<TwinLatestDocument>> {
+    const started = Date.now();
+    const previous = this.storage.getTwinLatest();
+    const { profile, requirements, featureMap } = await this.inspect({
+      bypassCache: options.bypassCache
+    });
+
+    const fingerprint = InspectCache.fingerprint(this.guard.getRoot());
+    const reuseGraph =
+      options.incremental !== false &&
+      !options.force &&
+      !!previous &&
+      previous.fingerprint === fingerprint;
+
+    // Fast path: fingerprint match, no facet refresh requested
+    if (
+      reuseGraph &&
+      previous &&
+      !options.withImpact &&
+      !options.withDrift &&
+      !options.force
+    ) {
+      const skipped = {
+        ...previous,
+        generatedAt: new Date().toISOString(),
+        warnings: [
+          ...previous.warnings.filter((w) => !w.startsWith('Incremental Twin:')),
+          'Incremental Twin: skipped rebuild (fingerprint unchanged). Pass --force to rebuild.'
+        ]
+      };
+      this.storage.saveTwinLatest(skipped);
+      const result = ProjectTwinService.toOperationResult(skipped);
+      result.durationMs = Date.now() - started;
+      result.metadata = {
+        ...result.metadata,
+        incremental: true,
+        skippedRebuild: true
+      };
+      return result;
+    }
+
+    let impact = null;
+    const warnings: string[] = [];
+    let driftFacet = null;
+
+    if (options.withImpact) {
+      try {
+        impact = await AnalyzeChangesService.analyze(profile, this.guard);
+      } catch (err) {
+        warnings.push(
+          `Impact facet skipped: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
+
+    if (options.withDrift) {
+      try {
+        const agg = aggregateDrift({
+          guard: this.guard,
+          profile,
+          requirements
+        });
+        const sec = collectSecuritySurfaceHints(this.guard.getVeloProveDirectory());
+        warnings.push(...agg.warnings, ...sec.warnings);
+        if (sec.items.length) {
+          agg.items.push(...sec.items);
+          if (!agg.sources.includes('security-wrap')) {
+            agg.sources.push('security-wrap');
+          }
+        }
+        driftFacet = toTwinDriftFacet(agg);
+      } catch (err) {
+        warnings.push(
+          `Drift facet skipped: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    } else {
+      // Still surface prior security artifact hints as warnings (items need --with-drift facet)
+      const sec = collectSecuritySurfaceHints(this.guard.getVeloProveDirectory());
+      warnings.push(...sec.warnings);
+    }
+
+    const gitHead = await this.tryReadGitHead();
+
+    const twin = ProjectTwinService.assemble(this.guard.getRoot(), profile, requirements, featureMap, {
+      impact,
+      driftFacet,
+      warnings,
+      previousTwin: previous,
+      reuseGraph,
+      gitHead
+    });
+    const savedPath = this.storage.saveTwinLatest(twin);
+    const result = ProjectTwinService.toOperationResult(twin);
+    result.durationMs = Date.now() - started;
+    result.evidence = [
+      ...result.evidence,
+      { id: 'twin-saved', kind: 'file', summary: 'Wrote Twin snapshot', path: savedPath }
+    ];
+    if (reuseGraph) {
+      result.metadata = { ...result.metadata, incremental: true };
+    }
+    return result;
+  }
+
+  /** Aggregated drift over contract + feature-parity + env + docs hints. */
+  public async drift(options: { feature?: string; changed?: boolean } = {}): Promise<AggregatedDriftReport> {
+    const { profile, requirements } = await this.inspect();
+    const agg = aggregateDrift({
+      guard: this.guard,
+      profile,
+      requirements,
+      featureFilter: options.feature
+    });
+
+    if (options.changed) {
+      try {
+        const impact = await AnalyzeChangesService.analyze(profile, this.guard);
+        const changedSet = new Set(
+          impact.changedFiles.map((f) => f.replace(/\\/g, '/').toLowerCase())
+        );
+        if (changedSet.size > 0) {
+          agg.items = agg.items.filter(
+            (i) => i.path && [...changedSet].some((c) => i.path!.toLowerCase().includes(c) || c.includes(i.path!.toLowerCase()))
+          );
+        }
+      } catch {
+        /* keep full set */
+      }
+    }
+
+    const previous = this.storage.getTwinLatest();
+    const fingerprint = InspectCache.fingerprint(this.guard.getRoot());
+    if (previous && previous.fingerprint !== fingerprint) {
+      agg.items = [
+        {
+          category: 'twin:fingerprint',
+          summary: 'Twin fingerprint disagrees with workspace — prior Twin is STALE',
+          severity: 'medium',
+          evidenceClass: 'STALE'
+        },
+        ...agg.items
+      ];
+    }
+    return agg;
+  }
+
+  private async tryReadGitHead(): Promise<string | undefined> {
+    try {
+      const runner = new SafeProcessRunner(this.guard);
+      const res = await runner.run('git', ['rev-parse', 'HEAD'], {
+        cwd: this.guard.getRoot(),
+        timeoutMs: 5000
+      });
+      const head = (res.stdout || '').trim();
+      return head || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Incremental Twin refresh: reuse graph when fingerprint unchanged; otherwise full assemble.
+   * Prefer this for `twin update` — never invents edges without rebuild when fingerprint drifts.
+   */
+  public async twinUpdate(
+    options: Omit<TwinBuildOptions, 'incremental'> & { incremental?: boolean } = {}
+  ): Promise<OperationResult<TwinLatestDocument>> {
+    return this.twinBuild({
+      ...options,
+      incremental: options.incremental !== false,
+      force: options.force === true
+    });
+  }
+
+  /** Evidence-class counts for an on-disk Twin (no rebuild). */
+  public twinEvidenceSummary(): {
+    twin: TwinLatestDocument | null;
+    evidenceClasses: Record<string, number> | null;
+    verificationStatus: 'PARTIAL' | 'MISSING';
+  } {
+    const twin = this.twinStatus();
+    if (!twin) {
+      return { twin: null, evidenceClasses: null, verificationStatus: 'MISSING' };
+    }
+    return {
+      twin,
+      evidenceClasses: ProjectTwinService.summarizeEvidenceClasses(twin),
+      verificationStatus: 'PARTIAL'
+    };
+  }
+
+  public twinStatus(): TwinLatestDocument | null {
+    return this.storage.getTwinLatest();
+  }
+
+  public twinInspect(featureQuery: string): TwinInspectResult {
+    const twin = this.storage.getTwinLatest();
+    if (!twin) {
+      return { found: false, edges: [] };
+    }
+    return ProjectTwinService.inspectFeature(twin, featureQuery);
+  }
+
+  /**
+   * Enriched impact view: wraps `changed()` and optionally attaches Twin feature context.
+   * Does not replace `veloprove changed`.
+   */
+  public async impactAnalysis(): Promise<{
+    impact: ImpactAnalysisResult;
+    twinAttached: boolean;
+    relatedFeatures: Array<{ id: string; title: string }>;
+  }> {
+    const impact = await this.changed();
+    const twin = this.storage.getTwinLatest();
+    const relatedFeatures: Array<{ id: string; title: string }> = [];
+    if (twin) {
+      const changed = new Set(impact.changedFiles.map((c) => c.replace(/\\/g, '/')));
+      for (const node of twin.nodes) {
+        if (node.kind !== 'feature') continue;
+        const paths = node.paths || [];
+        if (paths.some((p) => changed.has(p.replace(/\\/g, '/')))) {
+          relatedFeatures.push({ id: node.id, title: node.title });
+        }
+      }
+    }
+    return { impact, twinAttached: !!twin, relatedFeatures };
   }
 
   public getFlaky(): FlakyTestReport[] {

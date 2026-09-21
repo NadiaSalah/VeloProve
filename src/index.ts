@@ -36,6 +36,8 @@ export * from './diagnostics/evidence-collector.js';
 export * from './diagnostics/classifier.js';
 
 export * from './application/engine.js';
+export * from './application/project-twin.js';
+export * from './shared/types/project-twin.js';
 export * from './application/plan-tests.js';
 export * from './application/generate-tests.js';
 export * from './application/api-live-grounding.js';

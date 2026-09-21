@@ -72,7 +72,7 @@ describe('Tool smoke on realistic project (fixtures/real-app-smoke)', () => {
 
     const handshake = engine.handshake({ agentName: 'SmokeAgent', preferredOutput: 'json' });
     expect(handshake.supportedTools.length).toBeGreaterThanOrEqual(8);
-    expect(handshake.instructionPrompt).toMatch(/75|docs\/reference\/mcp/i);
+    expect(handshake.instructionPrompt).toMatch(/docs\/reference\/mcp|vp\.\*|catalog/i);
     results.push({ id: 'bootstrap', ok: true });
 
     const plan = await engine.plan({ scope: 'all', maxTests: 10 });
@@ -162,7 +162,41 @@ describe('Tool smoke on realistic project (fixtures/real-app-smoke)', () => {
       ['record-scenario', () => engine.getRecorderBookmarklet()],
       ['setup-ci', () => engine.setupCi()],
       ['flaky', () => engine.getFlaky()],
-      ['lint', () => engine.lint({ scope: 'all' })]
+      ['lint', () => engine.lint({ scope: 'all' })],
+      [
+        'twin',
+        async () => {
+          const r = await engine.twinBuild({ withImpact: true, withDrift: true, force: true });
+          expect(r.success).toBe(true);
+          expect(r.data?.schemaVersion).toBe(1);
+          return r;
+        }
+      ],
+      [
+        'impact',
+        async () => {
+          const r = await engine.impactAnalysis();
+          expect(r.impact).toBeTruthy();
+          return r;
+        }
+      ],
+      [
+        'drift',
+        async () => {
+          const r = await engine.drift();
+          expect(Array.isArray(r.sources)).toBe(true);
+          expect(Array.isArray(r.items)).toBe(true);
+          return r;
+        }
+      ],
+      [
+        'test-affected',
+        async () => {
+          const r = await engine.run({ scope: 'affected' });
+          expect(r).toHaveProperty('status');
+          return r;
+        }
+      ]
     ];
 
     for (const [id, fn] of checks) {
@@ -228,7 +262,10 @@ describe('Tool smoke on realistic project (fixtures/real-app-smoke)', () => {
       'export-report',
       'mcp',
       'ui',
-      'web-sec'
+      'web-sec',
+      'twin',
+      'impact',
+      'drift'
     ];
     const unique = [...new Set(sample)];
     const { execFileSync } = await import('node:child_process');

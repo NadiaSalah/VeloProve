@@ -63,4 +63,11 @@ describe('SafeProcessRunner reliability', () => {
     expect(result.stdout).toContain('ok');
     expect(result.stderr).not.toMatch(/C:\\Program/i);
   });
+
+  it('quotes Windows shell args that contain spaces', async () => {
+    const { quoteWindowsShellArg } = await import('../../src/execution/process-runner.js');
+    expect(quoteWindowsShellArg('simple')).toBe('simple');
+    expect(quoteWindowsShellArg('has space')).toBe('"has space"');
+    expect(quoteWindowsShellArg('a&b')).toBe('"a&b"');
+  });
 });

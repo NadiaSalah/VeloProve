@@ -3,6 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import { VeloProveEngine } from '../../src/application/engine.js';
+import { catalogCliCommands } from '../../src/shared/tool-catalog.js';
 
 describe('VeloProve v1.1.0 Advanced Features', () => {
   const root = path.resolve(process.cwd());
@@ -11,7 +12,7 @@ describe('VeloProve v1.1.0 Advanced Features', () => {
   it('CLI exposes short aliases without adding new .command() entries', () => {
     const cli = fs.readFileSync(path.resolve(__dirname, '../../src/cli/index.ts'), 'utf8');
     const commands = [...cli.matchAll(/\.command\('([a-zA-Z0-9_\-]+)/g)].map((m) => m[1]);
-    expect(new Set(commands).size).toBe(75);
+    expect(new Set(commands).size).toBe(catalogCliCommands().length);
     expect(cli).toContain(".alias('load')");
     expect(cli).toContain(".alias('vdiff')");
     expect(cli).toContain(".alias('postman')");

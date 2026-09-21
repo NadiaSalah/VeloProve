@@ -2,6 +2,41 @@
 
 All notable changes to VeloProve will be documented in this file.
 
+## [1.0.1] - 2026-09-21
+
+### Fixed
+- Softened WCAG / screen-reader marketing claims to match static heuristics (not certified A/AA/AAA or live NVDA/VoiceOver) across CLI, MCP, Dashboard, and catalog summaries.
+- Windows `SafeProcessRunner`: quote args when `shell:true` for `.cmd`/`.bat` and npm-ecosystem shims.
+- `release-check` asserts CLI `--version` against `package.json` (no hardcoded 1.0.0); requires packaged `docs/guides/trust.md`.
+- `vp.suggestFix` surfaces `completeness: PARTIAL` when no unified diff exists.
+- Twin impact certainty for high-confidence graph tests; drift CLI wording; stale “75 tools” hardcodes in release docs / capability-registry comments.
+
+### Added
+- **Project Twin MVP (PARTIAL):** `veloprove twin` / `vp.twin` builds `.veloprove/twin/latest.json` from inspect SSOT; optional impact/drift facets wrap `changed` + aggregated drift; `veloprove impact` / `vp.impact` attaches Twin feature hits; `veloprove drift` / `vp.drift` aggregates contract+parity+env+docs; `test --affected` expands on low Twin confidence. Incremental fingerprint reuse + `--force`. Not AI ground-truth — see `TODO.md` for remaining Twin phases.
+
+### Changed
+- Package version **1.0.1**; capability manifest regenerated from package SSOT; package-lock lockstep.
+- Test fixtures relocated into `VeloProve-core/fixtures/` (was monorepo-sibling `../fixtures/`); pack-smoke and helpers updated.
+- Fault harness (`tests/fault-harness`) runs all **16** catalog faults (detect/diagnose rates measured; heal/auto-fix honest PARTIAL).
+- Classifier emits `FLAKY_TEST` for retry/intermittent signals; ephemeral/monorepo fixture helpers replace `cwd/fixtures` noise.
+- Shared `healable-policy` + `SecretRedactor` SSOT for process-runner redaction.
+- **Dashboard Tool Lab**: full CLI catalog (help-groups + search + Run/URL/Write/Terminal-only/Partial); Twin Build/Impact/Drift + evidence table; surface-matrix honesty updated.
+- Docs: beginner/AI path in `docs/README.md`; Tool Lab honesty in `docs/AGENTS.md` + FAQ; `TODO.md` reset for 1.0.1 publish prep; README gallery screenshots recaptured.
+- Dashboard Guide/About: Tool Lab note, honesty lines, Twin PARTIAL note; `brandV` from package version.
+- Docs: `features.md` / `docs/AGENTS.md` / About UI synced for Twin · impact · drift · `--affected`.
+- Monorepo fixtures expanded: `fault-harness`, `golden-project`, `security-local`, `api-local`, `a11y-local`, `release-*`, `git-disposable`.
+
+### Security
+- Canary secret redaction unit test; trust guide documents local vs network vs writes vs git.
+- Confirmed no PostHog/Segment/analytics SDK in product source (no telemetry by default).
+
+### Documentation
+- Added `docs/guides/trust.md` and `docs/internal/trust-hardening-1.0.1-report.md`.
+- Catalog-language counts in packaged docs; verify-first examples; features Twin sections; TODO Twin title honesty.
+- README / Guide / About synced for Twin · impact · drift · `--affected`; sequential real-fixture feature pass (`scripts/feature-pass-real.mjs` → `FEATURE_PASS_REPORT.json`).
+- npm README screenshots/logo use GitHub raw URLs (screenshots stay out of the tarball).
+- Pack `files` allowlist continues to exclude `docs/internal`, `docs/generated`, and screenshot corpora.
+
 ## [1.0.0] - 2026-08-28
 
 ### Status

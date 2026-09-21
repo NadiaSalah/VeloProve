@@ -1,8 +1,8 @@
 # VeloProve Roadmap
 
-**Current release line: `v1.0.0`** (`@engnadia/veloprove@1.0.0`)
+**Current release line: `v1.0.1`** (`@engnadia/veloprove@1.0.1`)
 
-This document tracks completed v1.0.0 work and post-1.0.x follow-ups.  
+This document tracks completed v1.0.0 work and post-1.0.x follow-ups (including Trust Hardening 1.0.1).  
 **Do not bump to v2** unless a future major breaking platform rewrite is explicitly approved.
 
 ---
@@ -12,7 +12,7 @@ This document tracks completed v1.0.0 work and post-1.0.x follow-ups.
 Local-first autonomous QA agent: inspect → impact → plan/generate → run → diagnose → heal → security/a11y/perf → evidence → release/verify.
 
 ### Core platform
-- [x] CLI `veloprove` + MCP `vp.*` (75 tools) + local Dashboard
+- [x] CLI `veloprove` + MCP `vp.*` (catalog length from `TOOL_SURFACE`; historically 75 at 1.0.0) + local Dashboard
 - [x] `OperationResult`, structured errors, CapabilityRegistry
 - [x] `veloprove verify` / `vp.verify` autonomous orchestrator (`--json`, `--ci`, `--intent`)
 - [x] `veloprove history` / `vp.history` local run-history trends
@@ -40,7 +40,13 @@ Local-first autonomous QA agent: inspect → impact → plan/generate → run �
 
 ## 1.0.x follow-ups (open) — see also [TODO.md](../../TODO.md)
 
-Open items reset in `TODO.md` (next improvements after competitive-gap cycle). Prior P0–P2 launch DX and TestSprite local-gap items below are **complete**.
+Open items live in `TODO.md` (**reset 2026-09-21** after screenshot refresh):
+
+- **P0 human:** `git commit` untracked 1.0.1 sources → `npm publish` + GitHub tag → marketplace upload
+- **In-tree done:** Tool Lab honesty, Twin PARTIAL + evidence, trust badges, Guide path, README+marketplace stills recaptured
+- **Later:** Twin VERIFIED only when harness warrants; deeper monorepo edges; synthesizer expansion optional
+
+Prior P0–P2 launch DX and TestSprite local-gap items below are **complete**.
 
 ### ✅ Prior cycle — launch DX + competitive gaps (complete)
 - [x] `init --teach` / `--link-ai` + Docs Chat (`ask` / `vp.ask`)
@@ -80,4 +86,4 @@ Open items reset in `TODO.md` (next improvements after competitive-gap cycle). P
 
 ---
 
-*Last updated: September 2026 — Open 1.0.x follow-ups tracked in TODO.md. Maintained by NadiaSalah.*
+*Last updated: 2026-09-21 — Ordered backlog reset in TODO.md (P0–P5). Maintained by NadiaSalah.*

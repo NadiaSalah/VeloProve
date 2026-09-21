@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { TOOL_SURFACE, catalogCliCommands, catalogMcpTools } from '../../src/shared/tool-catalog.js';
+import { buildDashboardLabCatalog } from '../../src/application/dashboard-lab-catalog.js';
 
 /**
  * Professional tool-surface audit:
@@ -49,12 +50,14 @@ describe('Tool surface audit (CLI × MCP × UI × Docs × AI)', () => {
     return out;
   };
 
-  /** UI may invoke via runAction('x') or fetch('/api/actions/x') (e.g. Docs Chat). */
+  /** UI: runAction / runLabTool / fetch, plus generated Tool Lab catalog (full CLI). */
   const extractUiActions = (): string[] => {
     const blob = `${dashUi}\n${dashClient}`;
     const fromRun = [...blob.matchAll(/runAction\('([a-zA-Z0-9_-]+)'/g)].map((m) => m[1]);
+    const fromLab = [...blob.matchAll(/runLabTool\('([a-zA-Z0-9_-]+)'/g)].map((m) => m[1]);
     const fromFetch = [...blob.matchAll(/\/api\/actions\/([a-zA-Z0-9_-]+)/g)].map((m) => m[1]);
-    return [...new Set([...fromRun, ...fromFetch])];
+    const fromCatalog = buildDashboardLabCatalog().map((t) => t.action);
+    return [...new Set([...fromRun, ...fromLab, ...fromFetch, ...fromCatalog])];
   };
 
   const registeredMcp = extractMcp();
@@ -66,8 +69,8 @@ describe('Tool surface audit (CLI × MCP × UI × Docs × AI)', () => {
     const catMcp = new Set(catalogMcpTools());
     const catCli = new Set(catalogCliCommands());
 
-    expect(registeredMcp.length).toBe(75);
-    expect(registeredCli.length).toBe(75);
+    expect(registeredMcp.length).toBe(catalogMcpTools().length);
+    expect(registeredCli.length).toBe(catalogCliCommands().length);
 
     for (const tool of registeredMcp) {
       expect(catMcp.has(tool), `MCP ${tool} missing from TOOL_SURFACE catalog`).toBe(true);
@@ -100,7 +103,7 @@ describe('Tool surface audit (CLI × MCP × UI × Docs × AI)', () => {
     // AI handshake must teach core loop + point agents at full catalog
     expect(handshake).toContain('vp.inspect');
     expect(handshake).toContain('vp.verify');
-    expect(handshake).toMatch(/75|full catalog|docs\/reference\/mcp/i);
+    expect(handshake).toMatch(/catalogMcpTools|Full catalog:|docs\/reference\/mcp/i);
   });
 
   it('every CLI command is documented in cli.md and has a .description()', () => {
@@ -152,8 +155,8 @@ describe('Tool surface audit (CLI × MCP × UI × Docs × AI)', () => {
       expect(combinedUserDocs.toLowerCase()).toContain(marker.toLowerCase());
     }
 
-    // Guide + About must advertise 75 tools and brand assets
-    expect(aboutGuideBlob).toContain('75');
+    // Guide + About must advertise catalog tool counts and brand assets
+    expect(aboutGuideBlob).toMatch(/\d+ <code>vp\.\*<\/code> tools|mcpCount|\$\{mcpCount\}/);
     expect(aboutGuideBlob).toContain('veloprove-logo.svg');
     expect(aboutGuideBlob).toContain('docs/reference/mcp.md');
   });
@@ -211,8 +214,8 @@ describe('Tool surface audit (CLI × MCP × UI × Docs × AI)', () => {
 
     fs.writeFileSync(path.join(outDir, 'TOOL_SURFACE_AUDIT.json'), JSON.stringify(report, null, 2));
 
-    expect(report.totals.mcpRegistered).toBe(75);
-    expect(report.totals.cliRegistered).toBe(75);
+    expect(report.totals.mcpRegistered).toBe(catalogMcpTools().length);
+    expect(report.totals.cliRegistered).toBe(catalogCliCommands().length);
     expect(report.gaps.docs, `Doc gaps: ${report.gaps.docs.join(', ')}`).toEqual([]);
     expect(report.gaps.dashServer, `Dash server gaps: ${report.gaps.dashServer.join(', ')}`).toEqual([]);
     expect(report.gaps.dashUiNotWired, `Dash UI gaps: ${report.gaps.dashUiNotWired.join(', ')}`).toEqual([]);

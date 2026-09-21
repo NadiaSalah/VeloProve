@@ -1,46 +1,58 @@
 # VeloProve Documentation
 
-Canonical docs for `@engnadia/veloprove`. Start here, then pick a guide or reference.
+Canonical docs for `@engnadia/veloprove`. **Start here**, then follow the path that matches your role.
 
-**AI agents (after npm install):** read [AGENTS.md](AGENTS.md) first — packaged playbook + MCP setup.
+## Start here (beginners)
 
-## Guides
+1. [Getting Started](guides/getting-started.md) — install + 5-minute first run  
+2. [FAQ](guides/faq.md) — no-AI mode, after install, verify vs release, **Tool Lab honesty**  
+3. [Trust & privacy](guides/trust.md) — local vs network, writes, git  
+4. [Dashboard UI](guides/dashboard.md) — `veloprove ui` + Terminal only / Partial tools  
+5. [Surface matrix](reference/surface-matrix.md) — CLI ↔ MCP ↔ Dashboard (what exists where)
+
+## AI agents (after npm install)
+
+Read **[AGENTS.md](AGENTS.md) first** — packaged playbook + MCP JSON + autonomous loop.
+
+Then keep open:
+
+- [Surface matrix](reference/surface-matrix.md) — do **not** nest `ui` / `tui` / `mcp` / `watch` / `mock-server` inside Dashboard  
+- [CLI Reference](reference/cli.md) · [MCP Reference](reference/mcp.md)  
+- Humans/agents can also ask: `npx veloprove ask "…"`, Dashboard **Docs Chat**, or MCP `vp.ask` (packaged markdown only — no cloud LLM)
+
+## Guides (deeper)
 
 | Doc | Description |
 |-----|-------------|
-| [Getting Started](guides/getting-started.md) | Install, system requirements, 5-minute tutorial |
-| [FAQ](guides/faq.md) | OS / no-AI mode, after-install, AI link, verify vs release, Docs Chat |
-| [Features](guides/features.md) | Capability deep dive by domain |
-| [Examples & Recipes](guides/examples.md) | Next.js, Express, Vitest, Playwright, `node:test` recipes |
-| [Dashboard UI](guides/dashboard.md) | Live command center (`veloprove ui`) |
-| [AI Integrations](guides/ai-integrations.md) | Copilot, Codex, handshake extras (MCP JSON → [AGENTS.md](AGENTS.md)) |
-| [Scheduled verify](guides/scheduled-verify.md) | watch/hook + Windows Task Scheduler / systemd / cron recipes |
+| [Features](guides/features.md) | Capability deep dive by domain (read after getting-started) |
+| [Examples & Recipes](guides/examples.md) | Next.js, Express, Vitest, Playwright, `node:test` |
+| [AI Integrations](guides/ai-integrations.md) | Extra editor notes (MCP JSON lives in [AGENTS.md](AGENTS.md)) |
+| [Scheduled verify](guides/scheduled-verify.md) | `watch` / `hook` + OS schedulers |
+| [Project Twin](guides/features.md) | **PARTIAL MVP** — search “Project Twin” in Features; CLI `twin` / `impact` / `drift` / `test --affected` |
 | [MCP marketplace pack](assets/marketplace/README.md) | Listing copy, no-API-key badge, screenshot checklist |
 
 ## Reference
 
 | Doc | Description |
 |-----|-------------|
-| [CLI Reference](reference/cli.md) | Commands, flags, and options (**75**) |
-| [MCP Reference](reference/mcp.md) | `vp.*` tools, schemas, `vp://` resources (**75**) |
-| [Architecture](reference/architecture.md) | CLI / MCP / Dashboard → engine map |
-| [Surface matrix](reference/surface-matrix.md) | 75 CLI / 75 MCP / 54 Dashboard + intentional asymmetries |
+| [CLI Reference](reference/cli.md) | Commands + Dashboard column (catalog SSOT) |
+| [MCP Reference](reference/mcp.md) | `vp.*` tools + `vp://` resources |
+| [Architecture](reference/architecture.md) | CLI / MCP / Dashboard → engine |
+| [Surface matrix](reference/surface-matrix.md) | Counts + Terminal only / Partial / MCP-only |
 
 ## Assets
 
-Official brand marks (shipped under `docs/assets/`):
-
 | File | Use |
 |------|-----|
-| [veloprove-logo.svg](assets/veloprove-logo.svg) | Wordmark + mark (README, About pane, `/logo.svg`) |
-| [veloprove-icon.svg](assets/veloprove-icon.svg) | App mark (favicon, sidebar, `/icon.svg`) |
+| [veloprove-logo.svg](assets/veloprove-logo.svg) | Wordmark (README, About, `/logo.svg`) |
+| [veloprove-icon.svg](assets/veloprove-icon.svg) | Mark (favicon, sidebar, `/icon.svg`) |
 
 ## Repo-only (not published to npm)
 
 | Path | Purpose |
 |------|---------|
-| [internal/roadmap.md](internal/roadmap.md) | Completed v1.0.0 / post-1.0 backlog |
-| `generated/*.json` | Tool-surface / smoke / capability manifests from local audits |
-| Root [AGENTS.md](../AGENTS.md) | **Contributor** agent protocol (edit `src/`, parity tests) — not for consumer apps |
+| [internal/roadmap.md](internal/roadmap.md) | Completed backlog archive |
+| `generated/*.json` | Local audit / smoke / capability manifests |
+| Root [AGENTS.md](../AGENTS.md) | **Contributor** protocol (`src/`, parity) — not for consumer apps |
 
-Root contributor docs: [CONTRIBUTING.md](../CONTRIBUTING.md) · [RELEASING.md](../RELEASING.md) · [SECURITY.md](../SECURITY.md) · [CHANGELOG.md](../CHANGELOG.md)
+Root maintainer docs: [CONTRIBUTING.md](../CONTRIBUTING.md) · [RELEASING.md](../RELEASING.md) · [SECURITY.md](../SECURITY.md) · [CHANGELOG.md](../CHANGELOG.md) · [TODO.md](../TODO.md)

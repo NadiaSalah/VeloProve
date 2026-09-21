@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { WorkspaceGuard } from '../execution/workspace-guard.js';
+import { getPackageVersion } from '../shared/package-meta.js';
+import { catalogCliCommands, catalogMcpTools } from '../shared/tool-catalog.js';
 
 export interface AgentCapabilities {
   agentName?: string;
@@ -45,6 +47,8 @@ const MCP_SNIPPET = `{
 }`;
 
 function buildAgentsMdContent(): string {
+  const mcpCount = catalogMcpTools().length;
+  const cliCount = catalogCliCommands().length;
   return `# VeloProve Universal Agent Instructions
 
 This project uses **VeloProve** (local autonomous QA). Prefer MCP \`vp.*\` tools or \`npx veloprove <cmd>\`.
@@ -60,14 +64,16 @@ Use plan/generate/run only when verify reports missing coverage or an empty suit
 
 ## Extended loop (when needed)
 1. Discover: \`vp.inspect\` + \`vp.doctor\`
-2. Impact: \`vp.changed\`
+2. Impact: \`vp.changed\` / \`vp.impact\` (optional \`vp.twin\` PARTIAL MVP — local project model; not AI assumptions)
 3. Plan → Generate → Run: \`vp.plan\` → \`vp.generate\` → \`vp.run\`
 4. Gate: \`vp.releaseCheck\`
 
+Optional Twin helpers (PARTIAL): \`vp.twin\` / \`vp.drift\` / \`npx veloprove test --affected\` (expands when confidence is low).
+
 ## Packaged docs (after npm install)
 - Playbook + MCP setup: \`node_modules/@engnadia/veloprove/docs/AGENTS.md\`
-- MCP catalog (75): \`node_modules/@engnadia/veloprove/docs/reference/mcp.md\`
-- CLI catalog (75): \`node_modules/@engnadia/veloprove/docs/reference/cli.md\`
+- MCP catalog (${mcpCount} tools): \`node_modules/@engnadia/veloprove/docs/reference/mcp.md\`
+- CLI catalog (${cliCount} commands): \`node_modules/@engnadia/veloprove/docs/reference/cli.md\`
 - FAQ: \`node_modules/@engnadia/veloprove/docs/guides/faq.md\`
 
 Or open Docs Chat via \`npx veloprove ui\` / \`npx veloprove ask "…"\`.
@@ -75,6 +81,7 @@ Or open Docs Chat via \`npx veloprove ui\` / \`npx veloprove ask "…"\`.
 }
 
 function buildPasteToAi(agentName: string, agentsMdPath: string): string {
+  const mcpCount = catalogMcpTools().length;
   return `This project uses VeloProve for local autonomous QA. Follow AGENTS.md (${agentsMdPath}) and MCP tools (vp.*).
 
 ONE-PROMPT LOOP (preferred when user says "test this project" / "verify changes"):
@@ -83,7 +90,7 @@ ONE-PROMPT LOOP (preferred when user says "test this project" / "verify changes"
 3. If blocked: open .veloprove/evidence/<runId>/ then heal / suggestFix and re-verify
 4. vp.history
 
-Rules: never overwrite developer-written tests (overwritePolicy: generated-only). Prefer MCP over ad-hoc shell. Catalog: node_modules/@engnadia/veloprove/docs/reference/mcp.md (75 tools).
+Rules: never overwrite developer-written tests (overwritePolicy: generated-only). Prefer MCP over ad-hoc shell. Catalog: node_modules/@engnadia/veloprove/docs/reference/mcp.md (${mcpCount} tools).
 
 You are assisting: ${agentName}.`;
 }
@@ -204,8 +211,12 @@ export class AgentAdaptationService {
       }
     ];
 
-    const instructionPrompt = `You are connected to VeloProve v1.0.0 (Local-First Autonomous QA Engine).
-Full catalog: 75 MCP tools (docs/reference/mcp.md) + 75 CLI commands (docs/reference/cli.md). User guide: docs/guides/features.md.
+    const mcpCount = catalogMcpTools().length;
+    const cliCount = catalogCliCommands().length;
+    const productVersion = getPackageVersion();
+
+    const instructionPrompt = `You are connected to VeloProve v${productVersion} (Local-First Autonomous QA Engine).
+Full catalog: ${mcpCount} MCP tools (docs/reference/mcp.md) + ${cliCount} CLI commands (docs/reference/cli.md). User guide: docs/guides/features.md.
 Teach / refresh project AI files: npx veloprove teach-ai (alias: agent-handshake) or vp.bootstrap.
 Ask docs locally: npx veloprove ask "…" / vp.ask (no cloud LLM).
 
@@ -226,7 +237,7 @@ Always follow the autonomous QA verification cycle:
       'Never modify developer written tests; use vp.generate with overwritePolicy: "generated-only".',
       'Trust VeloProve failure classification; use evidence before making source code edits.',
       'Always rerun impacted tests via vp.changed after making bug fixes.',
-      'Read docs/reference/mcp.md for the full 75-tool schema catalog when a specialized capability is needed.',
+      `Read docs/reference/mcp.md for the full ${mcpCount}-tool schema catalog when a specialized capability is needed.`,
       'Destructive actions (malware remediate, dead-asset purge, auto-fix --apply) require explicit user opt-in.'
     ];
 

@@ -132,10 +132,12 @@ describe('VerifyOrchestrator integration (stub engine)', () => {
     expect(result.data?.verdict).toBe('PASS');
     expect(result.data?.selection.mode).toBe('changed');
     expect(result.data?.selection.selectedTests).toContain('tests/unit/a.test.ts');
-    expect(engine.run).toHaveBeenCalledWith({
-      scope: 'paths',
-      paths: ['tests/unit/a.test.ts']
-    });
+    expect(engine.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: 'paths',
+        paths: ['tests/unit/a.test.ts']
+      })
+    );
     expect(result.data?.exitCode).toBe(0);
   });
 

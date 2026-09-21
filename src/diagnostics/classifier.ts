@@ -114,7 +114,30 @@ export class FailureClassifier {
       };
     }
 
-    // 4. Environment / Config Failure
+    // 4. Flaky — retries / intermittent signals (before assertion default)
+    if (
+      (evidence.retryAttempts && evidence.retryAttempts > 1) ||
+      combined.includes('flaky') ||
+      combined.includes('intermittent') ||
+      combined.includes('passed on retry')
+    ) {
+      return {
+        classification: 'FLAKY_TEST',
+        confidence: 0.82,
+        rootCause: evidence.retryAttempts && evidence.retryAttempts > 1
+          ? `Test showed intermittent behavior across ${evidence.retryAttempts} attempts.`
+          : 'Failure message indicates flaky/intermittent test behavior.',
+        suggestedActions: [
+          'Quarantine or stabilize the test with `veloprove stabilize`',
+          'Inspect shared state, timing, and async races'
+        ],
+        canAutoHeal: false,
+        evidenceSignals: signals,
+        speculationNotes: ['Retries alone do not prove product flake; environment load can contribute.']
+      };
+    }
+
+    // 5. Environment / Config Failure
     if (
       combined.includes('module not found') ||
       combined.includes('cannot find module') ||
@@ -135,7 +158,7 @@ export class FailureClassifier {
       };
     }
 
-    // 5. Application Bug (Assertion Failure / 500 status code)
+    // 6. Application Bug (Assertion Failure / 500 status code)
     if (
       (combined.includes('expected') && combined.includes('received')) ||
       combined.includes('assertion') ||
@@ -162,7 +185,7 @@ export class FailureClassifier {
       };
     }
 
-    // 6. Unknown / Fallback
+    // 7. Unknown / Fallback
     return {
       classification: 'UNKNOWN',
       confidence: 0.5,

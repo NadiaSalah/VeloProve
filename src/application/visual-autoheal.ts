@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { WorkspaceGuard } from '../execution/workspace-guard.js';
 import type { DiagnosticResult, HealResult } from '../shared/types/diagnostics.js';
+import { HEALABLE_POLICY_REASON, isHealableTestContent } from './healable-policy.js';
 
 export interface VisualHealMatch {
   brokenSelector: string;
@@ -10,6 +11,10 @@ export interface VisualHealMatch {
   strategy: 'role-match' | 'label-match' | 'text-match' | 'visual-aria';
 }
 
+/**
+ * Visual/ARIA locator healer — same healable policy as HealTestService
+ * (never rewrite unmarked developer tests).
+ */
 export class VisualAutoHealService {
   public static async healWithVisualAria(
     diagnoses: DiagnosticResult[],
@@ -28,6 +33,21 @@ export class VisualAutoHealService {
       }
 
       let content = fs.readFileSync(testFilePath, 'utf8');
+
+      if (!isHealableTestContent(content)) {
+        healResults.push({
+          testFile: diag.evidence.testFile,
+          testId: diag.testId,
+          success: false,
+          beforeSnippet: '',
+          afterSnippet: '',
+          reason: HEALABLE_POLICY_REASON,
+          confidence: 1,
+          evidenceUsed: ['healable-policy']
+        });
+        continue;
+      }
+
       const brokenSelector = diag.evidence.browserEvidence?.failedSelector;
 
       if (!brokenSelector) {

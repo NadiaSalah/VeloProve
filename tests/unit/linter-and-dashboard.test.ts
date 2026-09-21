@@ -5,9 +5,10 @@ import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
 import { LinterService } from '../../src/application/linter-service.js';
 import { LocalDashboardServer } from '../../src/application/dashboard-server.js';
 import { LocalStorage } from '../../src/storage/local-store.js';
+import { ephemeralFixtureDir } from '../helpers/monorepo-fixtures.js';
 
 describe('LinterService & LocalDashboardServer Actions', () => {
-  const fixtureDir = path.resolve(process.cwd(), 'fixtures/lint-test-project');
+  const fixtureDir = ephemeralFixtureDir('lint-test-project');
   let guard: WorkspaceGuard;
   let storage: LocalStorage;
 

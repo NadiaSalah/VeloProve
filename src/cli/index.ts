@@ -21,6 +21,7 @@ import {
   type HelpGroupId
 } from './help-groups.js';
 import { msg } from './messages.js';
+import { getPackageVersion } from '../shared/package-meta.js';
 
 const program = new Command();
 const defaultHelp = new Help();
@@ -36,7 +37,7 @@ function resolveTargetUrl(
 program
   .name('veloprove')
   .description('Local-First Agentic QA & Automated Testing Toolkit')
-  .version('1.0.0')
+  .version(getPackageVersion())
   .configureHelp({
     formatHelp(cmd, helper) {
       if (cmd.parent) {
@@ -633,14 +634,24 @@ program
 program
   .command('test')
   .description('Execute test suites (Vitest, Jest, Playwright, or node --test) and collect structured results')
-  .option('-s, --scope <scope>', 'Execution scope (all, changed, paths, critical)', 'all')
+  .option('-s, --scope <scope>', 'Execution scope (all, changed, affected, paths, critical)', 'all')
   .option('-p, --paths <paths...>', 'Specific test paths')
+  .option('--affected', 'Twin-aware affected tests (expands when confidence is low)', false)
   .option('--security', 'Also execute comprehensive security testing suite', false)
   .action(async (opts) => {
     const engine = new VeloProveEngine(process.cwd());
     console.log(pc.cyan('\nRunning VeloProve test execution...'));
 
-    const res = await engine.run({ scope: opts.scope, paths: opts.paths });
+    const scope = opts.affected ? 'affected' : opts.scope;
+    const res = await engine.run({ scope, paths: opts.paths });
+
+    const rationale = res.selectionRationale;
+    if (rationale?.length) {
+      console.log(pc.dim('Selection:'));
+      for (const line of rationale) {
+        console.log(pc.dim(`  • ${line}`));
+      }
+    }
 
     const statusColor = res.status === 'passed' ? pc.green : pc.red;
     console.log(pc.bold(statusColor(`\n=== Run Result: ${res.status.toUpperCase()} (${res.durationMs}ms) ===`)));
@@ -860,7 +871,7 @@ program
 // 9.5 a11y
 program
   .command('a11y')
-  .description('Run automated WCAG 2.1 accessibility audit')
+  .description('Run static WCAG-oriented accessibility heuristics (not a certified WCAG audit)')
   .action(async () => {
     const engine = new VeloProveEngine(process.cwd());
     const result = await engine.auditA11y();
@@ -891,8 +902,7 @@ program
 // 9.7 contract-drift
 program
   .command('contract-drift')
-  .alias('drift')
-  .description('Detect API contract drift between OpenAPI specs and code')
+  .description('Detect API contract drift between OpenAPI specs and code (also covered by `veloprove drift` aggregator)')
   .action(async () => {
     const engine = new VeloProveEngine(process.cwd());
     const result = await engine.checkContractDrift();
@@ -1453,7 +1463,7 @@ program
 // 9.32 auto-fix
 program
   .command('auto-fix')
-  .description('Synthesize code repair patches from latest test diagnostics')
+  .description('Propose reviewable app-bug patches from diagnostics (REVIEW_REQUIRED — not guaranteed fixes)')
   .option('--apply', 'Apply patch repairs directly to source code', false)
   .option('-y, --yes', 'Skip confirmation when applying --apply', false)
   .option('--allow-no-ai', 'Apply patches without a linked AI agent', false)
@@ -2368,6 +2378,203 @@ program
   .description('Start VeloProve MCP Server over stdio')
   .action(async () => {
     await runMcpServer(process.cwd());
+  });
+
+// Project Twin (MVP) — composition over inspect SSOT
+program
+  .command('twin')
+  .description(
+    'Build or inspect Project Twin (local JSON model from inspect evidence; PARTIAL MVP — not AI assumptions)'
+  )
+  .argument('[action]', 'build | status | inspect', 'status')
+  .argument('[featureId]', 'Feature id or title substring for inspect')
+  .option('--with-impact', 'Attach change-impact facet (wraps `changed`)', false)
+  .option('--with-drift', 'Attach aggregated drift facet (contract+parity+env+docs)', false)
+  .option('--incremental', 'Reuse graph when fingerprint unchanged (default on)', true)
+  .option('--force', 'Force full Twin rebuild', false)
+  .option('--bypass-cache', 'Bypass inspect cache', false)
+  .option('--json', 'Emit machine-readable JSON', false)
+  .action(async (action: string, featureId: string | undefined, opts) => {
+    const engine = new VeloProveEngine(process.cwd());
+    const act = (action || 'status').toLowerCase();
+
+    if (act === 'build' || act === 'update') {
+      const result =
+        act === 'update'
+          ? await engine.twinUpdate({
+              withImpact: !!opts.withImpact,
+              withDrift: !!opts.withDrift,
+              force: !!opts.force,
+              bypassCache: !!opts.bypassCache
+            })
+          : await engine.twinBuild({
+              withImpact: !!opts.withImpact,
+              withDrift: !!opts.withDrift,
+              incremental: opts.incremental !== false,
+              force: !!opts.force,
+              bypassCache: !!opts.bypassCache
+            });
+      if (opts.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+      const twin = result.data!;
+      console.log(pc.bold(pc.cyan('\n=== VeloProve Project Twin ===')));
+      console.log(`Status: ${result.status} · verificationStatus=PARTIAL (MVP)`);
+      console.log(`Fingerprint: ${twin.fingerprint}`);
+      if (result.metadata?.incremental) {
+        console.log(pc.dim(`Incremental: ${result.metadata.skippedRebuild ? 'skipped rebuild' : 'reused graph'}`));
+      }
+      console.log(
+        `Summary: ${twin.summary.features} features · ${twin.summary.sourceFiles} sources · ${twin.summary.testFiles} tests · ${twin.summary.routes} routes · ${twin.summary.apiEndpoints} APIs`
+      );
+      console.log(`Nodes: ${twin.nodes.length} · Edges: ${twin.edges.length}`);
+      const classes = result.metadata?.evidenceClasses as Record<string, number> | undefined;
+      if (classes) {
+        console.log(
+          `Evidence: VERIFIED=${classes.VERIFIED || 0} OBSERVED=${classes.OBSERVED || 0} INFERRED=${classes.INFERRED || 0} STALE=${classes.STALE || 0} UNKNOWN=${classes.UNKNOWN || 0}`
+        );
+      }
+      if (twin.facets.impact?.included) {
+        console.log(
+          `Impact facet: ${twin.facets.impact.changedFiles.length} changed · ${twin.facets.impact.items.length} items (source=${twin.facets.impact.source})`
+        );
+      }
+      if (twin.facets.drift?.included) {
+        console.log(
+          `Drift facet: ${twin.facets.drift.items.length} items · score=${twin.facets.drift.compatibilityScore ?? 'n/a'} (source=${twin.facets.drift.source})`
+        );
+      }
+      console.log(pc.dim(`Wrote .veloprove/twin/latest.json`));
+      for (const w of result.warnings.slice(0, 5)) {
+        console.log(pc.yellow(`⚠ ${w.message}`));
+      }
+      return;
+    }
+
+    if (act === 'inspect') {
+      const q = featureId || '';
+      if (!q) {
+        console.error(pc.red('Usage: veloprove twin inspect <featureId|title>'));
+        process.exitCode = 1;
+        return;
+      }
+      let twin = engine.twinStatus();
+      if (!twin) {
+        await engine.twinBuild({});
+        twin = engine.twinStatus();
+      }
+      const found = engine.twinInspect(q);
+      if (opts.json) {
+        console.log(JSON.stringify(found, null, 2));
+        return;
+      }
+      if (!found.found || !found.node) {
+        console.log(pc.yellow(`No Twin feature node matching "${q}". Run: veloprove twin build`));
+        return;
+      }
+      console.log(pc.bold(pc.cyan(`\n=== Twin inspect: ${found.node.title} ===`)));
+      console.log(`Id: ${found.node.id} · kind=${found.node.kind}`);
+      console.log(
+        `Evidence: ${found.node.evidence.map((e) => `${e.class}:${e.summary}`).join(' | ')}`
+      );
+      console.log(`Edges (${found.edges.length}):`);
+      for (const e of found.edges.slice(0, 40)) {
+        console.log(`  ${e.from} —${e.kind}/${e.evidenceClass}→ ${e.to}`);
+      }
+      return;
+    }
+
+    // status (default)
+    const twin = engine.twinStatus();
+    if (opts.json) {
+      console.log(JSON.stringify(twin, null, 2));
+      return;
+    }
+    if (!twin) {
+      console.log(pc.yellow('No Twin snapshot yet. Run: veloprove twin build'));
+      return;
+    }
+    console.log(pc.bold(pc.cyan('\n=== Project Twin status ===')));
+    console.log(`Generated: ${twin.generatedAt}`);
+    console.log(`Fingerprint: ${twin.fingerprint}`);
+    console.log(
+      `Features ${twin.summary.features} · sources ${twin.summary.sourceFiles} · tests ${twin.summary.testFiles}`
+    );
+    console.log(`Nodes ${twin.nodes.length} · Edges ${twin.edges.length}`);
+    console.log(pc.dim('PARTIAL MVP — see docs/guides/trust.md honesty; Twin is planned composition layer.'));
+  });
+
+program
+  .command('impact')
+  .description(
+    'Change impact analysis (wraps `changed`; attaches Twin feature hits when snapshot exists)'
+  )
+  .option('--json', 'Emit machine-readable JSON', false)
+  .action(async (opts) => {
+    const engine = new VeloProveEngine(process.cwd());
+    const { impact, twinAttached, relatedFeatures } = await engine.impactAnalysis();
+    if (opts.json) {
+      console.log(JSON.stringify({ impact, twinAttached, relatedFeatures }, null, 2));
+      return;
+    }
+    console.log(pc.bold(pc.cyan('\n=== Impact (wraps changed) ===')));
+    console.log(`Changed files: ${impact.changedFiles.length}`);
+    for (const cf of impact.changedFiles.slice(0, 30)) console.log(`  • ${cf}`);
+    console.log(`Impacted tests: ${impact.impactedTestFiles.length}`);
+    for (const t of impact.impactedTestFiles.slice(0, 30)) console.log(`  🎯 ${t}`);
+    if (twinAttached) {
+      console.log(`Twin-related features: ${relatedFeatures.length}`);
+      for (const f of relatedFeatures.slice(0, 20)) console.log(`  ◆ ${f.title} (${f.id})`);
+    } else {
+      console.log(pc.dim('Tip: run `veloprove twin build` to attach Twin feature context.'));
+    }
+  });
+
+program
+  .command('drift')
+  .description(
+    'Aggregated drift (wraps contract-drift + feature-parity + env-drift + docs hints; Twin STALE when fingerprint disagrees)'
+  )
+  .argument('[feature]', 'Optional feature/path filter')
+  .option('--changed', 'Limit items to paths overlapping git changes', false)
+  .option('--json', 'Emit machine-readable JSON', false)
+  .action(async (feature: string | undefined, opts) => {
+    const engine = new VeloProveEngine(process.cwd());
+    const report = await engine.drift({
+      feature: feature || undefined,
+      changed: !!opts.changed
+    });
+    if (opts.json) {
+      console.log(JSON.stringify(report, null, 2));
+      return;
+    }
+    console.log(pc.bold(pc.cyan('\n=== VeloProve Drift (aggregator) ===')));
+    console.log(`Sources: ${report.sources.join(', ') || '(none)'}`);
+    console.log(`Items: ${report.items.length} · docs stale hints: ${report.docsStaleHints}`);
+    if (report.contract) {
+      console.log(`Contract compatibility: ${report.contract.compatibilityScore}`);
+    }
+    if (report.parity) {
+      console.log(`Feature parity: ${report.parity.parityScore}% (${report.parity.overallStatus})`);
+    }
+    if (report.env) {
+      console.log(`Env health: ${report.env.healthScore} (${report.env.verdict})`);
+    }
+    for (const item of report.items.slice(0, 40)) {
+      const sev =
+        item.severity === 'high' ? pc.red : item.severity === 'medium' ? pc.yellow : pc.dim;
+      console.log(
+        `  ${sev(`[${item.severity}/${item.evidenceClass}]`)} ${item.category}: ${item.summary}`
+      );
+    }
+    if (report.items.length > 40) {
+      console.log(pc.dim(`  … and ${report.items.length - 40} more`));
+    }
+    for (const w of report.warnings.slice(0, 5)) {
+      console.log(pc.yellow(`⚠ ${w}`));
+    }
+    console.log(pc.dim('Related engines: contract-drift · feature-parity · env-drift (not aliases)'));
   });
 
 export { program };

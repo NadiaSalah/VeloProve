@@ -101,3 +101,6 @@ fixtures/**/tests/unit/tc-*.test.js
 
 # 14. Local-only marketplace demo (never ship to git/npm)
 _local_demo/
+
+# 15. Smoke-generated HTML reports under fixtures
+fixtures/**/veloprove-executive-report.html

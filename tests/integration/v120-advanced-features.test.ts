@@ -8,9 +8,10 @@ import { A11yAuditorService } from '../../src/application/a11y-auditor.js';
 import { VisualDiffService } from '../../src/application/visual-diff.js';
 import { ContractDriftService } from '../../src/application/contract-drift.js';
 import { MockSandboxService } from '../../src/application/mock-sandbox.js';
+import { ephemeralFixtureDir } from '../helpers/monorepo-fixtures.js';
 
 describe('VeloProve Advanced Features (Refinement, A11y, Visual Diff, Contract Drift, Mock Sandbox)', () => {
-  const fixtureDir = path.resolve(process.cwd(), 'fixtures/v120-project');
+  const fixtureDir = ephemeralFixtureDir('v120-project');
   let guard: WorkspaceGuard;
 
   beforeAll(() => {

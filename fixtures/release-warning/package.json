@@ -1,0 +1,7 @@
+{
+  "name": "veloprove-release-warning",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Uncovered requirement fixture for READY_WITH_WARNINGS scenarios."
+}

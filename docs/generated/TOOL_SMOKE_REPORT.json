@@ -1,6 +1,6 @@
 {
-  "fixture": "D:\\projects\\VeloProve\\fixtures\\real-app-smoke",
-  "generatedAt": "2026-09-18T15:20:51.358Z",
+  "fixture": "D:\\projects\\VeloProve\\VeloProve-core\\fixtures\\real-app-smoke",
+  "generatedAt": "2026-09-21T17:31:59.587Z",
   "executed": [
     {
       "id": "fixture-server",
@@ -31,7 +31,7 @@
     {
       "id": "verify",
       "ok": true,
-      "note": "SUCCESS"
+      "note": "SUCCESS_WITH_WARNINGS"
     },
     {
       "id": "coverage",
@@ -162,6 +162,22 @@
       "ok": true
     },
     {
+      "id": "twin",
+      "ok": true
+    },
+    {
+      "id": "impact",
+      "ok": true
+    },
+    {
+      "id": "drift",
+      "ok": true
+    },
+    {
+      "id": "test-affected",
+      "ok": true
+    },
+    {
       "id": "owasp-scan",
       "ok": true
     },
@@ -193,7 +209,7 @@
     {
       "id": "cli-help-sample",
       "ok": true,
-      "note": "15 commands"
+      "note": "18 commands"
     }
   ],
   "tiers": {
@@ -241,6 +257,9 @@
       "dedup",
       "verify",
       "history",
+      "twin",
+      "impact",
+      "drift",
       "init",
       "setup-ci",
       "sandbox",

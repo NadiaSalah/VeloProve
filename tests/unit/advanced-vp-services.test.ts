@@ -8,9 +8,10 @@ import { PerformanceProfilerService } from '../../src/application/perf-profiler.
 import { MockNetworkGenerator } from '../../src/application/mock-network.js';
 import { QuarantineService } from '../../src/application/quarantine-service.js';
 import { CoverageHeatmapService } from '../../src/application/coverage-heatmap.js';
+import { ephemeralFixtureDir } from '../helpers/monorepo-fixtures.js';
 
 describe('Advanced VeloProve Services (Security Audit, Perf Profiler, MSW Mock Generator, Flaky Quarantine, Coverage Heatmap)', () => {
-  const fixtureDir = path.resolve(process.cwd(), 'fixtures/advanced-vp-fixture');
+  const fixtureDir = ephemeralFixtureDir('advanced-vp-fixture');
   let guard: WorkspaceGuard;
   let storage: LocalStorage;
 

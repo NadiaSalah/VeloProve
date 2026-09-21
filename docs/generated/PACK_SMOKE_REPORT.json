@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-09-18T15:20:28.819Z",
-  "tarball": "engnadia-veloprove-1.0.0.tgz",
-  "consumerDir": "C:\\Users\\EngNadia\\AppData\\Local\\Temp\\vp-pack-smoke-AwVLW1\\app",
+  "generatedAt": "2026-09-21T17:32:17.336Z",
+  "tarball": "engnadia-veloprove-1.0.1.tgz",
+  "consumerDir": "C:\\Users\\EngNadia\\AppData\\Local\\Temp\\vp-pack-smoke-gtH0KC\\app",
   "steps": {
     "init": "ok",
     "ask": "ok",
     "doctor": "HEALTHY",
-    "verify": "SUCCESS"
+    "verify": "SUCCESS_WITH_WARNINGS"
   }
 }

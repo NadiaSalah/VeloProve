@@ -23,7 +23,9 @@ Add to your editor's MCP configuration (`.cursor/mcp.json`, `~/.codeium/windsurf
 
 ---
 
-## Available MCP Tools (75 Tools)
+## Available MCP Tools
+
+Counts follow `catalogMcpTools().length` in `src/shared/tool-catalog.ts` (do not hardcode). Numbered list below is the current catalog snapshot.
 
 ### 1. `vp.inspect`
 Inspects workspace stack, routes, API endpoints, test runners (Vitest / Jest / Playwright / `node:test`), existing tests, and discovered PRD requirements.
@@ -94,7 +96,7 @@ Refines or adjusts test assertions in test files using natural language instruct
 ```
 
 ### 9. `vp.accessibility`
-Runs automated WCAG 2.1 accessibility audits on components and routes.
+Runs static WCAG-oriented accessibility heuristics on components and routes (not a certified conformance audit).
 ```json
 // Inputs:
 {}
@@ -720,6 +722,33 @@ Load local test-run history trends from `.veloprove` state (pass rate, duration,
 }
 ```
 
+### 76. `vp.twin`
+Build or read **Project Twin** — local composition of inspect SSOT into `.veloprove/twin/latest.json`. **PARTIAL MVP:** evidence classes (`VERIFIED` / `OBSERVED` / `INFERRED` / `STALE`); optional facets wrap `changed` and aggregated drift; supports incremental/force. CLI: `veloprove twin`.
+```json
+// Inputs:
+{
+  "action": "build",
+  "withImpact": true,
+  "withDrift": true,
+  "incremental": true,
+  "force": false,
+  "featureId": "optional-for-inspect"
+}
+```
+
+### 77. `vp.impact`
+Change impact wrapping the same engine as `vp.changed` / `veloprove changed`. When a Twin snapshot exists, attaches related Twin feature hits. CLI: `veloprove impact`.
+
+### 78. `vp.drift`
+Aggregated drift wrapping `contract-drift`, `feature-parity`, `env-drift`, and docs API-mention hints. Marks STALE when Twin fingerprint disagrees. CLI: `veloprove drift`.
+```json
+// Inputs:
+{
+  "feature": "optional-filter",
+  "changed": false
+}
+```
+
 Canonical MCP namespace is **`vp.*` only** (no `qa.*` aliases).
 
 ---
@@ -735,3 +764,4 @@ VeloProve resources use the **`vp://` scheme only** (same product namespace as `
 | `vp://test-plan/latest` | Latest Test Plan | Active prioritized test plan |
 | `vp://runs/latest` | Latest Test Run | Results and timings of the latest test run |
 | `vp://release/confidence` | Release Confidence | Quantitative readiness score and blockers (`engine.releaseCheck`) |
+| `vp://twin/latest` | Project Twin Latest | Twin snapshot JSON (PARTIAL MVP) |

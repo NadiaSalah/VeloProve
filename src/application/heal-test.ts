@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import type { WorkspaceGuard } from '../execution/workspace-guard.js';
 import type { DiagnosticResult, HealResult } from '../shared/types/diagnostics.js';
 import { FixSafetyPolicy } from './fix-safety-policy.js';
+import { isHealableTestContent } from './healable-policy.js';
 
 export class HealTestService {
   public static async heal(
@@ -38,7 +39,7 @@ export class HealTestService {
       const content = fs.readFileSync(testFilePath, 'utf8');
 
       // Ensure we only auto-heal generated or explicitly marked tests
-      if (!content.includes('@veloprove-generated') && !content.includes('// @veloprove-healable')) {
+      if (!isHealableTestContent(content)) {
         continue;
       }
 

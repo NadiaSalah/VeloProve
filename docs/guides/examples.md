@@ -4,37 +4,24 @@ Practical, concise recipes for common testing, verification, and autonomous work
 
 ---
 
-## 🤖 Recipe 1: The Autonomous Coding Agent QA Loop
+## Recipe 1: Verify-first agent loop
 
-The standard 10-step verification loop for AI coding agents (Cursor, Windsurf, Claude Code, Cline, Codex):
+Prefer **`veloprove verify`** (or `vp.verify`) for change-aware QA. Manual steps below are the expanded form of the same engine path — see packaged [`AGENTS.md`](../AGENTS.md).
 
 ```bash
-# 1. Inspect stack, framework routes, and PRD requirements
+# Teach the agent once (optional but recommended)
+npx veloprove teach-ai --force --mcp
+
+# One-shot: impact → targeted tests → diagnose → heal TEST_BUG → release gate
+npx veloprove verify --json --ci
+
+# Or expand manually when debugging:
 npx veloprove inspect
-
-# 2. Identify only files affected by recent git modifications
 npx veloprove changed
-
-# 3. Generate risk-prioritized test plan
-npx veloprove plan --scope changed
-
-# 4. Materialize test files (preserving developer tests)
-npx veloprove generate --overwrite generated-only
-
-# 5. Run tests and collect structured results
 npx veloprove test --scope changed
-
-# 6. If failures occur, diagnose root cause
 npx veloprove diagnose
-
-# 7. Self-heal locators or inspect code fix recommendations
-npx veloprove heal
-npx veloprove auto-fix
-
-# 8. Re-run affected tests
-npx veloprove test --scope changed
-
-# 9. Verify release readiness
+npx veloprove heal          # locators in @veloprove-generated / healable tests only
+# vp.suggestFix / auto-fix = guidance / REVIEW_REQUIRED — not guaranteed patches
 npx veloprove release --ci
 ```
 
@@ -150,7 +137,7 @@ npx veloprove scan-malware --fix
 ## ♿ Recipe 7: Accessibility + Visual Regression Workflow
 
 ```bash
-# 1. Run WCAG 2.1 A/AA/AAA accessibility checks
+# 1. Run static WCAG-oriented accessibility heuristics
 npx veloprove a11y
 
 # 2. Simulate screen reader auditory speech flow

@@ -90,7 +90,20 @@ npx veloprove history -n 10
 npx veloprove verify --ci
 # or gate alone:
 npx veloprove release
+
+# Optional — Project Twin (PARTIAL MVP; local model from inspect evidence)
+npx veloprove twin build --with-impact --with-drift
+npx veloprove drift --json
+npx veloprove test --affected
 ```
+
+### Step 6b: Open the Dashboard (optional)
+
+```bash
+npx veloprove ui
+```
+
+Use the sidebar for daily workflows. Open **Tool Lab** for the full CLI catalog. **Terminal only** tools (`ui`, `tui`, `mcp`, `watch`, `mock-server`) must stay in a terminal — do not nest them inside the Dashboard. See [Dashboard](dashboard.md) and [Surface matrix](../reference/surface-matrix.md).
 
 ### Step 7: Teach your AI + ask docs (recommended)
 ```bash
@@ -125,6 +138,6 @@ Add the VeloProve MCP server to your editor settings:
 ```
 *(If installed locally in your project dependencies, `["veloprove", "mcp"]` can also be used).*
 
-Now your AI assistant can run `vp.inspect`, `vp.plan`, `vp.run`, `vp.diagnose`, `vp.heal`, `vp.refine`, `vp.verify`, `vp.history`, `vp.ensureDev`, `vp.accessibility`, and `vp.releaseCheck` autonomously.
+Now your AI assistant can run `vp.inspect`, `vp.plan`, `vp.run`, `vp.diagnose`, `vp.heal`, `vp.refine`, `vp.verify`, `vp.history`, `vp.ensureDev`, `vp.accessibility`, `vp.releaseCheck`, plus optional Twin helpers `vp.twin` / `vp.impact` / `vp.drift` (PARTIAL MVP).
 
 Full packaged agent playbook (loop + every editor MCP snippet): see [`docs/AGENTS.md`](../AGENTS.md) inside this package (`node_modules/@engnadia/veloprove/docs/AGENTS.md` after install).

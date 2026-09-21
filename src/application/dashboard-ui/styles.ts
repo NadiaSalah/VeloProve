@@ -544,6 +544,47 @@ export function dashboardStyles(): string {
     }
     .guide-search:focus { border-color: var(--accent-border); }
 
+    /* Tool Lab — full CLI catalog */
+    .lab-card { gap: 12px; }
+    .lab-head {
+      display: flex; flex-wrap: wrap; gap: 12px 16px;
+      align-items: flex-start; justify-content: space-between;
+    }
+    .lab-head > div { flex: 1 1 240px; min-width: 0; }
+    .lab-search { flex: 1 1 220px; max-width: 360px; margin: 0; }
+    .lab-legend {
+      display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+      font-size: 12px; padding-bottom: 4px;
+    }
+    .lab-catalog { display: flex; flex-direction: column; gap: 18px; }
+    .lab-group-title {
+      margin: 0 0 8px; font-size: 12px; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--text-muted); font-weight: 600;
+    }
+    .lab-list { display: flex; flex-direction: column; gap: 6px; }
+    .lab-row {
+      display: flex; gap: 12px; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border: 1px solid var(--border-soft); border-radius: 10px;
+      background: color-mix(in srgb, var(--bg) 70%, transparent);
+    }
+    .lab-row:hover { border-color: var(--accent-border); }
+    .lab-meta { min-width: 0; flex: 1; }
+    .lab-title { font-weight: 600; font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .lab-sum { font-size: 12px; margin-top: 2px; }
+    .lab-cli { font-size: 11px; margin-top: 4px; word-break: break-word; }
+    .lab-cli code { font-size: 11px; }
+    .lab-hint { font-size: 11px; margin-top: 6px; line-height: 1.4; }
+    .lab-hint code { font-size: 11px; }
+    .twin-evidence { margin-top: 12px; }
+    .twin-evidence-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .twin-evidence-table th, .twin-evidence-table td {
+      text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border-soft);
+    }
+    .lab-group.lab-hidden, .lab-row.lab-hidden { display: none; }
+    .btn.sm { padding: 6px 10px; font-size: 12px; min-height: 32px; }
+    .btn.danger { background: rgba(240,113,120,0.12); border-color: rgba(240,113,120,0.35); color: var(--danger); }
+    .btn.danger:hover { background: rgba(240,113,120,0.2); }
+
     /* Docs Chat — Cursor-like: answers scroll above, composer docked below */
     #view-docs-chat.view.active {
       flex: 1; min-height: 0; height: 100%; gap: 0;

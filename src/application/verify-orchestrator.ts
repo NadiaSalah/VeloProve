@@ -33,6 +33,7 @@ import type { ProjectProfile } from '../shared/types/project.js';
 import type { SecurityReport } from '../shared/types/security.js';
 import type { A11yAuditResult } from './a11y-auditor.js';
 import { FailureEvidencePackService } from './failure-evidence-pack.js';
+import { planAffectedTests } from './twin-affected-tests.js';
 
 export interface VerifyOptions {
   /** Force full suite instead of impacted paths */
@@ -326,24 +327,58 @@ export class VerifyOrchestrator {
       if (options.includeSecurity && !plan.includes('security')) plan.push('security');
       if (options.includeA11y && !plan.includes('accessibility')) plan.push('accessibility');
 
-      // Test selection
-      const useChanged =
+      // Test selection — Twin raises confidence; low confidence expands (never shrinks below graph)
+      let useChanged =
         !options.fullSuite &&
         impact !== null &&
         impact.impactedTestFiles.length > 0;
+      let selectedPaths = useChanged ? [...impact!.impactedTestFiles] : [];
+      let selectionReason = useChanged
+        ? `Selected ${impact!.impactedTestFiles.length} impacted test file(s) from change analysis`
+        : options.fullSuite
+          ? 'Full suite requested via --full'
+          : impact?.changedFiles.length
+            ? 'Changes detected but no mapped tests — running full suite for safety'
+            : 'Clean working tree — running full suite as baseline verification';
 
-      // Mode is always 'changed' (impacted paths) or 'all' (full suite fallback).
-      // There is no 'none' path: an empty impact map still runs the full suite for safety.
+      if (useChanged && impact && profile) {
+        const twinSnapshot =
+          typeof engine.twinStatus === 'function' ? engine.twinStatus() : null;
+        const twinPlan = planAffectedTests(
+          impact,
+          twinSnapshot,
+          profile.testFiles.map((t) => t.relativePath)
+        );
+        if (twinPlan.expandedToAll) {
+          useChanged = false;
+          selectedPaths = [];
+          selectionReason = twinPlan.rationale.join('; ');
+          warnings.push({
+            code: 'VP_TWIN_EXPAND',
+            message: 'Twin/affected confidence low — expanded to full suite (correctness > speed).',
+            remediation: 'Run `veloprove twin build --with-impact` to improve mapping.'
+          });
+        } else if (twinPlan.paths.length >= selectedPaths.length) {
+          selectedPaths = twinPlan.paths;
+          selectionReason = twinPlan.rationale.join('; ');
+        }
+        evidence.push({
+          id: 'twin-affected-selection',
+          kind: 'twin-selection',
+          summary: selectionReason,
+          data: {
+            twinUsed: twinPlan.twinUsed,
+            expandedToAll: twinPlan.expandedToAll,
+            certaintyHistogram: twinPlan.certaintyHistogram,
+            pathCount: twinPlan.paths.length
+          }
+        });
+      }
+
       const selection = {
         mode: (useChanged ? 'changed' : 'all') as 'changed' | 'all',
-        selectedTests: useChanged ? impact!.impactedTestFiles : [],
-        reason: useChanged
-          ? `Selected ${impact!.impactedTestFiles.length} impacted test file(s) from change analysis`
-          : options.fullSuite
-            ? 'Full suite requested via --full'
-            : impact?.changedFiles.length
-              ? 'Changes detected but no mapped tests — running full suite for safety'
-              : 'Clean working tree — running full suite as baseline verification'
+        selectedTests: useChanged ? selectedPaths : [],
+        reason: selectionReason
       };
 
       if (!useChanged && (impact?.changedFiles.length || 0) > 0 && impact!.impactedTestFiles.length === 0) {
@@ -362,8 +397,8 @@ export class VerifyOrchestrator {
         const t0 = Date.now();
         testRun = await engine.run(
           useChanged
-            ? { scope: 'paths', paths: impact!.impactedTestFiles }
-            : { scope: 'all' }
+            ? { scope: 'paths', paths: selectedPaths, selectionRationale: [selection.reason] }
+            : { scope: 'all', selectionRationale: [selection.reason] }
         );
         phases.push({
           capability: 'run',

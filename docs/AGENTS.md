@@ -52,9 +52,10 @@ Use plan/generate/run only when verify reports missing coverage or an empty suit
 1. vp.bootstrap     → Discover capabilities / write local AGENTS.md (`veloprove teach-ai`)
 2. vp.inspect       → Stack, routes, APIs, PRD requirements
 3. vp.changed       → Impacted source + tests from git diff
+   optional: vp.impact / vp.twin / vp.drift  → Twin enrichment (PARTIAL MVP — evidence classes; not AI assumptions)
 4. vp.plan          → Risk-prioritized cases
 5. vp.generate      → Materialize tests (overwritePolicy: generated-only; live API grounding on by default)
-6. vp.run           → Execute affected/full suites (poll vp.run.get if async)
+6. vp.run           → Execute affected/full suites (`veloprove test --affected` expands when Twin confidence is low)
 7. vp.diagnose      → APPLICATION_BUG | TEST_BUG | FLAKY_TEST | …
 8. vp.heal / vp.suggestFix → Repair locators or inspect app-fix hints
 9. vp.run           → Confirm green
@@ -63,7 +64,7 @@ Use plan/generate/run only when verify reports missing coverage or an empty suit
 
 **Safety:** Never overwrite or delete developer-written tests unless the user explicitly asks. Prefer `overwritePolicy: "generated-only"`.
 
-CLI equivalents use `npx veloprove <command>` (e.g. `inspect`, `verify --ci`, `release`, `ask`).
+CLI equivalents use `npx veloprove <command>` (e.g. `inspect`, `verify --ci`, `release`, `ask`, `twin`, `drift`).
 
 Optional local hardening:
 
@@ -71,6 +72,22 @@ Optional local hardening:
 - `watch --verify` / `watch -i 300` — re-verify on change or on an interval
 - `hook install --verify` — pre-commit runs `veloprove verify --ci`
 - `generate --no-live-ground` — skip live GET probing when offline
+- `twin build --with-impact --with-drift` — refresh Project Twin snapshot (PARTIAL)
+- `test --affected` — Twin-aware selection; expands to full suite when confidence is low
+
+---
+
+## Dashboard Tool Lab honesty (required reading)
+
+Dashboard **sidebar / Guide** = curated daily workflows. **Tool Lab** = full CLI catalog (same engine).
+
+| Class | Commands | Rule for agents |
+|-------|----------|-----------------|
+| **Terminal only** | `ui`, `tui`, `mcp`, `watch`, `mock-server` | **Never nest** inside Dashboard — run in a separate terminal (`npx veloprove <cmd>`) |
+| **Partial** | `alert`, `db-snapshot`, `db-restore`, `refine`, `run-collection`, `dead-assets` | Dashboard path is incomplete — prefer CLI for full options |
+| **Run / URL / Write** | Most other CLI commands | Safe one-click via Tool Lab / curated views |
+
+Full matrix: `docs/reference/surface-matrix.md`. MCP resources for Twin: `vp://twin/latest`, `vp://twin/evidence`, `vp://twin/graph`.
 
 ---
 
@@ -101,7 +118,7 @@ Or: `npx veloprove init --link-ai --teach` / `npx veloprove teach-ai --force --m
 
 If the package is already a local dependency, `["veloprove", "mcp"]` is also valid.
 
-**Namespace:** tools are `vp.*` only (**75** tools including `vp.ask`). **Resources:** `vp://…` only (examples: `vp://project/profile`, `vp://release/confidence`).
+**Namespace:** tools are `vp.*` only (full catalog including `vp.ask` — length from `catalogMcpTools()`). **Resources:** `vp://…` only (examples: `vp://project/profile`, `vp://release/confidence`, `vp://twin/latest`, `vp://twin/evidence`, `vp://twin/graph`).
 
 ---
 
@@ -122,8 +139,8 @@ More: [guides/faq.md](guides/faq.md).
 |-----|---------|
 | [guides/faq.md](guides/faq.md) | Install, AI link, verify, ask — FAQ |
 | [guides/ai-integrations.md](guides/ai-integrations.md) | Copilot / Codex / handshake extras |
-| [reference/mcp.md](reference/mcp.md) | All **75** MCP tools + schemas + resources |
-| [reference/cli.md](reference/cli.md) | All **75** CLI commands + short aliases |
+| [reference/mcp.md](reference/mcp.md) | All MCP tools + schemas + resources (catalog length) |
+| [reference/cli.md](reference/cli.md) | All CLI commands + short aliases (catalog length) |
 | [reference/surface-matrix.md](reference/surface-matrix.md) | Exposure matrix + intentional CLI/MCP/UI asymmetries |
 | [guides/features.md](guides/features.md) | Capability map by domain |
 | [guides/getting-started.md](guides/getting-started.md) | Install + first run |

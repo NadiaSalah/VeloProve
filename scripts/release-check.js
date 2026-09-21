@@ -89,6 +89,8 @@ try {
     'docs/guides/features.md',
     'docs/guides/ai-integrations.md',
     'docs/guides/examples.md',
+    'docs/guides/trust.md',
+    'docs/guides/scheduled-verify.md',
     'docs/reference/cli.md',
     'docs/reference/mcp.md',
     'docs/reference/architecture.md',
@@ -121,6 +123,24 @@ try {
     process.exit(1);
   }
 
+  // 7b. GitHub README screenshots (repo-only; not in npm tarball)
+  const shotDir = path.join(rootDir, 'docs', 'assets', 'screenshots');
+  const shots = [
+    '01-dashboard-overview.png',
+    '02-dashboard-verify.png',
+    '03-dashboard-docs-chat.png'
+  ];
+  const missingShots = shots.filter((f) => !fs.existsSync(path.join(shotDir, f)));
+  if (missingShots.length) {
+    console.warn(
+      '⚠ README screenshots missing (GitHub gallery 404 until recaptured):\n   ' +
+        missingShots.map((f) => `docs/assets/screenshots/${f}`).join('\n   ') +
+        '\n   Run: node scripts/capture-readme-screenshots.mjs'
+    );
+  } else {
+    console.log('   ✔ README screenshot PNGs present (repo gallery).');
+  }
+
   // 8. Package size limit check (Max 5MB)
   const maxSizeBytes = 5 * 1024 * 1024;
   if (packData.size > maxSizeBytes) {
@@ -139,10 +159,13 @@ try {
       'utf8'
     );
 
-    // Verify bin execution from compiled dist
+    // Verify bin execution from compiled dist (version SSOT = package.json)
+    const expectedVersion = JSON.parse(
+      fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')
+    ).version;
     const binOutput = execSync(`node "${cliPath}" --version`, { cwd: tempDir, encoding: 'utf8' }).trim();
-    if (!binOutput.includes('1.0.0')) {
-      throw new Error(`Unexpected CLI version output: ${binOutput}`);
+    if (!binOutput.includes(expectedVersion)) {
+      throw new Error(`Unexpected CLI version output: ${binOutput} (expected ${expectedVersion})`);
     }
 
     // Run veloprove doctor in consumer project

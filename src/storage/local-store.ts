@@ -23,7 +23,8 @@ export class LocalStorage {
       path.join(this.baseDir, 'runs'),
       path.join(this.baseDir, 'artifacts'),
       path.join(this.baseDir, 'reports'),
-      path.join(this.baseDir, 'cache')
+      path.join(this.baseDir, 'cache'),
+      path.join(this.baseDir, 'twin')
     ];
 
     for (const dir of dirs) {
@@ -113,6 +114,31 @@ export class LocalStorage {
   public getFlakyHistory(): FlakyTestReport[] {
     const file = path.join(this.baseDir, 'cache', 'flaky-tests.json');
     if (!fs.existsSync(file)) return [];
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  }
+
+  public saveFeatureMap(featureMap: import('../shared/types/requirements.js').FeatureMap): void {
+    const file = path.join(this.baseDir, 'feature-map.json');
+    fs.writeFileSync(file, JSON.stringify(featureMap, null, 2), 'utf8');
+  }
+
+  public getFeatureMap(): import('../shared/types/requirements.js').FeatureMap | null {
+    const file = path.join(this.baseDir, 'feature-map.json');
+    if (!fs.existsSync(file)) return null;
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  }
+
+  public saveTwinLatest(twin: import('../shared/types/project-twin.js').TwinLatestDocument): string {
+    const twinDir = path.join(this.baseDir, 'twin');
+    if (!fs.existsSync(twinDir)) fs.mkdirSync(twinDir, { recursive: true });
+    const file = path.join(twinDir, 'latest.json');
+    fs.writeFileSync(file, JSON.stringify(twin, null, 2), 'utf8');
+    return file;
+  }
+
+  public getTwinLatest(): import('../shared/types/project-twin.js').TwinLatestDocument | null {
+    const file = path.join(this.baseDir, 'twin', 'latest.json');
+    if (!fs.existsSync(file)) return null;
     return JSON.parse(fs.readFileSync(file, 'utf8'));
   }
 

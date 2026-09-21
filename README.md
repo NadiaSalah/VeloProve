@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/NadiaSalah/VeloProve">
-    <img src="docs/assets/veloprove-logo.svg" alt="VeloProve" width="320" />
+    <img src="https://raw.githubusercontent.com/NadiaSalah/VeloProve/main/docs/assets/veloprove-logo.svg" alt="VeloProve" width="320" />
   </a>
 </p>
 
@@ -16,14 +16,14 @@
   <img src="https://img.shields.io/badge/tests-passing-brightgreen.svg" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg" alt="Node Version" />
   <img src="https://img.shields.io/badge/Privacy-Local--First-purple.svg" alt="Local First" />
-  <img src="https://img.shields.io/badge/MCP-75%20tools-0a7a3e.svg" alt="75 MCP tools" />
+  <img src="https://img.shields.io/badge/MCP-catalog%20tools-0a7a3e.svg" alt="MCP catalog tools" />
 </p>
 
 ---
 
 <p align="center">
   <img
-    src="docs/assets/screenshots/01-dashboard-overview.png"
+    src="https://raw.githubusercontent.com/NadiaSalah/VeloProve/main/docs/assets/screenshots/01-dashboard-overview.png"
     alt="VeloProve Command Center — Overview (sidebar, workspace, Results)"
   />
 </p>
@@ -34,7 +34,7 @@
 
 <p align="center">
   <img
-    src="docs/assets/screenshots/02-dashboard-verify.png"
+    src="https://raw.githubusercontent.com/NadiaSalah/VeloProve/main/docs/assets/screenshots/02-dashboard-verify.png"
     alt="VeloProve Command Center — Verify (sidebar, workspace, Results)"
   />
 </p>
@@ -45,7 +45,7 @@
 
 <p align="center">
   <img
-    src="docs/assets/screenshots/03-dashboard-docs-chat.png"
+    src="https://raw.githubusercontent.com/NadiaSalah/VeloProve/main/docs/assets/screenshots/03-dashboard-docs-chat.png"
     alt="VeloProve Command Center — Docs Chat (sidebar, workspace, Results)"
   />
 </p>
@@ -111,11 +111,11 @@ Together, **VeloProve** is a local engineering workspace where software quality 
 ## Why VeloProve?
 
 - **Local-First & Private**: Core analysis and orchestration execute directly on your local machine without forced telemetry. Network access occurs only when explicitly targeting remote endpoints, registries, webhooks, or live applications requested by the user.
-- **Agent-Native (MCP)**: Exposes 75 structured Model Context Protocol (MCP) tools for coding agents to inspect, plan, write, run, diagnose, heal, and verify tests autonomously.
+- **Agent-Native (MCP)**: Exposes a full catalog of structured Model Context Protocol (MCP) tools for coding agents to inspect, plan, write, run, diagnose, heal, and verify tests autonomously.
 - **Deep Code & Framework Awareness**: Analyzes AST structures across Next.js, React, Vite, Express, Fastify, Vue, and Svelte to discover routes, API contracts, and requirements.
 - **Evidence-Based Diagnostics**: Classifies test failures with confidence scoring (`APPLICATION_BUG`, `TEST_BUG`, `FLAKY_TEST`, `NETWORK_FAILURE`) and provides recommended source code fixes.
 - **Smart Change Impact**: Analyzes `git diff` to identify and run only the tests affected by your recent code edits.
-- **Comprehensive Testing Spectrum**: Unifies Unit, Component, API (Dynamic Variables + Auto-Auth + Auto-Cleanup), E2E (Playwright), Security (OWASP Top 10 + CVEs), and Accessibility (WCAG 2.1).
+- **Comprehensive Testing Spectrum**: Unifies Unit, Component, API (Dynamic Variables + Auto-Auth + Auto-Cleanup), E2E (Playwright), Security (OWASP-oriented probes + CVE patterns), and Accessibility (static WCAG-oriented checks — not a full conformance auditor).
 - **Developer-Controlled**: Seamlessly runs via standard CLI, interactive terminal dashboard (TUI), local live web dashboard, or CI/CD quality gates.
 
 ---
@@ -124,15 +124,15 @@ Together, **VeloProve** is a local engineering workspace where software quality 
 
 - 🤖 **AI-Assisted Test Generation**: Materializes Vitest, Jest, and Playwright tests from discovered PRD requirements, routes, and OpenAPI contracts. Projects that already use Node’s built-in `node --test` / `node:test` are detected and executed without installing Vitest.
 - ⚡ **Automated Test Execution & Watch Mode**: Runs test suites with compact structured summaries and real-time watch feedback.
-- 🔬 **Failure Root-Cause Analysis**: Evidence-based diagnostics separating application bugs from test bugs with actionable recommendations.
-- 🩺 **Safe Test Self-Healing**: Automatically repairs stale locators using Visual-Aria and accessibility hierarchies without breaking tests.
+- 🩺 **Safe Test Self-Healing**: Conservatively repairs stale locators on marked generated/healable tests (not unmarked developer tests).
 - 🔍 **Autonomous Git Bisect**: Traverses commit history (`veloprove bisect`) to pinpoint bug-introducing commits automatically.
 - 🛡️ **Comprehensive Security Testing**: Autonomous non-destructive vulnerability testing for authentication, authorization (IDOR / privilege escalation), input injections (SQLi, NoSQLi, XSS, Command, Path Traversal), form tampering, JWT tokens, and file uploads.
 - 📬 **API Testing & Postman Runner**: Executes Postman v2.1 collections, interpolates chained variables, and tests OpenAPI boundary probes.
-- 🛡️ **Security & Secret Scanning**: Audits dependencies for CVEs, scans for leaked credentials, and runs OWASP Top 10 checks.
-- 🎙️ **Accessibility & Screen Reader Simulation**: Audits WCAG 2.1 A/AA/AAA guidelines and simulates NVDA/VoiceOver speech order.
+- 🛡️ **Security & Secret Scanning**: Audits dependencies for known CVE patterns, scans for leaked credentials, and runs OWASP-oriented checks.
+- 🎙️ **Accessibility & Screen Reader Simulation**: Static WCAG-oriented heuristics (alt text, roles, labels) plus a speech-order simulator — **not** a certified WCAG 2.1 A/AA/AAA audit and **not** a real NVDA/VoiceOver run.
+- 🔬 **Failure Root-Cause Analysis**: Evidence-based diagnostics separating application bugs from test bugs with recommended next steps (suggestions are guidance, not guaranteed fixes).
 - 🎬 **Visual Failure Replay & Executive Reports**: Generates standalone animated SVG/HTML replay packages and single-file executive QA reports.
-- 🌐 **75 Model Context Protocol (MCP) Tools**: Native stdio MCP server for full AI coding agent interoperability (includes docs-grounded `vp.ask`).
+- 🌐 **Model Context Protocol (MCP) Tools**: Native stdio MCP server for full AI coding agent interoperability (includes docs-grounded `vp.ask`; catalog length from `TOOL_SURFACE`).
 
 ---
 
@@ -185,7 +185,7 @@ npx veloprove ask "how do I verify changes?"
 
 `init` · `teach-ai` · `ask` · `inspect` · `doctor` · `verify` · `test` · `changed` · `security` · `history`
 
-Root `veloprove --help` groups all **75** commands like the Dashboard sidebar: Start / Verify / Repair / Results / API / Security / Experience / More. Aliases are shortcuts only — docs and MCP keep the full canonical name.
+Root `veloprove --help` groups all catalog CLI commands like the Dashboard sidebar: Start / Verify / Repair / Results / API / Security / Experience / More. Aliases are shortcuts only — docs and MCP keep the full canonical name.
 
 ---
 
@@ -207,7 +207,7 @@ npx veloprove ui -p 4000 -o
 * 🧪 **Live Runner & Self-Healing Studio**: Execute tests in real time, view failure classifications, and preview Visual-Aria locator healing diffs.
 * 📬 **Postman-like API Studio**: Send interactive HTTP requests, execute Postman v2.1 collections, and export discovered routes to Postman JSON.
 * 🗺️ **Architecture & Topology Graph**: Render interactive Mermaid.js diagrams mapping UI routes, backend APIs, databases, and microservices.
-* 🛡️ **Security & Accessibility Center**: Run OWASP Top 10 scans, audit WCAG 2.1 rules, and simulate screen reader speech flows.
+* 🛡️ **Security & Accessibility Center**: Run OWASP-oriented scans, static WCAG-oriented a11y checks, and heuristic screen-reader speech-order previews.
 
 👉 **[Read the Full Dashboard UI Documentation](docs/guides/dashboard.md)**
 
@@ -221,12 +221,14 @@ npx veloprove doctor               # Environment & install health
 npx veloprove inspect              # Stack, routes, APIs, PRD
 npx veloprove plan / generate      # Risk-scored plan → materialize tests
 npx veloprove test / changed       # Full suite or impact-selected tests
+npx veloprove twin / impact / drift # Project Twin PARTIAL MVP + drift aggregator
+npx veloprove test --affected      # Twin-aware selection (expands if low confidence)
 npx veloprove diagnose / heal      # Classify failures; heal TEST_BUG locators
 npx veloprove verify / release     # Change-aware gate + confidence score
 npx veloprove ui / tui / mcp       # Dashboard, terminal center, MCP stdio
 ```
 
-Full command list (**75**): **[CLI Reference](docs/reference/cli.md)**.
+Full command list: **[CLI Reference](docs/reference/cli.md)**.
 
 ---
 
@@ -248,7 +250,7 @@ Add to `.cursor/mcp.json`, `~/.codeium/windsurf/mcp_config.json`, or `cline_mcp_
 
 ### Core MCP Tools
 
-VeloProve exposes 75 structured Model Context Protocol (MCP) tools over stdio. The core tools for autonomous coding agent loops include:
+VeloProve exposes a catalog of structured Model Context Protocol (MCP) tools over stdio. The core tools for autonomous coding agent loops include:
 
 - `vp.inspect`: Deep project scanning (frameworks, routes, APIs, PRD requirements).
 - `vp.doctor`: Run environment, runtime, and project diagnostics.
@@ -265,8 +267,9 @@ VeloProve exposes 75 structured Model Context Protocol (MCP) tools over stdio. T
 - `vp.verify`: Autonomous change-aware orchestrator returning structured `OperationResult` evidence.
 - `vp.history`: Local run-history trends (pass rate, duration, flaky aggregates).
 - `vp.ensureDev`: Smart DevServer auto-launcher when the app is offline.
+- `vp.twin` / `vp.impact` / `vp.drift`: Project Twin PARTIAL MVP (local model + change impact wrap + drift aggregator).
 
-👉 **[Agent playbook](docs/AGENTS.md)** · **[Complete MCP reference (75 tools)](docs/reference/mcp.md)**
+👉 **[Agent playbook](docs/AGENTS.md)** · **[Complete MCP reference](docs/reference/mcp.md)**
 
 ---
 

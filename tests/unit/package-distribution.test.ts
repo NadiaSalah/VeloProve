@@ -35,6 +35,7 @@ describe('VeloProve Production Packaging & NPX Distribution Architecture', () =>
     expect(packedFiles).toContain('docs/guides/dashboard.md');
     expect(packedFiles).toContain('docs/guides/features.md');
     expect(packedFiles).toContain('docs/guides/ai-integrations.md');
+    expect(packedFiles).toContain('docs/guides/trust.md');
     expect(packedFiles).toContain('docs/reference/cli.md');
     expect(packedFiles).toContain('docs/reference/mcp.md');
     expect(packedFiles).toContain('docs/assets/veloprove-logo.svg');
@@ -45,6 +46,7 @@ describe('VeloProve Production Packaging & NPX Distribution Architecture', () =>
     expect(packedFiles).not.toContain('AGENTS.md');
     expect(packedFiles).not.toContain('docs/generated/CAPABILITY_MANIFEST.json');
     expect(packedFiles.some((f) => f.startsWith('docs/internal/'))).toBe(false);
+    expect(packedFiles.some((f) => f.startsWith('docs/assets/screenshots/'))).toBe(false);
     expect(packedFiles.some((f) => f.startsWith('docs/integrations/'))).toBe(false);
     expect(packedFiles.some((f) => f.startsWith('docs/ai-testing-handoff/'))).toBe(false);
     // 4. Must NOT contain source files, test suites, or dev assets

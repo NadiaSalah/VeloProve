@@ -30,7 +30,7 @@ Or: `npx veloprove init --link-ai --teach`
 
 ## Listing blurb (short)
 
-**VeloProve** — local agentic QA for coding agents. Inspect, plan, generate, run, diagnose, heal, and `verify` entirely on your machine via **75** `vp.*` MCP tools. No cloud sandbox, no API key for MCP. Teach AI writes `AGENTS.md`; Docs Chat answers from packaged docs only.
+**VeloProve** — local agentic QA for coding agents. Inspect, plan, generate, run, diagnose, heal, and `verify` entirely on your machine via `vp.*` MCP tools (catalog length from `TOOL_SURFACE`). No cloud sandbox, no API key for MCP. Teach AI writes `AGENTS.md`; Docs Chat answers from packaged docs only.
 
 ## Listing blurb (long)
 

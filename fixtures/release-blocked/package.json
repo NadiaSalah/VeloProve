@@ -1,0 +1,7 @@
+{
+  "name": "veloprove-release-blocked",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Failing critical test fixture for NOT_READY / release blocked scenarios."
+}

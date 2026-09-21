@@ -6,12 +6,51 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-// Read source files
+const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+const packageVersion = pkg.version || '0.0.0';
+const packageName = pkg.name || '@engnadia/veloprove';
+
+/** @typedef {'VERIFIED'|'VERIFIED_WITH_WARNINGS'|'PARTIAL'|'BLOCKED'|'NOT_IMPLEMENTED'|'NOT_APPLICABLE'} VerificationStatus */
+
+/**
+ * Honest verificationStatus mapping (compat `status` kept).
+ * Diagnose/Heal/suggestFix stay PARTIAL until fault-harness rates are measured.
+ * Most implemented caps are VERIFIED_WITH_WARNINGS pending broader trust evidence.
+ */
+const VERIFICATION_OVERRIDES = {
+  'CAP-021': 'PARTIAL', // diagnose — rates measured by fault harness
+  'CAP-022': 'PARTIAL', // heal — rates measured by fault harness
+  'CAP-023': 'PARTIAL', // suggestFix / autoBugFix — diffOrPatch not real yet
+  'CAP-001': 'VERIFIED',
+  'CAP-ASK': 'VERIFIED',
+  'CAP-071': 'VERIFIED',
+  'CAP-017': 'VERIFIED_WITH_WARNINGS',
+  'CAP-018': 'VERIFIED_WITH_WARNINGS',
+  'CAP-019': 'VERIFIED_WITH_WARNINGS',
+  'CAP-025': 'VERIFIED_WITH_WARNINGS',
+  'CAP-070': 'VERIFIED_WITH_WARNINGS'
+};
+
+function mapVerificationStatus(capId, legacyStatus) {
+  if (VERIFICATION_OVERRIDES[capId]) return VERIFICATION_OVERRIDES[capId];
+  if (legacyStatus === 'implemented') return 'VERIFIED_WITH_WARNINGS';
+  if (legacyStatus === 'partial') return 'PARTIAL';
+  if (legacyStatus === 'blocked') return 'BLOCKED';
+  if (legacyStatus === 'not_implemented') return 'NOT_IMPLEMENTED';
+  return 'PARTIAL';
+}
+
+// Prefer catalog SSOT for MCP/CLI totals when parseable
+const catalogSource = fs.readFileSync(path.join(rootDir, 'src/shared/tool-catalog.ts'), 'utf8');
+const catalogMcp = [...catalogSource.matchAll(/mcp:\s*'([^']+)'/g)].map((m) => m[1]);
+const catalogCli = [...catalogSource.matchAll(/cli:\s*'([^']+)'/g)].map((m) => m[1]);
+
+// Read source files (registration cross-check)
 const mcpSource = fs.readFileSync(path.join(rootDir, 'src/mcp/server.ts'), 'utf8');
 const cliSource = fs.readFileSync(path.join(rootDir, 'src/cli/index.ts'), 'utf8');
 const dashboardSource = fs.readFileSync(path.join(rootDir, 'src/application/dashboard-server.ts'), 'utf8');
 
-// Extract MCP tool names
+// Extract MCP tool names from server (authoritative registration)
 const toolRegex = /name:\s*'(vp\.[a-zA-Z0-9_\.]+)'/g;
 const mcpTools = [];
 let m;
@@ -33,14 +72,19 @@ while ((m = dashRegex.exec(dashboardSource)) !== null) {
   dashboardActions.push(m[1]);
 }
 
-console.log(`Found ${mcpTools.length} MCP tools, ${cliCommands.length} CLI commands, ${dashboardActions.length} Dashboard actions.`);
+const totalMcpTools = catalogMcp.length || mcpTools.length;
+const totalCliCommands = catalogCli.length || cliCommands.length;
+
+console.log(
+  `Found ${mcpTools.length} MCP tools (catalog ${catalogMcp.length}), ${cliCommands.length} CLI commands (catalog ${catalogCli.length}), ${dashboardActions.length} Dashboard actions.`
+);
 
 const manifest = {
-  version: "1.0.0",
-  package: "@engnadia/veloprove",
+  version: packageVersion,
+  package: packageName,
   cliBinary: "veloprove",
-  totalCliCommands: cliCommands.length,
-  totalMcpTools: mcpTools.length,
+  totalCliCommands,
+  totalMcpTools,
   totalDashboardActions: dashboardActions.length,
   cliCommands: cliCommands.sort(),
   mcpTools: mcpTools.sort(),
@@ -939,6 +983,8 @@ for (const cap of manifest.capabilities) {
     .filter((a) => dashSet.has(a));
   // Prefer unique real actions only; empty means intentionally CLI/MCP-only for that capability
   cap.dashboard = [...new Set(mapped)];
+  // Keep legacy `status` for compat; add honest verificationStatus enum
+  cap.verificationStatus = mapVerificationStatus(cap.id, cap.status);
 }
 
 fs.writeFileSync(path.join(outputDir, 'CAPABILITY_MANIFEST.json'), JSON.stringify(manifest, null, 2), 'utf8');

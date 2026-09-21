@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
 import { WorkspaceGuard } from './workspace-guard.js';
+import { SecretRedactor } from '../shared/secret-redactor.js';
 
 export interface ProcessRunOptions {
   cwd?: string;
@@ -22,24 +23,28 @@ export interface ProcessRunResult {
   truncated: boolean;
 }
 
-const SENSITIVE_PATTERNS = [
-  /Bearer\s+([a-zA-Z0-9_\-.~+/]+=*)/gi,
-  /(?:api[_-]?key|secret|token|password|auth|private[_-]?key)\s*[:=]\s*["']?([a-zA-Z0-9_\-.~+/]+=*)["']?/gi,
-  /postgres:\/\/[^:]+:([^@]+)@/gi,
-  /mongodb(?:\+srv)?:\/\/[^:]+:([^@]+)@/gi,
-  /mysql:\/\/[^:]+:([^@]+)@/gi
-];
+/** Quote a single argument for cmd.exe when SafeProcessRunner enables shell:true. */
+export function quoteWindowsShellArg(arg: string): string {
+  if (arg.length === 0) return '""';
+  // Already fully double-quoted
+  if (arg.startsWith('"') && arg.endsWith('"') && arg.length >= 2) return arg;
+  if (!/[\s"&<>|^%]/.test(arg)) return arg;
+  return `"${arg.replace(/"/g, '\\"')}"`;
+}
 
+/** SSOT: delegate to SecretRedactor (plus connection-string patterns for process logs). */
 export function redactSecrets(text: string): string {
-  let redacted = text;
-  for (const pattern of SENSITIVE_PATTERNS) {
-    redacted = redacted.replace(pattern, (match, p1) => {
-      if (p1 && p1.length > 4) {
-        return match.replace(p1, `${p1.slice(0, 2)}***${p1.slice(-2)}`);
-      }
-      return match.replace(p1, '***');
-    });
-  }
+  if (!text || typeof text !== 'string') return text;
+  let redacted = SecretRedactor.redact(text);
+  redacted = redacted.replace(/postgres:\/\/[^:]+:([^@]+)@/gi, (m, p1) =>
+    m.replace(p1, p1.length > 4 ? `${p1.slice(0, 2)}***${p1.slice(-2)}` : '***')
+  );
+  redacted = redacted.replace(/mongodb(?:\+srv)?:\/\/[^:]+:([^@]+)@/gi, (m, p1) =>
+    m.replace(p1, p1.length > 4 ? `${p1.slice(0, 2)}***${p1.slice(-2)}` : '***')
+  );
+  redacted = redacted.replace(/mysql:\/\/[^:]+:([^@]+)@/gi, (m, p1) =>
+    m.replace(p1, p1.length > 4 ? `${p1.slice(0, 2)}***${p1.slice(-2)}` : '***')
+  );
   return redacted;
 }
 
@@ -117,21 +122,34 @@ export class SafeProcessRunner {
       let execTarget = executable;
       // Default: never use shell for absolute/.exe paths (spaces in "Program Files").
       let useShell = false;
+      let spawnArgs = args;
+
+      const isCmdShim =
+        isWindows &&
+        (executable.toLowerCase().endsWith('.cmd') || executable.toLowerCase().endsWith('.bat'));
 
       // Bare npm ecosystem shims need shell on Windows (.cmd resolution).
       if (
         isWindows &&
-        !executable.endsWith('.cmd') &&
         !executable.endsWith('.exe') &&
         !executable.includes('\\') &&
         !executable.includes('/')
       ) {
         const cmdWrappers = ['npx', 'npm', 'yarn', 'pnpm', 'vitest', 'jest', 'playwright', 'eslint', 'bun'];
         const low = executable.toLowerCase();
-        if (cmdWrappers.includes(low)) {
+        if (cmdWrappers.includes(low) || isCmdShim) {
           execTarget = executable;
           useShell = true;
         }
+      } else if (isCmdShim) {
+        // Explicit .cmd/.bat paths also need shell + quoted args on Windows.
+        useShell = true;
+      }
+
+      // When shell:true on Windows, quote args that contain spaces/metacharacters
+      // so they are not split by cmd.exe.
+      if (useShell && isWindows) {
+        spawnArgs = args.map(quoteWindowsShellArg);
       }
 
       const spawnOpts: SpawnOptions = {
@@ -144,7 +162,7 @@ export class SafeProcessRunner {
 
       let child: ChildProcess;
       try {
-        child = spawn(execTarget, args, spawnOpts);
+        child = spawn(execTarget, spawnArgs, spawnOpts);
       } catch (err) {
         resolve({
           exitCode: 1,

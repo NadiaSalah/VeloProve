@@ -5,9 +5,10 @@ import http from 'node:http';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
 import { PostmanRunnerService, type PostmanCollection } from '../../src/adapters/api/postman-runner.js';
 import { VeloProveEngine } from '../../src/application/engine.js';
+import { ephemeralFixtureDir } from '../helpers/monorepo-fixtures.js';
 
 describe('PostmanRunnerService & Collection Suite Runner', () => {
-  const fixtureDir = path.resolve(process.cwd(), 'fixtures/postman-test-project');
+  const fixtureDir = ephemeralFixtureDir('postman-test-project');
   let guard: WorkspaceGuard;
   let mockServer: http.Server;
   const mockPort = 5988;

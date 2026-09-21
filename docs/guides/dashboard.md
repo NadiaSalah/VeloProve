@@ -76,6 +76,7 @@ Sidebar **Docs Chat** answers questions from packaged documentation only (no clo
 ### 3. 🧪 Live Test Runner, Verify & History
 * **Targeted Execution**: Run full suites, critical-only tests, or change-impacted tests via Git diff analysis.
 * **Autonomous Verify**: One-click `verify` action (impact → test → diagnose → heal → release) with OperationResult evidence.
+* **Project Twin (PARTIAL MVP)**: Status card under Verify — `twin` / `drift` / `test --affected` (composition over inspect; expands on low confidence).
 * **Run History Sparklines**: Pass-rate and duration trends from SSR + `GET /api/history` / `veloprove history`. Use **Refresh History** (`/api/actions/history`) on Test Runs to reload aggregates into the Results pane (branch, MTTR, regression alerts).
 * **API Studio multi-step flows**: Ordered request steps with `{{var}}` substitution and Postman export.
 * **OpenAPI mock one-click**: Discovered APIs → Generate MSW using OpenAPI examples when present.
@@ -99,9 +100,9 @@ Sidebar **Docs Chat** answers questions from packaged documentation only (no clo
 * **OWASP Top 10 Audit**: Audit HTTP endpoints for Missing Content-Security-Policy (CSP), CORS misconfigurations, and unsafe headers.
 * **Malware & Backdoor Scanner**: Deep AST scan for suspicious lifecycle scripts, obfuscated payloads, and network leaks.
 
-### 7. 🎙️ Accessibility & WCAG 2.1 Audits
-* **A11y Rule Verification**: Run automated WCAG 2.1 Level A, AA, and AAA checks on rendered components and routes.
-* **Screen Reader Speech Simulator**: View simulated NVDA and VoiceOver auditory reading flows, heading structures, and missing aria tags.
+### 7. 🎙️ Accessibility checks
+* **A11y heuristics**: Static WCAG-oriented checks on components/routes (not a certified A/AA/AAA audit).
+* **Speech-order preview**: Heuristic reading-order simulation — not a real NVDA/VoiceOver run.
 
 ### 8. 🗺️ Microservices & Architecture Topology Graph
 * **Visual Graph Rendering**: View live interactive Mermaid.js diagrams mapping UI pages, backend controllers, databases, and third-party integrations.
@@ -113,7 +114,18 @@ Sidebar **Docs Chat** answers questions from packaged documentation only (no clo
 
 ### 10. 📘 Guide, About & MCP Integrations
 * **Interactive Guide**: Searchable workflow snippets for verify, ensure-dev, history, security, MCP, and more.
-* **About**: Package identity, 75 `vp.*` tools, dashboard port `4173`, safety guarantees.
+* **About**: Package identity, CLI/MCP catalog counts, dashboard port `4173`, safety guarantees, honesty notes (a11y heuristics / PARTIAL suggestFix / Twin PARTIAL MVP).
+* **Tool Lab**: Full CLI catalog — help-group sections, search, modes **Run / URL / Write / Terminal only / Partial**. Sidebar + Guide stay curated daily workflows.
+
+### What runs in Dashboard vs Terminal only / Partial
+
+| Class | Tools | Dashboard |
+| :--- | :--- | :--- |
+| **Run / URL / Write** | Most catalog CLIs | One-click via Tool Lab / curated views (same engine) |
+| **Terminal only** | `ui`, `tui`, `mcp`, `watch`, `mock-server` | **Cannot nest** — Tool Lab copies `npx veloprove <cmd>` for a separate terminal |
+| **Partial** | e.g. `alert`, `db-snapshot`, `db-restore`, `refine`, `run-collection` | Limited path; full options on CLI — see `docs/reference/surface-matrix.md` |
+
+Do **not** confuse **CLI-only (no MCP twin)** (`init`, `hook`, …) with **Terminal only** (cannot nest in UI). Details: `docs/reference/surface-matrix.md`.
 * **MCP Integration Guide**: Copy-pasteable configuration snippets for Cursor, Claude Code, Windsurf, and Cline.
 
 ---

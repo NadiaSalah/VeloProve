@@ -31,9 +31,14 @@ export class SecretRedactor {
     redacted = redacted.replace(/("?password"?\s*[:=]\s*)"[^"]+"/gi, '$1"***REDACTED***"');
     redacted = redacted.replace(/("?password"?\s*[:=]\s*)'[^']+'/gi, '$1\'***REDACTED***\'');
 
-    // Redact secrets and api keys
+    // Redact secrets and api keys (quoted JSON / config)
     redacted = redacted.replace(/("?(?:secret|apiKey|api_key|access_token|private_key)"?\s*[:=]\s*)"[^"]+"/gi, '$1"***REDACTED***"');
 
+    // Redact bare token=/password=/api_key= in logs (process stdout); keep prior JWT/Bearer markers
+    redacted = redacted.replace(
+      /\b((?:access_)?token|password|api[_-]?key|secret)\s*=\s*([^\s&;,"']{8,})/gi,
+      (full, key: string, value: string) => (/REDACTED/i.test(value) ? full : `${key}=***`)
+    );
     // Redact session cookies
     redacted = redacted.replace(/(connect\.sid=)[^;\s]+/gi, '$1[REDACTED_SESSION_COOKIE]');
     redacted = redacted.replace(/(session(?:_id|Id)?=)[^;\s]+/gi, '$1[REDACTED_SESSION_COOKIE]');

@@ -67,7 +67,7 @@ export interface GeneratedTestFile {
 }
 
 export interface TestRunRequest {
-  scope?: 'all' | 'changed' | 'paths' | 'plan' | 'testIds' | 'critical';
+  scope?: 'all' | 'changed' | 'affected' | 'paths' | 'plan' | 'testIds' | 'critical';
   testIds?: string[];
   paths?: string[];
   planId?: string;
@@ -76,6 +76,8 @@ export interface TestRunRequest {
   headless?: boolean;
   timeoutMs?: number;
   retries?: number;
+  /** Twin-aware selection notes (populated by engine for OperationResult/evidence). */
+  selectionRationale?: string[];
 }
 
 export interface TestCaseResult {
@@ -124,4 +126,6 @@ export interface TestRunResult {
     path: string;
     testId?: string;
   }>;
+  /** Twin/changed selection notes when scope was resolved by the engine. */
+  selectionRationale?: string[];
 }

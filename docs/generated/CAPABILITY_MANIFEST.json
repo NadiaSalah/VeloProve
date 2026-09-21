@@ -1,9 +1,9 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "package": "@engnadia/veloprove",
   "cliBinary": "veloprove",
-  "totalCliCommands": 75,
-  "totalMcpTools": 75,
+  "totalCliCommands": 78,
+  "totalMcpTools": 78,
   "totalDashboardActions": 54,
   "cliCommands": [
     "a11y",
@@ -29,6 +29,7 @@
     "diagnose",
     "docker-env",
     "doctor",
+    "drift",
     "ensure-dev",
     "env-drift",
     "explore",
@@ -41,6 +42,7 @@
     "heal",
     "history",
     "hook",
+    "impact",
     "init",
     "inspect",
     "learn-framework",
@@ -75,6 +77,7 @@
     "test",
     "throttle",
     "tui",
+    "twin",
     "ui",
     "verify",
     "visual-diff",
@@ -105,6 +108,7 @@
     "vp.diagnose",
     "vp.dockerEnv",
     "vp.doctor",
+    "vp.drift",
     "vp.ensureDev",
     "vp.envDriftAudit",
     "vp.explore",
@@ -119,6 +123,7 @@
     "vp.graphqlTest",
     "vp.heal",
     "vp.history",
+    "vp.impact",
     "vp.inspect",
     "vp.learnFramework",
     "vp.lint",
@@ -155,6 +160,7 @@
     "vp.stabilizeFlaky",
     "vp.statefulMock",
     "vp.suggestFix",
+    "vp.twin",
     "vp.verify",
     "vp.visualDiff",
     "vp.wsTest"
@@ -247,7 +253,8 @@
         "tests/unit/scanner-requirements.test.ts",
         "tests/unit/v100-stability-enhancements.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED"
     },
     {
       "id": "CAP-002",
@@ -276,7 +283,8 @@
         "tests/unit/advanced-vp-services.test.ts",
         "tests/unit/docs-assistant-ai-link.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-ASK",
@@ -304,7 +312,8 @@
       "tests": [
         "tests/unit/docs-assistant-ai-link.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED"
     },
     {
       "id": "CAP-003",
@@ -330,7 +339,8 @@
       "tests": [
         "tests/unit/framework-learner.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-004",
@@ -355,7 +365,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-005",
@@ -380,7 +391,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-006",
@@ -405,7 +417,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-007",
@@ -428,7 +441,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-008",
@@ -453,7 +467,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-009",
@@ -478,7 +493,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-010",
@@ -503,7 +519,8 @@
       "tests": [
         "tests/unit/linter-and-dashboard.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-011",
@@ -528,7 +545,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-012",
@@ -553,7 +571,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-013",
@@ -578,7 +597,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-014",
@@ -603,7 +623,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-015",
@@ -628,7 +649,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-016",
@@ -653,7 +675,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-017",
@@ -679,7 +702,8 @@
       "tests": [
         "tests/integration/autonomous-flow.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-018",
@@ -705,7 +729,8 @@
       "tests": [
         "tests/integration/autonomous-flow.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-019",
@@ -732,7 +757,8 @@
       "tests": [
         "tests/integration/autonomous-flow.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-020",
@@ -758,7 +784,8 @@
       "tests": [
         "tests/unit/change-impact.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-021",
@@ -784,7 +811,8 @@
       "tests": [
         "tests/unit/classifier-diagnostics.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "PARTIAL"
     },
     {
       "id": "CAP-022",
@@ -810,7 +838,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "PARTIAL"
     },
     {
       "id": "CAP-023",
@@ -837,7 +866,8 @@
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "PARTIAL"
     },
     {
       "id": "CAP-024",
@@ -861,7 +891,8 @@
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-025",
@@ -886,7 +917,8 @@
       "tests": [
         "tests/integration/autonomous-flow.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-026",
@@ -913,7 +945,8 @@
         "tests/unit/postman-runner.test.ts",
         "tests/unit/dynamic-variables.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-027",
@@ -938,7 +971,8 @@
       "tests": [
         "tests/unit/postman-runner.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-028",
@@ -961,7 +995,8 @@
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-029",
@@ -984,7 +1019,8 @@
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-030",
@@ -1007,7 +1043,8 @@
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-031",
@@ -1030,7 +1067,8 @@
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-032",
@@ -1053,7 +1091,8 @@
       "tests": [
         "tests/unit/advanced-v130-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-033",
@@ -1076,7 +1115,8 @@
       "tests": [
         "tests/unit/remote-bridge.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-034",
@@ -1099,7 +1139,8 @@
       "tests": [
         "tests/unit/remote-bridge.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-035",
@@ -1122,7 +1163,8 @@
       "tests": [
         "tests/unit/remote-bridge.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-036",
@@ -1147,7 +1189,8 @@
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-037",
@@ -1170,7 +1213,8 @@
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-038",
@@ -1193,7 +1237,8 @@
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-039",
@@ -1218,7 +1263,8 @@
       "tests": [
         "tests/unit/v120-advanced-features.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-040",
@@ -1241,7 +1287,8 @@
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-041",
@@ -1266,7 +1313,8 @@
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-042",
@@ -1291,7 +1339,8 @@
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-043",
@@ -1316,7 +1365,8 @@
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-044",
@@ -1339,7 +1389,8 @@
       "tests": [
         "tests/unit/v150-enterprise-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-045",
@@ -1364,7 +1415,8 @@
       "tests": [
         "tests/unit/feature-parity.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-046",
@@ -1389,7 +1441,8 @@
       "tests": [
         "tests/unit/malware-scanner.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-047",
@@ -1414,7 +1467,8 @@
       "tests": [
         "tests/unit/malware-scanner.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-048",
@@ -1439,7 +1493,8 @@
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-049",
@@ -1464,7 +1519,8 @@
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-050",
@@ -1489,7 +1545,8 @@
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-051",
@@ -1514,7 +1571,8 @@
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-052",
@@ -1540,7 +1598,8 @@
       "tests": [
         "tests/unit/phase6-advanced-engines.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-053",
@@ -1565,7 +1624,8 @@
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-054",
@@ -1590,7 +1650,8 @@
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-055",
@@ -1615,7 +1676,8 @@
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-056",
@@ -1640,7 +1702,8 @@
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-057",
@@ -1663,7 +1726,8 @@
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-058",
@@ -1686,7 +1750,8 @@
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-059",
@@ -1711,7 +1776,8 @@
       "tests": [
         "tests/unit/phase7-enterprise-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-060",
@@ -1741,7 +1807,8 @@
       "tests": [
         "tests/unit/security-testing.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-061",
@@ -1766,7 +1833,8 @@
       "tests": [
         "tests/unit/v100-stability-dx-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-062",
@@ -1791,7 +1859,8 @@
       "tests": [
         "tests/unit/v100-stability-dx-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-063",
@@ -1816,7 +1885,8 @@
       "tests": [
         "tests/unit/v100-stability-dx-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-064",
@@ -1837,7 +1907,8 @@
       "tests": [
         "tests/unit/v100-stability-dx-suite.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-065",
@@ -1858,7 +1929,8 @@
       "tests": [
         "tests/unit/linter-and-dashboard.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-066",
@@ -1878,7 +1950,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-067",
@@ -1898,7 +1971,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-068",
@@ -1918,7 +1992,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-069",
@@ -1938,7 +2013,8 @@
       "tests": [
         "tests/unit/advanced-vp-services.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-070",
@@ -1959,7 +2035,8 @@
       "tests": [
         "tests/unit/interface-parity.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED_WITH_WARNINGS"
     },
     {
       "id": "CAP-071",
@@ -1984,7 +2061,8 @@
       "tests": [
         "tests/unit/package-distribution.test.ts"
       ],
-      "status": "implemented"
+      "status": "implemented",
+      "verificationStatus": "VERIFIED"
     }
   ]
 }

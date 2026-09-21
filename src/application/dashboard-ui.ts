@@ -11,14 +11,22 @@ import { navIco, btnIco } from './dashboard-ui/nav-icons.js';
 import { dashboardStyles } from './dashboard-ui/styles.js';
 import { dashboardClientScript } from './dashboard-ui/client-script.js';
 import { resolveAiPresence } from './ai-link.js';
+import { getPackageVersion } from '../shared/package-meta.js';
+import { catalogCliCommands, catalogMcpTools } from '../shared/tool-catalog.js';
+import { buildDashboardLabCatalog, renderLabCatalogHtml } from './dashboard-lab-catalog.js';
 
 export function renderDashboardHtml(data: DashboardUiData): string {
   const { profile, heatmap, runs, secAudit, perfAudit, quarantined, history } = data;
   const apis = profile.apiEndpoints || [];
   const frameworks = (profile.frameworks || ['Node.js']).join(', ');
   const runners = (profile.testFrameworks || ['none']).join(', ');
-  // Cache-bust brand SVGs so dashboard picks up docs/assets updates immediately
-  const brandV = '20260917';
+  const pkgVersion = getPackageVersion();
+  // Cache-bust brand SVGs from package version (not a hardcoded date)
+  const brandV = pkgVersion.replace(/[^a-zA-Z0-9._-]/g, '');
+  const mcpCount = catalogMcpTools().length;
+  const cliCount = catalogCliCommands().length;
+  const labTools = buildDashboardLabCatalog();
+  const labCatalogHtml = renderLabCatalogHtml(labTools);
   const aiPresence = resolveAiPresence(process.cwd());
   const aiBootstrap = {
     hasAi: aiPresence.hasAi,
@@ -153,7 +161,7 @@ export function renderDashboardHtml(data: DashboardUiData): string {
         <div class="nav-group" data-group="experience">
           <button type="button" class="nav-label" aria-expanded="false" onclick="toggleNavGroup(this)">Experience<span class="nav-chevron" aria-hidden="true"></span></button>
           <div class="nav-group-items">
-            <button class="nav-item" data-view="a11y" data-tip="Accessibility WCAG" aria-label="Accessibility" onclick="selectNav('a11y')">${navIco('a11y', 'lime')}<span class="label">Accessibility</span></button>
+            <button class="nav-item" data-view="a11y" data-tip="Accessibility heuristics" aria-label="Accessibility" onclick="selectNav('a11y')">${navIco('a11y', 'lime')}<span class="label">Accessibility</span></button>
             <button class="nav-item" data-view="screenreader" data-tip="Screen reader simulation" aria-label="Screen Reader" onclick="selectNav('screenreader')">${navIco('volume', 'teal')}<span class="label">Screen Reader</span></button>
             <button class="nav-item" data-view="perf" data-tip="Core Web Vitals" aria-label="Web Vitals" onclick="selectNav('perf')">${navIco('activity', 'lime')}<span class="label">Web Vitals</span></button>
             <button class="nav-item" data-view="throttle" data-tip="Network throttle" aria-label="Network Throttle" onclick="selectNav('throttle')">${navIco('signal', 'amber')}<span class="label">Network Throttle</span></button>
@@ -174,7 +182,7 @@ export function renderDashboardHtml(data: DashboardUiData): string {
           ${navIco('message', 'sky')}<span class="sq-label">Docs Chat</span>
         </button>
       </div>
-      <div class="sidebar-foot"><span>v1.0.0</span><span>Local-first</span></div>
+      <div class="sidebar-foot"><span>v${pkgVersion}</span><span>Local-first</span></div>
     </aside>
 
     <main class="workspace">
@@ -246,6 +254,26 @@ export function renderDashboardHtml(data: DashboardUiData): string {
                 </div>
                 <p class="muted stack-md">First verify? Open <button type="button" class="btn sm" onclick="selectNav('doctor')">Doctor</button> → <button type="button" class="btn sm" onclick="selectNav('teach-ai')">Teach AI</button> → then Run Verify. On failure open <code>.veloprove/evidence/&lt;runId&gt;/</code>.</p>
               </div>
+              <div class="card"><h3>Project Twin</h3><p class="muted"><strong>PARTIAL MVP</strong> — local composition over inspect evidence (<code>veloprove twin</code> / <code>vp.twin</code>). Drift aggregator: <code>veloprove drift</code>. Affected tests: <code>veloprove test --affected</code> (expands when Twin confidence is low). Not a second scanner; INFERRED edges are not confirmed facts.</p>
+                <div class="row actions">
+                  <button type="button" class="btn primary" onclick="runAction('twin')">Build Twin</button>
+                  <button type="button" class="btn" onclick="runAction('twin', '?mode=update')">Update (incremental)</button>
+                  <button type="button" class="btn" onclick="runAction('impact')">Impact</button>
+                  <button type="button" class="btn" onclick="runAction('drift')">Drift</button>
+                  <button type="button" class="btn" onclick="refreshTwinEvidence()">Refresh evidence</button>
+                </div>
+                <div class="twin-evidence" id="twinEvidencePanel">
+                  <h4 class="lab-group-title">Evidence classes</h4>
+                  <p class="muted" id="twinEvidenceHint">Run Build Twin or Refresh — counts are honesty labels, not a quality score.</p>
+                  <table class="twin-evidence-table" aria-label="Twin evidence class counts">
+                    <thead><tr><th>Class</th><th>Count</th><th>Meaning</th></tr></thead>
+                    <tbody id="twinEvidenceBody">
+                      <tr><td colspan="3" class="muted">No Twin snapshot loaded.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="code-line">npx veloprove twin build --with-impact --with-drift · update: npx veloprove twin update</div>
+              </div>
             </div>
 
             <div class="view" id="view-plan">
@@ -301,7 +329,7 @@ export function renderDashboardHtml(data: DashboardUiData): string {
             </div>
 
             <div class="view" id="view-heal">
-              <div class="card"><h3>Self-Heal & Auto-Fix</h3><p class="muted">Repair brittle locators and synthesize reviewable patches.</p>
+              <div class="card"><h3>Self-Heal & Auto-Fix</h3><p class="muted">Heal = locator rewrites in <code>@veloprove-generated</code> / <code>@veloprove-healable</code> only (PARTIAL). Auto-Fix = <strong>REVIEW_REQUIRED</strong> proposals (Dashboard never auto-applies). Results show an honesty badge — not guaranteed app repairs.</p>
                 <div class="row actions" data-btn-group="heal-mode" role="group" aria-label="Heal and fix">
                   <button type="button" class="btn primary" data-btn="heal" aria-pressed="true" onclick="runAction('heal')">Heal Locators</button>
                   <button type="button" class="btn" data-btn="auto-fix" aria-pressed="false" onclick="runAction('auto-fix')">Auto-Fix Bugs</button>
@@ -458,23 +486,22 @@ export function renderDashboardHtml(data: DashboardUiData): string {
             </div>
 
             <div class="view" id="view-lab">
-              <div class="card">
-                <h3>Tool Lab</h3>
-                <p class="muted">Extra dashboard actions for advanced engines (same engine as CLI/MCP). Results stream in the Results pane.</p>
-                <div class="row actions wrap">
-                  <button class="btn" onclick="runAction('learn-framework')">Learn Framework</button>
-                  <button class="btn" onclick="runAction('fuzz-api')">Fuzz API</button>
-                  <button class="btn" onclick="runAction('mutation')">Mutation Score</button>
-                  <button class="btn" onclick="runAction('visual-diff')">Visual Diff</button>
-                  <button class="btn" onclick="runAction('contract-drift')">Contract Drift</button>
-                  <button class="btn" onclick="runAction('docker-env')">Docker Env</button>
-                  <button class="btn" onclick="runAction('browser-matrix')">Browser Matrix</button>
-                  <button class="btn" onclick="runAction('bdd')">BDD Features</button>
-                  <button class="btn" onclick="runAction('ai-eval')">AI Eval</button>
-                  <button class="btn" onclick="runAction('throttle')">Throttle</button>
-                  <button class="btn" onclick="runAction('failure-replay')">Failure Replay</button>
-                  <button class="btn" onclick="runAction('recorder-bookmarklet')">Recorder Bookmarklet</button>
+              <div class="card lab-card">
+                <div class="lab-head">
+                  <div>
+                    <h3>Tool Lab</h3>
+                    <p class="muted">Full CLI catalog (${labTools.length} tools) — same <code>VeloProveEngine</code> as CLI/MCP. Grouped like <code>veloprove --help</code>. <strong>URL</strong> tools use Base URL from API Studio / Load / Throttle fields. <strong>Terminal only</strong> tools (<code>ui</code>, <code>tui</code>, <code>mcp</code>, <code>watch</code>, <code>mock-server</code>) cannot nest here — Copy CLI. <strong>Partial</strong> tools prompt for params or prefer CLI.</p>
+                  </div>
+                  <input class="guide-search lab-search" id="labSearchInput" placeholder="Search tools (cli, mcp, summary)…" onkeyup="filterLab()" aria-label="Search Tool Lab" />
                 </div>
+                <div class="lab-legend muted">
+                  <span class="pill ok">Run</span> one-click
+                  <span class="pill warn">URL</span> needs live target
+                  <span class="pill bad">Write</span> may modify files
+                  <span class="pill warn">Terminal only</span> CLI — cannot nest in Dashboard
+                  <span class="pill">Partial</span> degraded vs full CLI
+                </div>
+                <div id="labCatalog" class="lab-catalog">${labCatalogHtml}</div>
               </div>
             </div>
 
@@ -494,12 +521,12 @@ export function renderDashboardHtml(data: DashboardUiData): string {
             </div>
 
             <div class="view" id="view-a11y">
-              <div class="card"><h3>Accessibility (WCAG)</h3><p class="muted">Run axe-style WCAG checks across discovered routes.</p>
+              <div class="card"><h3>Accessibility</h3><p class="muted">Static WCAG-oriented heuristics across discovered routes (not a certified WCAG audit).</p>
                 <div class="row actions"><button class="btn primary" onclick="runAction('a11y')">Run A11y Audit</button></div></div>
             </div>
 
             <div class="view" id="view-screenreader">
-              <div class="card"><h3>Screen Reader Simulation</h3><p class="muted">Approximate NVDA / VoiceOver reading order for key pages.</p>
+              <div class="card"><h3>Screen Reader Simulation</h3><p class="muted">Approximate reading-order heuristics for key pages (not a live NVDA/VoiceOver run).</p>
                 <div class="row actions"><button class="btn primary" onclick="runAction('screen-reader')">Simulate</button></div></div>
             </div>
 
@@ -546,21 +573,24 @@ export function renderDashboardHtml(data: DashboardUiData): string {
                 <h3>Interactive Guide</h3>
                 <p class="muted">Local-first workflow for CLI, MCP (<code>vp.*</code>), and this dashboard — all share the same engine.</p>
                 <input class="guide-search" id="guideSearchInput" placeholder="Search guide..." onkeyup="filterGuide()" />
-                <div class="guide-item"><h4>1. Daily-10</h4><p class="muted">Most-used CLI: <code>init</code>, <code>teach-ai</code>, <code>ask</code>, <code>inspect</code>, <code>doctor</code>, <code>verify</code>, <code>test</code>, <code>changed</code>, <code>security</code>, <code>history</code>. Root help groups all 75 commands like the sidebar (Start → More).</p><div class="code-line">npx veloprove --help</div></div>
+                <div class="guide-item"><h4>1. Daily-10</h4><p class="muted">Most-used CLI: <code>init</code>, <code>teach-ai</code>, <code>ask</code>, <code>inspect</code>, <code>doctor</code>, <code>verify</code>, <code>test</code>, <code>changed</code>, <code>security</code>, <code>history</code>. Root help groups all ${cliCount} commands like the sidebar (Start → More).</p><div class="code-line">npx veloprove --help</div></div>
                 <div class="guide-item"><h4>2. Inspect & Doctor</h4><p class="muted">Discover stack, routes, APIs, runners (Vitest / Jest / Playwright / <code>node:test</code>), and environment health.</p><div class="code-line">npx veloprove inspect && npx veloprove doctor</div></div>
                 <div class="guide-item"><h4>3. Teach AI</h4><p class="muted">Write AGENTS.md + agent-manifest and get a paste-ready briefing so Cursor/Claude/Cline know how to use VeloProve. Use sidebar Quick Actions or Overview.</p><div class="code-line">npx veloprove teach-ai --force --mcp</div></div>
                 <div class="guide-item"><h4>4. Docs Chat</h4><p class="muted">Ask questions answered from packaged docs only (no cloud LLM). English-only without an AI agent. CLI: <code>veloprove ask</code> / Dashboard Docs Chat.</p><div class="code-line">npx veloprove ask "how do I link Cursor?"</div></div>
                 <div class="guide-item"><h4>5. Verify (change-aware QA)</h4><p class="muted">Impact → targeted tests → diagnose → heal TEST_BUG → release gate. Returns OperationResult evidence.</p><div class="code-line">npx veloprove verify --json --ci</div></div>
+                <div class="guide-item"><h4>5a. Happy path (Verify → Twin → Drift → affected)</h4><p class="muted">Daily loop after Teach AI: autonomous verify, refresh Twin, aggregate drift, then Twin-aware affected tests (expands when confidence is low).</p><div class="code-line">npx veloprove verify --json && npx veloprove twin update --with-impact --with-drift && npx veloprove drift && npx veloprove test --affected</div></div>
+                <div class="guide-item"><h4>5b. Project Twin (PARTIAL)</h4><p class="muted">Local project model from inspect evidence — not AI assumptions. Build Twin, aggregate drift, run Twin-aware affected tests (expands when confidence is low). Dashboard Twin card shows evidence class counts (VERIFIED/OBSERVED/INFERRED/STALE/UNKNOWN).</p><div class="code-line">npx veloprove twin build --with-impact --with-drift && npx veloprove drift && npx veloprove test --affected</div></div>
                 <div class="guide-item"><h4>6. Ensure Dev Server</h4><p class="muted">Probe baseURL and auto-start npm/pnpm/yarn/bun when offline.</p><div class="code-line">npx veloprove ensure-dev -u http://localhost:5173</div></div>
                 <div class="guide-item"><h4>7. Plan & Generate</h4><p class="muted">Risk-scored plans and compiling tests without overwriting developer tests.</p><div class="code-line">npx veloprove plan && npx veloprove generate</div></div>
                 <div class="guide-item"><h4>8. Run Changed + History</h4><p class="muted">Execute impacted tests, then review pass-rate trends.</p><div class="code-line">npx veloprove test -s changed && npx veloprove history -n 20</div></div>
-                <div class="guide-item"><h4>9. Diagnose & Heal</h4><p class="muted">Classify failures, then repair brittle locators safely.</p><div class="code-line">npx veloprove diagnose && npx veloprove heal</div></div>
+                <div class="guide-item"><h4>9. Diagnose & Heal</h4><p class="muted">Classify failures, then repair brittle locators in <code>@veloprove-generated</code> / healable tests. App-bug suggestions (<code>vp.suggestFix</code>) are guidance only (PARTIAL — no patch until synthesizer applies).</p><div class="code-line">npx veloprove diagnose && npx veloprove heal</div></div>
+                <div class="guide-item"><h4>9b. Tool Lab</h4><p class="muted">Sidebar stays curated. <strong>Tool Lab</strong> lists every CLI command (${cliCount}) with modes: Run / URL / Write / <strong>Terminal only</strong> / Partial. Terminal-only (cannot nest in Dashboard): <code>ui</code>, <code>tui</code>, <code>mcp</code>, <code>watch</code>, <code>mock-server</code> — use a separate terminal. Partial tools (e.g. <code>alert</code>, <code>db-snapshot</code>, <code>refine</code>) expose a limited path; full options stay on CLI.</p><div class="code-line">npx veloprove --help</div></div>
                 <div class="guide-item"><h4>10. Security Suite</h4><p class="muted">Non-destructive auth, injection, session, and upload probes.</p><div class="code-line">npx veloprove security --safe</div></div>
                 <div class="guide-item"><h4>11. Web Sec + Dedup</h4><p class="muted">SRI/CSRF/CORS audit and duplicate-test detection.</p><div class="code-line">npx veloprove web-sec && npx veloprove dedup</div></div>
                 <div class="guide-item"><h4>12. Load Testing</h4><p class="muted">Benchmark RPS and p95 latency locally. Alias: <code>load</code>. Use <code>-c</code> for VUs (not <code>-u</code>).</p><div class="code-line">npx veloprove load http://localhost:3000/api -c 20 -d 5</div></div>
                 <div class="guide-item"><h4>13. Coverage Heatmap</h4><p class="muted">Map PRD requirements to tests.</p><div class="code-line">npx veloprove coverage</div></div>
                 <div class="guide-item"><h4>14. Export Reports</h4><p class="muted">HTML, JUnit XML, Allure results, or simple PDF from local state.</p><div class="code-line">npx veloprove export-report -f allure</div></div>
-                <div class="guide-item"><h4>15. MCP for Agents</h4><p class="muted">75 <code>vp.*</code> tools over stdio (includes <code>vp.ask</code>). Full catalog: <code>docs/reference/mcp.md</code>. Teach AI first via Quick Actions or <code>teach-ai</code>.</p><div class="code-line">npx -y @engnadia/veloprove mcp</div></div>
+                <div class="guide-item"><h4>15. MCP for Agents</h4><p class="muted">${mcpCount} <code>vp.*</code> tools over stdio (includes <code>vp.ask</code>). Full catalog: <code>docs/reference/mcp.md</code>. Teach AI first via Quick Actions or <code>teach-ai</code>.</p><div class="code-line">npx -y @engnadia/veloprove mcp</div></div>
                 <div class="guide-item"><h4>16. Scenario Recorder</h4><p class="muted">Capture journeys and synthesize Playwright tests locally.</p><div class="code-line">npx veloprove record-scenario</div></div>
                 <div class="guide-item"><h4>17. Pre-commit Hook</h4><p class="muted">Install change-impact verification before commits.</p><div class="code-line">npx veloprove hook install</div></div>
               </div>
@@ -629,17 +659,20 @@ export function renderDashboardHtml(data: DashboardUiData): string {
                 <p class="lead"><strong>VeloProve</strong> combines velocity and proof — a local engineering workspace where quality is inspected, tested, and proven before release.</p>
                 <div class="stack muted">
                   <div>Package: <code>@engnadia/veloprove</code></div>
-                  <div>CLI: <code>veloprove</code> (75 commands) · MCP: <code>vp.*</code> (75 tools)</div>
+                  <div>CLI: <code>veloprove</code> (${cliCount} commands) · MCP: <code>vp.*</code> (${mcpCount} tools)</div>
                   <div>Dashboard: <code>veloprove ui</code> (default port 4173)</div>
                   <div>Catalogs: <code>docs/reference/cli.md</code> · <code>docs/reference/mcp.md</code> · <code>docs/guides/features.md</code></div>
                   <div>Identity: local-first · zero-cloud core · OperationResult evidence</div>
                   <div>Runners: Vitest · Jest · Playwright · <code>node:test</code> (built-in)</div>
                   <div>Safety: WorkspaceGuard · FixSafetyPolicy · secret redaction · protected developer tests</div>
+                  <div>Honesty: a11y = static heuristics · screen-reader = approximate order · suggestFix/auto-fix = guidance / REVIEW_REQUIRED (see <code>docs/guides/trust.md</code>)</div>
+                  <div>Project Twin: <strong>PARTIAL MVP</strong> — <code>twin</code> / <code>impact</code> / <code>drift</code> / <code>test --affected</code> (composition over inspect; not AI ground-truth)</div>
+                  <div>Tool Lab: full CLI catalog (${cliCount}) — Terminal only: <code>ui</code>/<code>tui</code>/<code>mcp</code>/<code>watch</code>/<code>mock-server</code> (cannot nest); Partial tools prefer CLI for full options</div>
                   <div>Brand: <code>docs/assets/veloprove-logo.svg</code> · <code>docs/assets/veloprove-icon.svg</code></div>
-                  <div>License: MIT · Node.js &gt;= 18 · Windows / macOS / Linux · v1.0.0</div>
+                  <div>License: MIT · Node.js &gt;= 18 · Windows / macOS / Linux · v${pkgVersion}</div>
                   <div>AI agent: optional — core QA runs locally without Cursor/Claude; sensitive steps show a notice + Run without AI</div>
                 </div>
-                <p class="muted stack">CLI, MCP, and this UI call the same <code>VeloProveEngine</code>. Surface matrix: 75 CLI · 75 MCP · curated Dashboard · see <code>docs/reference/surface-matrix.md</code>. When adding a capability: register CLI + MCP + docs + parity tests, then purge dead code.</p>
+                <p class="muted stack">CLI, MCP, and this UI call the same <code>VeloProveEngine</code>. Surface matrix: ${cliCount} CLI · ${mcpCount} MCP · Dashboard Tool Lab (${labTools.length}) · see <code>docs/reference/surface-matrix.md</code>. When adding a capability: register CLI + MCP + docs + Lab row + parity tests, then purge dead code.</p>
               </div>
             </div>
 

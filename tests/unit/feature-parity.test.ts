@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
 import { FeatureParityAuditorService } from '../../src/application/feature-parity-auditor.js';
 import { VeloProveEngine } from '../../src/application/engine.js';
+import { ephemeralFixtureDir } from '../helpers/monorepo-fixtures.js';
 
 describe('FeatureParityAuditorService (UI-to-Backend Ghost Feature & Parity Detection)', () => {
-  const fixtureDir = path.resolve(process.cwd(), 'fixtures/parity-test-app');
+  const fixtureDir = ephemeralFixtureDir('parity-test-app');
   let guard: WorkspaceGuard;
 
   beforeEach(() => {

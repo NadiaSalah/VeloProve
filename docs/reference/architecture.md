@@ -44,6 +44,6 @@
 
 ## Surface parity
 
-CLI (`veloprove`), MCP (`vp.*`, 75 tools), and Dashboard share `VeloProveEngine`. New capabilities must register in CapabilityRegistry (verify subset) and ship CLI + MCP + docs (+ Dashboard action when applicable). Catalog surface is 83 rows (75 MCP + 8 CLI-only). `vp.history` / `veloprove history` expose the same run-history snapshot as `GET /api/history`.
+CLI (`veloprove`), MCP (`vp.*`), and Dashboard share `VeloProveEngine`. New capabilities must register in CapabilityRegistry (verify subset) and ship CLI + MCP + docs (+ Dashboard action when applicable). Surface counts come from `TOOL_SURFACE` / `catalogCliCommands()` / `catalogMcpTools()` (Dashboard may include a few helper actions beyond catalog). `vp.history` / `veloprove history` expose the same run-history snapshot as `GET /api/history`.
 
 AI may assist planning/generation; filesystem, process execution, gates, and schemas remain deterministic.

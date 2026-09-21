@@ -1,0 +1,21 @@
+{
+  "baseline": "app@veloprove-clean-baseline (06311ea)",
+  "faults": [
+    {"id":"FAULT-001","feature":"VP-F003","kind":"logic","mutation":"invert product search filter","expected":"unit/E2E mismatch","severity":"high","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-002","feature":"VP-F015","kind":"validation","mutation":"accept malformed contact email","expected":"API validation failure","severity":"medium","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-003","feature":"VP-F022","kind":"routing","mutation":"resolve unknown product instead of 404","expected":"route assertion failure","severity":"medium","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-004","feature":"VP-F048","kind":"authentication","mutation":"accept empty login password","expected":"form/API guard finding","severity":"high","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-005","feature":"VP-F040","kind":"authorization","mutation":"expose admin profile to user","expected":"security/route finding","severity":"critical","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-006","feature":"VP-F015","kind":"API status/schema","mutation":"return 200 invalid contact payload","expected":"schema/status assertion","severity":"high","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-007","feature":"VP-F026","kind":"error rendering","mutation":"remove not-found message","expected":"E2E route failure","severity":"medium","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-008","feature":"VP-F026","kind":"accessibility","mutation":"remove search label","expected":"a11y selector failure","severity":"medium","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-009","feature":"VP-F023","kind":"stale E2E locator","mutation":"rename Travel Pack","expected":"test-bug diagnosis","severity":"low","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-010","feature":"VP-F010","kind":"controlled flake","mutation":"random async delay","expected":"flake classification","severity":"medium","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-011","feature":"VP-F030","kind":"safe hostile input","mutation":"post XSS/SQL/path-like strings","expected":"validation/sanitization evidence","severity":"high","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-012","feature":"VP-F029","kind":"fake secret","mutation":"add fake test token","expected":"secret scan finding","severity":"high","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-013","feature":"VP-F013","kind":"Git impact","mutation":"change product data","expected":"changed/impact mapping","severity":"medium","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-014","feature":"VP-F013","kind":"bisect sequence","mutation":"two known product commits","expected":"bisect candidate","severity":"medium","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-015","feature":"VP-F053","kind":"uncovered branch","mutation":"uncovered reviews error branch","expected":"coverage gap","severity":"low","evidence":"evidence/phase3-cli.txt"},
+    {"id":"FAULT-016","feature":"VP-F005","kind":"release blocker","mutation":"failing critical test","expected":"release not ready","severity":"critical","evidence":"evidence/phase3-cli.txt"}
+  ]
+}

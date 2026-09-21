@@ -8,9 +8,10 @@ import { BrowserMatrixService } from '../../src/application/browser-matrix.js';
 import { BddGeneratorService } from '../../src/application/bdd-generator.js';
 import { WebhookAlertService } from '../../src/application/webhook-alerts.js';
 import { VeloProveEngine } from '../../src/application/engine.js';
+import { monorepoFixture } from '../helpers/monorepo-fixtures.js';
 
 describe('VeloProve v1.5.0 Enterprise Engines Suite', () => {
-  const testRoot = path.resolve(process.cwd(), 'fixtures/test-project');
+  const testRoot = monorepoFixture('test-project');
   let guard: WorkspaceGuard;
 
   beforeEach(() => {

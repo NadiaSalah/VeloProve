@@ -1,0 +1,9 @@
+{
+  "name": "fault-harness-baseline",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/math.test.js tests/auth.test.js"
+  }
+}

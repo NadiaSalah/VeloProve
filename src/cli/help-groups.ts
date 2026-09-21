@@ -1,7 +1,7 @@
 /**
  * Grouped root CLI help — mirrors Dashboard sidebar IA
  * (Start / Verify / Repair / Results / API / Security / Experience / More).
- * Display only — command count stays flat at 75.
+ * Display only — command count is catalogCliCommands().length (not hardcoded).
  */
 
 export type HelpGroupId =
@@ -38,6 +38,9 @@ export const CLI_HELP_GROUPS: Record<string, HelpGroupId> = {
   plan: 'Verify',
   generate: 'Verify',
   test: 'Verify',
+  twin: 'Verify',
+  impact: 'Verify',
+  drift: 'Verify',
   changed: 'Verify',
   release: 'Verify',
   lint: 'Verify',

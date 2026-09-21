@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import { WorkspaceGuard } from '../../src/execution/workspace-guard.js';
 import { FrameworkLearnerService } from '../../src/application/framework-learner.js';
 import { VeloProveEngine } from '../../src/application/engine.js';
+import { ephemeralFixtureDir } from '../helpers/monorepo-fixtures.js';
 
 describe('FrameworkLearnerService (Custom & Uncommon Framework Self-Teaching)', () => {
-  const fixtureDir = path.resolve(process.cwd(), 'fixtures/custom-framework-project');
+  const fixtureDir = ephemeralFixtureDir('custom-framework-project');
   let guard: WorkspaceGuard;
 
   beforeAll(() => {

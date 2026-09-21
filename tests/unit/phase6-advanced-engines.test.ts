@@ -8,9 +8,10 @@ import { NetworkThrottlerService } from '../../src/application/network-throttler
 import { SmartContractAuditorService } from '../../src/application/smart-contract-auditor.js';
 import { DeadAssetPurgeService } from '../../src/application/dead-asset-purge.js';
 import { VeloProveEngine } from '../../src/application/engine.js';
+import { ephemeralFixtureDir } from '../helpers/monorepo-fixtures.js';
 
 describe('VeloProve Phase 6 Next-Gen Engines Suite', () => {
-  const fixtureDir = path.resolve(process.cwd(), 'fixtures/phase6-test-repo');
+  const fixtureDir = ephemeralFixtureDir('phase6-test-repo');
   let guard: WorkspaceGuard;
 
   beforeEach(() => {

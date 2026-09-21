@@ -37,8 +37,8 @@ A: Inside the package:
 
 - `node_modules/@engnadia/veloprove/docs/AGENTS.md` — agent playbook + MCP JSON  
 - `node_modules/@engnadia/veloprove/docs/guides/` — getting started, features, FAQ  
-- `node_modules/@engnadia/veloprove/docs/reference/cli.md` — CLI (75 commands)  
-- `node_modules/@engnadia/veloprove/docs/reference/mcp.md` — MCP (75 tools)
+- `node_modules/@engnadia/veloprove/docs/reference/cli.md` — CLI commands (catalog SSOT)  
+- `node_modules/@engnadia/veloprove/docs/reference/mcp.md` — MCP `vp.*` tools (catalog SSOT)
 
 Or ask locally: `npx veloprove ask "…"`.
 
@@ -85,8 +85,9 @@ A: Yes — `watch --verify`, `watch -i <sec>`, or `hook install --verify`. There
 **Q: verify vs release vs test?**  
 A:
 
-- `veloprove test` — run suites (`vp.run` in MCP)  
+- `veloprove test` — run suites (`vp.run` in MCP); `test --affected` uses Twin+graph (expands when confidence is low)  
 - `veloprove changed` — list impacted tests only  
+- `veloprove impact` / `veloprove twin` / `veloprove drift` — Twin enrichment / aggregator (**PARTIAL MVP**)  
 - `veloprove verify --ci` — full change-aware loop (inspect → impact → test → diagnose → heal → release)  
 - `veloprove release` — confidence score gate only  
 
@@ -99,6 +100,14 @@ npx veloprove ask --repl
 ```
 
 Dashboard → **Docs Chat**. MCP: `vp.ask({ question: "..." })`. Answers are built from shipped markdown only (no cloud API).
+
+**Q: Can every CLI command run from the Dashboard?**  
+A: Almost — open **Tool Lab**. Exceptions:
+
+- **Terminal only** (cannot nest): `ui`, `tui`, `mcp`, `watch`, `mock-server` — run in a separate terminal  
+- **Partial**: `alert`, `db-snapshot`, `db-restore`, `refine`, `run-collection`, `dead-assets` — limited Dashboard path; prefer CLI for full options  
+
+Details: `docs/reference/surface-matrix.md` and Dashboard Guide **9b. Tool Lab**.
 
 **Q: audit vs security vs owasp vs web-sec?**  
 A:

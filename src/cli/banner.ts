@@ -1,4 +1,6 @@
 import pc from 'picocolors';
+import { getPackageVersion } from '../shared/package-meta.js';
+import { catalogMcpTools } from '../shared/tool-catalog.js';
 
 /**
  * Official CLI brand colors matching docs/assets/veloprove-icon.svg
@@ -47,12 +49,14 @@ function frameRules(contentWidth: number): { top: string; mid: string; bottom: s
  * Full startup / help banner: VP mark left + wordmark right, framed rules
  */
 export function renderVeloProveBanner(): string {
+  const version = getPackageVersion();
+  const mcpCount = catalogMcpTools().length;
   const icon = renderIconMark();
   const text = [
-    `${brand.bold(brand.white('VeloProve'))} ${brand.dim('CLI')} ${brand.dim('v1.0.0')}`,
+    `${brand.bold(brand.white('VeloProve'))} ${brand.dim('CLI')} ${brand.dim(`v${version}`)}`,
     brand.bold(brand.white('Build. Test. Trust.')),
     brand.dim('Autonomous QA · Failure Healing · API Quality Hub'),
-    `${pc.bgGreen(pc.black(' LOCAL-FIRST '))} ${pc.bgBlue(pc.white(' 75 MCP '))} ${brand.accent(brand.bold(' ZERO-CLOUD '))}`,
+    `${pc.bgGreen(pc.black(' LOCAL-FIRST '))} ${pc.bgBlue(pc.white(` ${mcpCount} MCP `))} ${brand.accent(brand.bold(' ZERO-CLOUD '))}`,
     brand.dim('https://github.com/NadiaSalah/VeloProve'),
   ];
 

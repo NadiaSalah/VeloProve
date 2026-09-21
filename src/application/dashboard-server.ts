@@ -1,7 +1,6 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { WorkspaceGuard } from '../execution/workspace-guard.js';
 import type { LocalStorage } from '../storage/local-store.js';
 import type { VeloProveEngine } from './engine.js';
@@ -28,11 +27,14 @@ import {
   writeExportWithProjectFallback,
   PROJECT_EXPORTS_DIR
 } from './export-save.js';
+import { DEFAULT_CONFIG } from '../shared/config-loader.js';
+import { buildDashboardLabCatalog } from './dashboard-lab-catalog.js';
+import { getPackageRoot } from '../shared/package-meta.js';
 
 type SsePayload = Record<string, unknown>;
 
 function resolveBrandAsset(guard: WorkspaceGuard, filename: string): string | null {
-  const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+  const packageRoot = getPackageRoot();
   const candidates = [
     path.join(packageRoot, 'docs', 'assets', filename),
     path.join(guard.getRoot(), 'docs', 'assets', filename)
@@ -623,7 +625,248 @@ export class LocalDashboardServer {
                 data = engine.initSecurityPolicy({ framework: 'baseline', mergeIntoConfig: true });
                 break;
               }
+              case 'twin': {
+                const urlObj = new URL(req.url || '/api/actions/twin', 'http://localhost');
+                const mode = (urlObj.searchParams.get('mode') || 'build').toLowerCase();
+                if (mode === 'status') {
+                  data = engine.twinEvidenceSummary();
+                  break;
+                }
+                if (mode === 'update') {
+                  data = await engine.twinUpdate({ withImpact: true, withDrift: true });
+                  break;
+                }
+                data = await engine.twinBuild({ withImpact: true, withDrift: true, incremental: true });
+                break;
+              }
+              case 'twin-status': {
+                data = engine.twinEvidenceSummary();
+                break;
+              }
+              case 'impact': {
+                data = await engine.impactAnalysis();
+                break;
+              }
+              case 'drift': {
+                data = await engine.drift({});
+                break;
+              }
+              case 'refine': {
+                const urlObj = new URL(req.url || '/api/actions/refine', 'http://localhost');
+                const instruction =
+                  urlObj.searchParams.get('instruction') ||
+                  'Strengthen assertions with clearer expects and remove brittle timing assumptions';
+                const testFilePath = urlObj.searchParams.get('file') || undefined;
+                data = await engine.refineTest({ instruction, testFilePath: testFilePath || undefined });
+                break;
+              }
+              case 'run-collection': {
+                const urlObj = new URL(req.url || '/api/actions/run-collection', 'http://localhost');
+                const collectionPath =
+                  urlObj.searchParams.get('collection') ||
+                  urlObj.searchParams.get('path') ||
+                  'veloprove_postman_collection.json';
+                const baseURL = urlObj.searchParams.get('url') || urlObj.searchParams.get('baseURL') || undefined;
+                data = await engine.runPostmanCollection(collectionPath, undefined, baseURL);
+                break;
+              }
+              case 'request': {
+                const urlObj = new URL(req.url || '/api/actions/request', 'http://localhost');
+                const target = urlObj.searchParams.get('url') || 'http://localhost:3000/api';
+                const method = (urlObj.searchParams.get('method') || 'GET').toUpperCase();
+                data = await engine.sendHttpRequest({
+                  method: method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS',
+                  url: target
+                });
+                break;
+              }
+              case 'load-test': {
+                const urlObj = new URL(req.url || '/api/actions/load-test', 'http://localhost');
+                const target = urlObj.searchParams.get('url') || 'http://localhost:3000/api';
+                const vus = Number(urlObj.searchParams.get('vus') || 10);
+                const durationSec = Number(urlObj.searchParams.get('duration') || 3);
+                data = await engine.runLoadTest({ url: target, vus, durationSec, method: 'GET' });
+                break;
+              }
+              case 'mock-data': {
+                data = engine.generateMockData({ preset: 'user', count: 5, locale: 'en' });
+                break;
+              }
+              case 'owasp-scan': {
+                const urlObj = new URL(req.url || '/api/actions/owasp-scan', 'http://localhost');
+                const target = urlObj.searchParams.get('url') || 'http://localhost:3000';
+                data = await engine.scanOwasp(target);
+                break;
+              }
+              case 'graphql': {
+                const urlObj = new URL(req.url || '/api/actions/graphql', 'http://localhost');
+                const endpoint = urlObj.searchParams.get('url') || 'http://localhost:3000/graphql';
+                data = await engine.runGraphQL({
+                  endpoint,
+                  query: '{ __typename }'
+                });
+                break;
+              }
+              case 'ws-test': {
+                const urlObj = new URL(req.url || '/api/actions/ws-test', 'http://localhost');
+                let target = urlObj.searchParams.get('url') || 'ws://localhost:3000';
+                if (target.startsWith('http://')) target = 'ws://' + target.slice('http://'.length);
+                if (target.startsWith('https://')) target = 'wss://' + target.slice('https://'.length);
+                data = await engine.testWebSocket({ url: target });
+                break;
+              }
+              case 'remote-init': {
+                data = engine.generateRemoteProbe('standalone_js', { siteName: 'Dashboard Remote' });
+                break;
+              }
+              case 'remote-connect': {
+                const urlObj = new URL(req.url || '/api/actions/remote-connect', 'http://localhost');
+                const target = urlObj.searchParams.get('url') || 'http://localhost:3000';
+                data = await engine.connectRemoteSite(target);
+                break;
+              }
+              case 'remote-audit': {
+                const urlObj = new URL(req.url || '/api/actions/remote-audit', 'http://localhost');
+                const target = urlObj.searchParams.get('url') || 'http://localhost:3000';
+                data = await engine.auditRemoteSite(target, { includeLoadTest: false });
+                break;
+              }
+              case 'stabilize': {
+                const urlObj = new URL(req.url || '/api/actions/stabilize', 'http://localhost');
+                const target = urlObj.searchParams.get('file') || 'tests';
+                data = engine.stabilizeTests(target, false);
+                break;
+              }
+              case 'db-snapshot': {
+                const snaps = engine.listDbSnapshots();
+                data = {
+                  snapshots: snaps,
+                  note: 'Dashboard lists snapshots. Create via CLI: veloprove db-snapshot <name> --files …'
+                };
+                break;
+              }
+              case 'db-restore': {
+                const urlObj = new URL(req.url || '/api/actions/db-restore', 'http://localhost');
+                const snapshotId = urlObj.searchParams.get('id') || '';
+                const snaps = engine.listDbSnapshots();
+                const id = snapshotId || snaps[0]?.id || '';
+                if (!id) {
+                  data = { success: false, error: 'No snapshot available. Create one with veloprove db-snapshot first.' };
+                } else {
+                  data = engine.restoreDbSnapshot(id);
+                }
+                break;
+              }
+              case 'chaos': {
+                const urlObj = new URL(req.url || '/api/actions/chaos', 'http://localhost');
+                const target = urlObj.searchParams.get('url') || 'http://localhost:3000/api';
+                data = await engine.runChaosTest({ targetUrl: target, iterations: 3 });
+                break;
+              }
+              case 'alert': {
+                const urlObj = new URL(req.url || '/api/actions/alert', 'http://localhost');
+                const webhookUrl = urlObj.searchParams.get('url') || urlObj.searchParams.get('webhook') || '';
+                if (!webhookUrl) {
+                  data = {
+                    skipped: true,
+                    note: 'Webhook URL required. Use CLI: veloprove alert <webhookUrl> or MCP vp.sendAlert'
+                  };
+                } else {
+                  data = await engine.sendAlert({
+                    webhookUrl,
+                    provider: 'generic',
+                    payload: {
+                      projectName: 'Dashboard',
+                      verdict: 'READY',
+                      totalTests: 0,
+                      passedCount: 0,
+                      failedCount: 0,
+                      detailsUrl: 'veloprove ui'
+                    }
+                  });
+                }
+                break;
+              }
+              case 'rate-limit': {
+                const urlObj = new URL(req.url || '/api/actions/rate-limit', 'http://localhost');
+                const target = urlObj.searchParams.get('url') || 'http://localhost:3000/api';
+                data = await engine.auditRateLimit({
+                  targetUrl: target,
+                  requestCount: 20,
+                  concurrency: 5,
+                  method: 'GET'
+                });
+                break;
+              }
+              case 'setup-ci': {
+                data = { workflowPath: engine.setupCi() };
+                break;
+              }
+              case 'sandbox': {
+                const sandbox = await engine.startSandbox(18089);
+                data = { baseURL: sandbox.baseURL, note: 'Sandbox stays up while the dashboard process is running.' };
+                break;
+              }
+              case 'hook': {
+                data = engine.installGitHook('npx veloprove changed');
+                break;
+              }
+              case 'init': {
+                const root = guard.getRoot();
+                const dirs = [
+                  path.join(root, '.veloprove'),
+                  path.join(root, '.veloprove', 'config'),
+                  path.join(root, '.veloprove', 'reports'),
+                  path.join(root, '.veloprove', 'state')
+                ];
+                for (const d of dirs) {
+                  if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+                }
+                const configPath = path.join(root, 'veloprove.config.json');
+                let createdConfig = false;
+                if (!fs.existsSync(configPath)) {
+                  fs.writeFileSync(configPath, JSON.stringify(DEFAULT_CONFIG, null, 2), 'utf8');
+                  createdConfig = true;
+                }
+                const inspected = await engine.inspect();
+                data = {
+                  createdConfig,
+                  configPath,
+                  projectName: inspected.profile.projectName,
+                  frameworks: inspected.profile.frameworks
+                };
+                break;
+              }
+              case 'ui':
+              case 'tui':
+              case 'mcp':
+              case 'watch':
+              case 'mock-server': {
+                const hints: Record<string, string> = {
+                  ui: 'npx veloprove ui',
+                  tui: 'npx veloprove tui',
+                  mcp: 'npx veloprove mcp',
+                  watch: 'npx veloprove watch',
+                  'mock-server': 'npx veloprove mock-server'
+                };
+                data = {
+                  mode: 'cli-hint',
+                  command: hints[action],
+                  note: 'Interactive / long-running — run in a terminal (Dashboard already hosts the UI).'
+                };
+                break;
+              }
               default: {
+                // Lab catalog completeness: unknown ids should not silently 400 if catalog drifts
+                const labKnown = buildDashboardLabCatalog().some((t) => t.action === action);
+                if (labKnown) {
+                  data = {
+                    mode: 'cli-hint',
+                    command: `npx veloprove ${action}`,
+                    note: `Action '${action}' is cataloged but has no dedicated dashboard handler yet. Use CLI.`
+                  };
+                  break;
+                }
                 sse.broadcast('action', { phase: 'error', action, error: `Unknown action: ${action}` });
                 sse.broadcast('log', { message: `✖ Unknown action: ${action}` });
                 return sendJson({ error: `Unknown action: ${action}` }, 400);

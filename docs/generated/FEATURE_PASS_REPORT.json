@@ -1,0 +1,330 @@
+{
+  "fixture": "D:\\projects\\VeloProve\\fixtures\\real-app-smoke",
+  "generatedAt": "2026-09-21T15:36:33.459Z",
+  "summary": {
+    "total": 52,
+    "passed": 52,
+    "failed": 0
+  },
+  "failed": [],
+  "results": [
+    {
+      "id": "fixture-server",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "inspect",
+      "ok": true,
+      "ms": 6
+    },
+    {
+      "id": "doctor",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "teach-ai",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "ask",
+      "ok": true,
+      "ms": 8
+    },
+    {
+      "id": "plan",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "changed",
+      "ok": true,
+      "ms": 40
+    },
+    {
+      "id": "twin",
+      "ok": true,
+      "ms": 83,
+      "note": "SUCCESS_WITH_WARNINGS"
+    },
+    {
+      "id": "impact",
+      "ok": true,
+      "ms": 37
+    },
+    {
+      "id": "drift",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "id": "test",
+      "ok": true,
+      "ms": 351,
+      "note": "passed"
+    },
+    {
+      "id": "test-affected",
+      "ok": true,
+      "ms": 380,
+      "note": "passed"
+    },
+    {
+      "id": "verify",
+      "ok": true,
+      "ms": 388,
+      "note": "SUCCESS_WITH_WARNINGS"
+    },
+    {
+      "id": "coverage",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "release",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "history",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "audit",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "id": "scan-malware",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "env-drift",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "contract-drift",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "feature-parity",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "a11y",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "web-sec",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "id": "arch-graph",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "dedup",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "security-scan",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "mock-gen",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "mock-data",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "export-postman",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "bdd",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "flaky",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "lint",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "id": "quarantine",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "db-audit",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "id": "dead-assets",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "screen-reader",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "fuzz-api",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "setup-ci",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "browser-matrix",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "docker-env",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "remote-init",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "record-scenario",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "audit-contracts",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "id": "mutation-score",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "visual-diff",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "id": "export-report",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "id": "request",
+      "ok": true,
+      "ms": 15,
+      "note": "200"
+    },
+    {
+      "id": "owasp-scan",
+      "ok": true,
+      "ms": 6
+    },
+    {
+      "id": "load-test",
+      "ok": true,
+      "ms": 1001,
+      "note": "PASSED"
+    },
+    {
+      "id": "rate-limit",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "id": "chaos",
+      "ok": true,
+      "ms": 38
+    },
+    {
+      "id": "throttle",
+      "ok": true,
+      "ms": 170
+    }
+  ],
+  "catalogOffline": [
+    "inspect",
+    "doctor",
+    "bootstrap",
+    "ask",
+    "learn-framework",
+    "fuzz-api",
+    "mutation-score",
+    "a11y",
+    "visual-diff",
+    "lint",
+    "contract-drift",
+    "audit",
+    "mock-gen",
+    "quarantine",
+    "coverage",
+    "plan",
+    "generate",
+    "run",
+    "changed",
+    "flaky",
+    "release",
+    "export-postman",
+    "mock-data",
+    "remote-init",
+    "record-scenario",
+    "db-snapshot",
+    "export-report",
+    "docker-env",
+    "browser-matrix",
+    "bdd",
+    "feature-parity",
+    "scan-malware",
+    "audit-contracts",
+    "screen-reader",
+    "db-audit",
+    "env-drift",
+    "arch-graph",
+    "security-scan",
+    "security-plan",
+    "web-sec",
+    "dedup",
+    "verify",
+    "history",
+    "twin",
+    "impact",
+    "drift",
+    "init",
+    "setup-ci",
+    "sandbox",
+    "hook"
+  ]
+}

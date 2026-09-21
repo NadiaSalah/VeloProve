@@ -2,7 +2,7 @@
 
 This repository is equipped with **VeloProve** (Local Autonomous QA Engine).
 
-**Consumer playbook (75 `vp.*` tools, install loop):** after `npm install`, use packaged [`docs/AGENTS.md`](docs/AGENTS.md). This root file is the **contributor** protocol for developing VeloProve itself.
+**Consumer playbook (full `vp.*` catalog — see `docs/reference/mcp.md`, install loop):** after `npm install`, use packaged [`docs/AGENTS.md`](docs/AGENTS.md). This root file is the **contributor** protocol for developing VeloProve itself.
 
 ## How to Test and Verify Code Changes
 

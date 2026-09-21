@@ -36,12 +36,12 @@ export function dashboardClientScript(aiPresence?: {
       owasp: ['OWASP Scan', 'Header and transport hardening checks for a live URL.'],
       malware: ['Malware Scan', 'Detect obfuscated payloads and suspicious scripts.'],
       remote: ['Remote Bridge', 'Companion probe workflow for live websites.'],
-      a11y: ['Accessibility', 'WCAG checks across discovered routes.'],
-      screenreader: ['Screen Reader', 'Approximate NVDA / VoiceOver reading order.'],
+      a11y: ['Accessibility', 'Static WCAG-oriented heuristics (not certified).'],
+      screenreader: ['Screen Reader', 'Approximate reading-order heuristics (not live NVDA/VoiceOver).'],
       perf: ['Web Vitals', 'Route-level performance profiling summary.'],
       throttle: ['Network Throttle', 'Simulate slow networks and offline drops.'],
       arch: ['Architecture', 'Topology graph and parity audits.'],
-      lab: ['Tool Lab', 'Advanced engines wired to the same VeloProveEngine as CLI/MCP.'],
+      lab: ['Tool Lab', 'Full CLI catalog — grouped, searchable, same engine as CLI/MCP.'],
       guide: ['Guide', 'VeloProve Complete Interactive User & Agent Guide'],
       about: ['About', 'Product identity and local-first philosophy.']
     };
@@ -154,14 +154,157 @@ export function dashboardClientScript(aiPresence?: {
       el.textContent = label;
     }
 
+    const TWIN_EVIDENCE_MEANING = {
+      VERIFIED: 'Confirmed by deterministic scan',
+      OBSERVED: 'Seen in repo/runtime artifacts',
+      INFERRED: 'Heuristic — not confirmed fact',
+      STALE: 'Previously true; fingerprint suggests outdated',
+      UNKNOWN: 'Not enough evidence'
+    };
+
+    function renderTwinEvidenceCounts(classes) {
+      const body = document.getElementById('twinEvidenceBody');
+      const hint = document.getElementById('twinEvidenceHint');
+      if (!body) return;
+      const order = ['VERIFIED', 'OBSERVED', 'INFERRED', 'STALE', 'UNKNOWN'];
+      if (!classes) {
+        body.innerHTML = '<tr><td colspan="3" class="muted">No Twin snapshot loaded.</td></tr>';
+        if (hint) hint.textContent = 'Run Build Twin or Refresh — counts are honesty labels, not a quality score.';
+        return;
+      }
+      body.replaceChildren();
+      order.forEach((cls) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td><code>' +
+          cls +
+          '</code></td><td>' +
+          (classes[cls] || 0) +
+          '</td><td class="muted">' +
+          (TWIN_EVIDENCE_MEANING[cls] || '') +
+          '</td>';
+        body.appendChild(tr);
+      });
+      if (hint) {
+        hint.textContent =
+          'PARTIAL MVP — INFERRED is not ground truth. verificationStatus stays PARTIAL until harness warrants VERIFIED.';
+      }
+    }
+
+    function renderTwinEvidenceFromPayload(payload) {
+      const root = payload && payload.data != null ? payload.data : payload;
+      const classes =
+        (root && root.evidenceClasses) ||
+        (root && root.metadata && root.metadata.evidenceClasses) ||
+        (payload && payload.metadata && payload.metadata.evidenceClasses) ||
+        null;
+      if (classes) {
+        renderTwinEvidenceCounts(classes);
+        return;
+      }
+      const twinDoc = root && root.data && root.data.nodes ? root.data : root && root.nodes ? root : null;
+      if (twinDoc && twinDoc.nodes) {
+        const counts = { VERIFIED: 0, OBSERVED: 0, INFERRED: 0, STALE: 0, UNKNOWN: 0 };
+        (twinDoc.nodes || []).forEach((n) => {
+          (n.evidence || []).forEach((e) => {
+            if (counts[e.class] != null) counts[e.class]++;
+          });
+        });
+        (twinDoc.edges || []).forEach((e) => {
+          if (counts[e.evidenceClass] != null) counts[e.evidenceClass]++;
+        });
+        ((twinDoc.facets && twinDoc.facets.drift && twinDoc.facets.drift.items) || []).forEach((item) => {
+          if (counts[item.evidenceClass] != null) counts[item.evidenceClass]++;
+        });
+        renderTwinEvidenceCounts(counts);
+      }
+    }
+
+    async function refreshTwinEvidence() {
+      try {
+        const res = await fetch('/api/actions/twin-status');
+        const data = await res.json();
+        if (data.success) {
+          setResult(data);
+          renderTwinEvidenceFromPayload(data);
+          setResultStatus('ok', 'Twin evidence');
+        } else {
+          notify('warn', 'Twin', data.error || 'No Twin snapshot');
+        }
+      } catch (err) {
+        notify('err', 'Twin evidence', err.message);
+      }
+    }
+
+    /** Honesty badges for trust-sensitive Dashboard actions (does not change engine output). */
+    function attachActionHonesty(actionName, data) {
+      const body = data && data.data != null ? data.data : data;
+      if (actionName === 'heal') {
+        const count = Array.isArray(body) ? body.length : (body && body.length) || 0;
+        return Object.assign({}, data, {
+          honesty: {
+            badge: 'PARTIAL · healable-policy',
+            summary:
+              'Heal only rewrites locators in @veloprove-generated / // @veloprove-healable tests. Other files are skipped.',
+            toast: count === 0,
+            toastKind: 'info',
+            healableOnly: true,
+            resultsCount: count
+          }
+        });
+      }
+      if (actionName === 'auto-fix') {
+        const patches = (body && body.patches) || [];
+        const applied = !!(body && body.applied);
+        const review = patches.some((p) => p.safety === 'REVIEW_REQUIRED') || patches.length > 0;
+        return Object.assign({}, data, {
+          honesty: {
+            badge: applied ? 'REVIEW_REQUIRED · applied' : 'REVIEW_REQUIRED · proposal',
+            summary:
+              'Auto-Fix proposes app patches under FixSafetyPolicy. Default is review-only (Dashboard runs apply=false). Many APPLICATION_BUG patterns stay PARTIAL with no patch.',
+            toast: true,
+            toastKind: 'warn',
+            reviewRequired: review || true,
+            applied: applied,
+            patchCount: patches.length,
+            completeness: patches.length ? 'COMPLETE_OR_PARTIAL' : 'PARTIAL'
+          }
+        });
+      }
+      if (actionName === 'a11y') {
+        return Object.assign({}, data, {
+          honesty: {
+            badge: 'heuristic · not WCAG-certified',
+            summary: 'Static WCAG-oriented heuristics only — not a certified A/AA/AAA audit.',
+            toast: false
+          }
+        });
+      }
+      if (actionName === 'screen-reader') {
+        return Object.assign({}, data, {
+          honesty: {
+            badge: 'approximate · not NVDA/VoiceOver',
+            summary: 'Reading-order heuristics only — not a live screen-reader run.',
+            toast: false
+          }
+        });
+      }
+      return data;
+    }
+
     function setResult(data, state) {
       const box = document.getElementById('resultBox');
-      latestResultPayload = data;
+      let payload = data;
+      if (payload && typeof payload === 'object' && window.__VP_LAB_META__) {
+        payload = Object.assign({}, payload, { lab: window.__VP_LAB_META__ });
+        window.__VP_LAB_META__ = null;
+      }
+      latestResultPayload = payload;
       box.classList.remove('is-loading', 'is-error', 'is-empty');
       if (state === 'loading') box.classList.add('is-loading');
       if (state === 'error') box.classList.add('is-error');
       if (state === 'empty') box.classList.add('is-empty');
-      box.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+      box.textContent = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2);
     }
 
     function copyResults() {
@@ -273,6 +416,34 @@ export function dashboardClientScript(aiPresence?: {
       'dead-assets': {
         title: 'Scan dead assets?',
         detail: 'Dashboard scan is read-only. Deleting files requires CLI: veloprove dead-assets --purge -y'
+      },
+      refine: {
+        title: 'Refine tests?',
+        detail: 'May rewrite assertions in the selected (or latest) test file.'
+      },
+      stabilize: {
+        title: 'Stabilize flaky tests?',
+        detail: 'May rewrite waits/retries in target test files when save is enabled.'
+      },
+      'db-restore': {
+        title: 'Restore DB snapshot?',
+        detail: 'Overwrites fixture/DB files from a prior snapshot.'
+      },
+      init: {
+        title: 'Initialize VeloProve?',
+        detail: 'Creates .veloprove dirs and veloprove.config.json if missing (idempotent).'
+      },
+      'setup-ci': {
+        title: 'Generate CI workflow?',
+        detail: 'Writes a GitHub Actions workflow under .github/workflows.'
+      },
+      hook: {
+        title: 'Install git pre-commit hook?',
+        detail: 'Installs a local hook that runs change-impact checks before commits.'
+      },
+      sandbox: {
+        title: 'Start ephemeral sandbox?',
+        detail: 'Starts a local mock sandbox server (stops when the dashboard process exits).'
       }
     };
 
@@ -397,9 +568,16 @@ export function dashboardClientScript(aiPresence?: {
         const res = await fetch('/api/actions/' + actionName + (query || ''));
         const data = await res.json();
         if (data.success) {
-          setResult(data);
-          setResultStatus('ok', 'Done · ' + (data.durationMs || '?') + 'ms');
+          const enriched = attachActionHonesty(actionName, data);
+          setResult(enriched);
+          const honestyLabel = enriched.honesty && enriched.honesty.badge
+            ? ' · ' + enriched.honesty.badge
+            : '';
+          setResultStatus('ok', 'Done · ' + (data.durationMs || '?') + 'ms' + honestyLabel);
           logConsole('✔ ' + actionName + ' complete' + (data.durationMs != null ? ' · ' + data.durationMs + 'ms' : ''));
+          if (enriched.honesty && enriched.honesty.toast) {
+            notify(enriched.honesty.toastKind || 'info', enriched.honesty.badge || actionName, enriched.honesty.summary);
+          }
           // Toasts only for outcomes that need attention (paths / paste briefing)
           if (actionName === 'export-report' && data.data?.filePath && data.data.saved !== false) {
             logConsole('Saved: ' + data.data.filePath);
@@ -419,6 +597,9 @@ export function dashboardClientScript(aiPresence?: {
           } else if (actionName === 'verify' && data.data?.evidencePack?.indexPath) {
             logConsole('Evidence pack: ' + data.data.evidencePack.indexPath);
           }
+          if (actionName === 'twin' || actionName === 'twin-status') {
+            renderTwinEvidenceFromPayload(enriched);
+          }
         } else {
           setResult(data, 'error');
           setResultStatus('err', 'Failed');
@@ -437,6 +618,113 @@ export function dashboardClientScript(aiPresence?: {
       const target = encodeURIComponent(document.getElementById('throttleUrl').value || 'http://localhost:3000');
       const profile = encodeURIComponent(document.getElementById('throttleProfile').value || 'REGULAR_3G');
       return runAction('throttle', '?url=' + target + '&profile=' + profile);
+    }
+
+    function labDefaultUrl() {
+      const api = document.getElementById('apiBaseUrl');
+      const load = document.getElementById('loadUrl');
+      const throttle = document.getElementById('throttleUrl');
+      return (api && api.value) || (load && load.value) || (throttle && throttle.value) || 'http://localhost:3000';
+    }
+
+    function runLabTool(action, mode, cli) {
+      if (mode === 'cli-hint') {
+        const cmd = 'npx veloprove ' + (cli || action);
+        setResult({
+          mode: 'cli-hint',
+          action: action,
+          cli: cli,
+          command: cmd,
+          dashboard: 'not-supported',
+          note: 'Terminal only — this command starts an interactive or long-running process and cannot nest inside the Dashboard. Paste the command in a separate terminal.'
+        });
+        setResultStatus('ok', 'Terminal only');
+        logConsole('ℹ Terminal only: ' + cmd);
+        notify('info', 'Terminal only', cmd);
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(cmd);
+            logConsole('📋 Copied: ' + cmd);
+          }
+        } catch (_) { /* ignore */ }
+        return;
+      }
+
+      // Partial-path tools: collect missing params (no silent useless defaults)
+      let query = '';
+      if (action === 'refine') {
+        const instruction = window.prompt(
+          'Refine instruction (natural language). Cancel to abort.',
+          'Strengthen assertions with clearer expects'
+        );
+        if (instruction == null) {
+          logConsole('Cancelled: refine');
+          return;
+        }
+        query = '?instruction=' + encodeURIComponent(instruction.trim() || 'Strengthen assertions with clearer expects');
+      } else if (action === 'run-collection') {
+        const collection = window.prompt(
+          'Postman collection path (relative to project). Cancel to abort.',
+          'veloprove_postman_collection.json'
+        );
+        if (collection == null) {
+          logConsole('Cancelled: run-collection');
+          return;
+        }
+        query =
+          '?collection=' +
+          encodeURIComponent(collection.trim() || 'veloprove_postman_collection.json') +
+          '&url=' +
+          encodeURIComponent(labDefaultUrl());
+      } else if (action === 'alert') {
+        const webhook = window.prompt('Webhook URL required for alert. Cancel to abort / use CLI.', '');
+        if (!webhook || !String(webhook).trim()) {
+          setResult({
+            mode: 'partial',
+            action: 'alert',
+            skipped: true,
+            note: 'Dashboard needs a webhook URL. Full options: npx veloprove alert <webhookUrl>'
+          });
+          setResultStatus('ok', 'Partial — use CLI');
+          notify('warn', 'Partial', 'Use CLI: npx veloprove alert <webhookUrl>');
+          return;
+        }
+        query = '?url=' + encodeURIComponent(String(webhook).trim());
+      } else if (action === 'db-restore') {
+        const id = window.prompt('Snapshot id to restore (empty = latest listed). Cancel to abort.', '');
+        if (id == null) {
+          logConsole('Cancelled: db-restore');
+          return;
+        }
+        if (String(id).trim()) query = '?id=' + encodeURIComponent(String(id).trim());
+      }
+
+      if (mode === 'needs-url' && !query) {
+        query = '?url=' + encodeURIComponent(labDefaultUrl());
+      } else if (mode === 'needs-url' && query && query.indexOf('url=') < 0) {
+        query += (query.indexOf('?') === 0 ? '&' : '?') + 'url=' + encodeURIComponent(labDefaultUrl());
+      }
+
+      window.__VP_LAB_META__ = {
+        mode: mode,
+        cli: 'npx veloprove ' + (cli || action),
+        action: action
+      };
+      return runAction(action, query);
+    }
+
+    function filterLab() {
+      const input = ((document.getElementById('labSearchInput') || {}).value || '').toLowerCase().trim();
+      document.querySelectorAll('.lab-group').forEach((group) => {
+        let any = false;
+        group.querySelectorAll('.lab-row').forEach((row) => {
+          const q = (row.getAttribute('data-lab-q') || row.innerText || '').toLowerCase();
+          const show = !input || q.includes(input);
+          row.classList.toggle('lab-hidden', !show);
+          if (show) any = true;
+        });
+        group.classList.toggle('lab-hidden', !any);
+      });
     }
 
     const ACTION_BTN_GROUP = {

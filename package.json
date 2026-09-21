@@ -1,6 +1,6 @@
 {
   "name": "@engnadia/veloprove",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local-first agentic QA toolkit for AI-assisted test generation, automated testing, failure analysis, regression detection, and quality reporting.",
   "keywords": [
     "veloprove",
@@ -70,7 +70,9 @@
     "release:pack": "npm pack",
     "pack:smoke": "node scripts/pack-smoke.js",
     "manifest:generate": "node scripts/generate-manifest.js",
-    "audit:tools": "vitest run tests/unit/tool-surface-audit.test.ts tests/integration/tool-smoke-real-project.test.ts"
+    "audit:tools": "vitest run tests/unit/tool-surface-audit.test.ts tests/integration/tool-smoke-real-project.test.ts",
+    "audit:features": "npm run build && node scripts/feature-pass-real.mjs",
+    "test:fault-harness": "vitest run tests/fault-harness/run-fault-harness.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",

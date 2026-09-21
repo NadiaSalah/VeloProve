@@ -95,27 +95,38 @@ This command executes:
 4. `npm pack --dry-run`: Validates packaged files against the strict allowlist (includes **docs/AGENTS.md**, FAQ, marketplace badge), checks file size (< 5MB), and verifies the CLI shebang.
 5. Consumer CLI smoke + **`npm run pack:smoke`**: pack → install on fixture → `init --teach` → **`ask`** → doctor → verify.
 
-Also recommended:
+Also recommended before publish:
 
 ```bash
-npm run audit:tools   # 75 CLI × 75 MCP × Dashboard wiring
+npm run audit:tools   # CLI × MCP × Dashboard wiring (counts from TOOL_SURFACE)
+npm run audit:features  # sequential real-fixture feature pass (when green)
 ```
 
----
+**Do not hardcode tool counts** in marketing copy — always derive from `catalogCliCommands()` / `catalogMcpTools()` / `TOOL_SURFACE` (or say “see surface-matrix”).
 
-## 5. Marketplace screenshots (manual upload)
-
-Already captured locally (do **not** commit):
-
-`_local_demo/screenshots/01-dashboard-overview.png`  
-`_local_demo/screenshots/02-dashboard-verify.png`  
-`_local_demo/screenshots/03-dashboard-docs-chat.png`  ← **Docs Chat UI**
-
-Checklist + listing copy: [`docs/assets/marketplace/README.md`](docs/assets/marketplace/README.md).
-
-Recapture: `cd _local_demo && node capture-screenshots.mjs` (UI must be on port 4177).
+**Tool Lab honesty:** sidebar is curated; Lab is full CLI. Terminal only (`ui`/`tui`/`mcp`/`watch`/`mock-server`) must not nest in Dashboard — documented in `docs/AGENTS.md`, `docs/guides/faq.md`, `docs/reference/surface-matrix.md`.
 
 ---
+
+## 5. Screenshots (two tracks)
+
+### A) GitHub README gallery (committed under `docs/assets/screenshots/`)
+
+Required PNGs for README embeds (excluded from npm via `.npmignore`):
+
+- `01-dashboard-overview.png`
+- `02-dashboard-verify.png`
+- `03-dashboard-docs-chat.png`
+
+Recapture (Dashboard on the port the script expects — see `docs/assets/screenshots/README.md`):
+
+```bash
+node scripts/capture-readme-screenshots.mjs
+```
+
+### B) Marketplace listings (manual upload — do **not** commit)
+
+`_local_demo/screenshots/` — Cursor / Claude / Windsurf uploads. Checklist: [`docs/assets/marketplace/README.md`](docs/assets/marketplace/README.md).
 
 ## 6. Release Steps for Maintainers
 

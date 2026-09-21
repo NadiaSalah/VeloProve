@@ -1,5 +1,5 @@
 /**
- * CapabilityRegistry — verify/intent subset (NOT the full 75-tool / 83-catalog surface).
+ * CapabilityRegistry — verify/intent subset (NOT the full 78-tool / 86-catalog surface).
  *
  * Used by VerifyOrchestrator and IntentPlanner to decide which high-level
  * capabilities to run during autonomous verify. Full product surface lives in
@@ -183,7 +183,7 @@ const CAPABILITIES: CapabilityDefinition[] = [
   },
   {
     id: 'accessibility',
-    description: 'WCAG automated checks',
+    description: 'Static WCAG-oriented heuristics',
     cliCommand: 'a11y',
     mcpTool: 'vp.accessibility',
     riskAreas: ['a11y', 'ui'],

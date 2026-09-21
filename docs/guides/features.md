@@ -1,6 +1,8 @@
 # VeloProve Feature Guide & Deep Dive
 
-VeloProve provides an end-to-end, local-first autonomous QA engine. This guide organizes all capabilities into cohesive engineering domains.
+VeloProve provides an end-to-end, local-first autonomous QA engine. This guide organizes capabilities by domain.
+
+**Surface index:** CLI / MCP / Dashboard ids live in `src/shared/tool-catalog.ts` (`TOOL_SURFACE`). Prefer that catalog (and `docs/reference/cli.md` / `mcp.md`) as the checklist; this guide is a capability essay, not a second registry. A11y / screen-reader are **static heuristics** (not certified WCAG / live NVDA). `vp.suggestFix` is **PARTIAL** guidance; `heal` covers marked tests only; `auto-fix` is **REVIEW_REQUIRED**.
 
 ---
 
@@ -32,7 +34,7 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
 - Evaluates test pass rates, diagnostic severities, flaky test ratios, and requirement coverage.
 - Outputs quantitative readiness scores (0-100) and gate verdicts (`READY`, `READY_WITH_WARNINGS`, `NOT_READY`).
 
-## 5b. Autonomous Verify Orchestrator (`vp.verify` / `veloprove verify`)
+## 6. Autonomous Verify Orchestrator (`vp.verify` / `veloprove verify`)
 - CapabilityRegistry-driven pipeline: inspect → impact → targeted (or full) tests → diagnose → optional TEST_BUG heal → release assessment.
 - Returns versioned `OperationResult` evidence with warnings and CI exit codes (`0`/`1`/`2`/`3`).
 - Supports deterministic `--intent` planning (no LLM) and flags for security / a11y inclusion.
@@ -41,18 +43,18 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
 - Recurring: `watch --verify` / `watch -i <sec>` / `hook install --verify` — see [scheduled-verify.md](scheduled-verify.md).
 - Dashboard Verify presets: sandbox / docker-env / full suite.
 
-## 5c. Run History Trends (`vp.history` / `veloprove history`)
+## Run History Trends (`vp.history` / `veloprove history`)
 - Aggregates local pass-rate, duration, and flaky counts from `.veloprove` state.
 - Shared by CLI, MCP, and dashboard sparklines (`/api/history`).
 
-## 5d. Smart DevServer Launcher (`vp.ensureDev` / `veloprove ensure-dev`)
+## Smart DevServer Launcher (`vp.ensureDev` / `veloprove ensure-dev`)
 - Probes `baseURL`, detects package scripts, and starts npm/pnpm/yarn/bun when offline.
 
 ---
 
 # Domain 2: Testing, Diagnostics & Safe Healing
 
-## 6. Evidence-Based Diagnostics (`vp.diagnose` / `veloprove diagnose`)
+## Evidence-Based Diagnostics (`vp.diagnose` / `veloprove diagnose`)
 - Classifies failures into root causes:
   - `APPLICATION_BUG`: Business logic error, server 500, or wrong response data.
   - `TEST_BUG`: Stale selector, changed markup, locator mismatch.
@@ -60,8 +62,8 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
   - `NETWORK_FAILURE`: Unreachable API endpoint or connection drop.
 
 ## 7. Guarded Test Self-Healing (`vp.heal` / `veloprove heal`)
-- Upgrades fragile CSS selectors (`#submit-btn-2`) to accessible locators (`getByRole('button', { name: 'Submit' })`).
-- Does NOT touch application business logic.
+- Upgrades fragile CSS selectors (`#submit-btn-2`) to accessible locators (`getByRole('button', { name: 'Submit' })`) in `@veloprove-generated` / `@veloprove-healable` tests only.
+- Does NOT touch application business logic or unmarked developer tests.
 
 ## 8. Natural Language Test Refinement (`vp.refine` / `veloprove refine`)
 - Allows developers and AI agents to update tests using plain English prompts.
@@ -76,7 +78,7 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
 - Tracks historical flakiness variance and isolates unstable tests from failing CI builds.
 
 ## 12. Autonomous Bug-Fix & Git Patch Synthesizer (`vp.autoBugFix` / `veloprove auto-fix`)
-- Generates verified source code fix patches for `APPLICATION_BUG` failures with unified Git diffs.
+- Proposes reviewable source patches for some `APPLICATION_BUG` failures under FixSafetyPolicy (**REVIEW_REQUIRED** — not guaranteed auto-apply).
 
 ## 13. Autonomous Git Bisect Regression Hunter (`vp.gitBisect` / `veloprove bisect`)
 - Traverses Git history to find the exact commit that introduced a test failure.
@@ -101,6 +103,7 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
 - Injects SQL injection probes, boundary buffers, and unauthorized access checks across discovered routes.
 
 ## 18. API & OpenAPI Contract Drift Detector (`vp.contractDrift` / `veloprove contract-drift`)
+- Compares OpenAPI/spec routes to scanned code endpoints. Also covered by the **`veloprove drift`** aggregator (which adds parity/env/docs).
 - Detects discrepancies between OpenAPI documentation specifications and active code routes.
 
 ## 19. GraphQL & WebSocket Real-Time Testing (`vp.graphqlTest`, `vp.wsTest` / `veloprove graphql`, `veloprove ws-test`)
@@ -128,11 +131,11 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
 ## 25. Visual Regression & Pixel Diff Engine (`vp.visualDiff` / `veloprove visual-diff`)
 - Compares UI screenshot baselines with current screenshots to detect visual regression.
 
-## 26. Automated WCAG 2.1 Accessibility Auditor (`vp.accessibility` / `veloprove a11y`)
-- Audits component JSX/TSX and routes against accessibility standards (missing alt tags, button contrast, form labels).
+## 26. Accessibility Auditor (`vp.accessibility` / `veloprove a11y`)
+- Static WCAG-oriented heuristics on component JSX/TSX and routes (missing alt tags, form labels, roles). Score labels are **not** a WCAG 2.1 A/AA/AAA conformance claim.
 
 ## 27. Screen Reader & Audio Flow Simulator (`vp.screenReaderSim` / `veloprove screen-reader`)
-- Simulates auditory speech flow order (NVDA / VoiceOver) and detects heading hierarchy skips and unlabelled controls.
+- Heuristic speech-order preview for headings/controls — **not** a live NVDA / VoiceOver session.
 
 ## 28. Live Remote Companion Bridge & Probe Agent (`vp.remoteInit`, `vp.remoteConnect`, `vp.remoteAudit` / `veloprove remote-init`, `veloprove remote-connect`, `veloprove remote-audit`)
 - Connects local VeloProve to any live production/staging website via a lightweight drop-in companion probe file.
@@ -213,13 +216,13 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
 ## 48. Teach AI / Universal Agent Handshake (`vp.bootstrap` / `veloprove teach-ai`)
 - Self-teaching protocol for any AI editor or agent (Cursor, Windsurf, Claude Code, Cline, Codex, Copilot). Writes `AGENTS.md`, optional `.cursor/mcp.json`, and a paste-ready briefing. Alias: `agent-handshake`. Dashboard: sidebar **Start → Teach AI** (and Overview Quick Actions).
 
-## 48b. Docs Chat (`vp.ask` / `veloprove ask`)
+## 49. Docs Chat (`vp.ask` / `veloprove ask`)
 - Answers questions from **packaged markdown docs only** (no cloud LLM). CLI: `veloprove ask "…"`, `--repl`. MCP: `vp.ask`. Dashboard pin: **Docs Chat**. Use Copy Answer to paste into an external agent chat.
 
-## 49. Custom Framework Self-Teaching (`vp.learnFramework` / `veloprove learn-framework`)
+## 50. Custom Framework Self-Teaching (`vp.learnFramework` / `veloprove learn-framework`)
 - Ingests custom or in-house framework conventions from `AGENTS.md` and repository guidelines.
 
-## 50. LLM & AI Output Hallucination & Accuracy Evaluator (`vp.aiEvaluate` / `veloprove ai-eval`)
+## 51. LLM & AI Output Hallucination & Accuracy Evaluator (`vp.aiEvaluate` / `veloprove ai-eval`)
 - Evaluates AI model outputs against ground truth facts and validates JSON schema compliance.
 
 ---
@@ -287,7 +290,7 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
 - Validates Node.js version, package manager, test runners (Vitest / Jest / Playwright / `node:test`), Playwright browsers, and project config health before agents run deep loops.
 
 ## 63. Application Fix Suggestions (`vp.suggestFix` — MCP-only)
-- When diagnosis is `APPLICATION_BUG`, returns evidence-backed source fix recommendations. There is no CLI twin; agents should call `vp.suggestFix` over MCP.
+- When diagnosis is `APPLICATION_BUG`, returns evidence-backed **prose guidance** (`completeness: PARTIAL` until real diffs ship). There is no CLI twin; agents should call `vp.suggestFix` over MCP. Not a guaranteed fix.
 
 ## 64. Git Pre-Commit Hook (`veloprove hook install|uninstall`)
 - Installs or removes a local pre-commit hook that runs change-impact verification before commits (CLI-only companion to the verify loop).
@@ -297,4 +300,20 @@ VeloProve provides an end-to-end, local-first autonomous QA engine. This guide o
 
 ## 66. Async Run Polling (`vp.run.get` — MCP-only)
 - Polls status for long-running `vp.run` executions when agents need non-blocking orchestration.
+
+## 67. Project Twin (**PARTIAL MVP**) (`vp.twin` / `veloprove twin`)
+- Builds a local project model under `.veloprove/twin/latest.json` from **inspect SSOT** (not a second scanner, not AI assumptions).
+- Evidence classes: `VERIFIED` / `OBSERVED` / `INFERRED` / `STALE` / `UNKNOWN`.
+- Optional facets: `--with-impact` (wraps `changed`), `--with-drift` (aggregator). Incremental fingerprint reuse; `--force` rebuilds.
+- Do **not** market as complete Ground Truth — see repo `TODO.md`.
+
+## 68. Impact enrichment (`vp.impact` / `veloprove impact`)
+- Thin wrap over `changed` that attaches Twin feature hits when a Twin snapshot exists.
+
+## 69. Drift aggregator (`vp.drift` / `veloprove drift`)
+- Composes `contract-drift` + `feature-parity` + `env-drift` + docs/package hints. Marks Twin fingerprint disagreement as `STALE`.
+- Individual engines remain available as separate commands (not aliases of `drift`).
+
+## 70. Twin-aware affected tests (`veloprove test --affected` / `--scope affected`)
+- Unions DependencyGraph + Twin impact. **Expands to the full suite** when confidence is low or no tests map — never silently shrinks.
 

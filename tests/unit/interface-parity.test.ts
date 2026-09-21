@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { catalogCliCommands, catalogMcpTools } from '../../src/shared/tool-catalog.js';
+import { getPackageVersion } from '../../src/shared/package-meta.js';
 
 describe('VeloProve Interface Parity & Integrity Validation', () => {
   const mcpServerSource = fs.readFileSync(path.resolve(__dirname, '../../src/mcp/server.ts'), 'utf8');
@@ -9,8 +11,11 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
   const cliDocSource = fs.readFileSync(path.resolve(__dirname, '../../docs/reference/cli.md'), 'utf8');
   const readmeSource = fs.readFileSync(path.resolve(__dirname, '../../README.md'), 'utf8');
   const dashboardSource = fs.readFileSync(path.resolve(__dirname, '../../src/application/dashboard-server.ts'), 'utf8');
+  const expectedMcp = catalogMcpTools().length;
+  const expectedCli = catalogCliCommands().length;
+  const pkgVersion = getPackageVersion();
 
-  it('verifies exactly 75 unique MCP tools are properly registered, have schemas, descriptions, and handlers', () => {
+  it('verifies catalog-derived unique MCP tools are properly registered, have schemas, descriptions, and handlers', () => {
     // 1. Extract tool names registered in ListToolsRequestSchema
     const toolNameRegex = /name:\s*'(vp\.[a-zA-Z0-9_\.]+)'/g;
     const registeredTools: string[] = [];
@@ -20,11 +25,11 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
       registeredTools.push(match[1]);
     }
 
-    expect(registeredTools.length).toBe(75);
+    expect(registeredTools.length).toBe(expectedMcp);
 
     // Verify no duplicates
     const uniqueTools = new Set(registeredTools);
-    expect(uniqueTools.size).toBe(75);
+    expect(uniqueTools.size).toBe(expectedMcp);
 
     // 2. Extract tool handlers in CallToolRequestSchema switch statement
     const caseRegex = /case\s*'(vp\.[a-zA-Z0-9_\.]+)':/g;
@@ -39,7 +44,7 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
     }
   });
 
-  it('verifies all 75 MCP tools are documented in docs/reference/mcp.md and advertised in README.md', () => {
+  it('verifies all catalog MCP tools are documented in docs/reference/mcp.md and advertised in README.md', () => {
     const toolNameRegex = /name:\s*'(vp\.[a-zA-Z0-9_\.]+)'/g;
     const registeredTools: string[] = [];
     let match: RegExpExecArray | null;
@@ -48,7 +53,7 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
       registeredTools.push(match[1]);
     }
 
-    expect(registeredTools.length).toBe(75);
+    expect(registeredTools.length).toBe(expectedMcp);
 
     for (const tool of registeredTools) {
       expect(
@@ -57,14 +62,14 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
       ).toContain(`\`${tool}\``);
     }
 
-    // Verify documentation claim synchronization
-    expect(mcpDocSource).toContain('75 Tools');
-    expect(readmeSource).toContain('75 structured Model Context Protocol (MCP) tools');
+    // Verify documentation claim synchronization (catalog language, not magic numbers)
+    expect(mcpDocSource).toMatch(/catalogMcpTools\(\)\.length|TOOL_SURFACE/);
+    expect(readmeSource).toMatch(/structured Model Context Protocol \(MCP\) tools|catalog length from `TOOL_SURFACE`|MCP-catalog/);
     expect(readmeSource).not.toContain('64 structured tools');
     expect(readmeSource).not.toContain('68 structured tools');
   });
 
-  it('verifies exactly 75 CLI commands are registered and documented', () => {
+  it('verifies catalog-derived CLI commands are registered and documented', () => {
     const cliCommandRegex = /\.command\('([a-zA-Z0-9_\-]+)(?:\s+[^']*)?'\)/g;
     const registeredCliCommands: string[] = [];
     let match: RegExpExecArray | null;
@@ -73,11 +78,11 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
       registeredCliCommands.push(match[1]);
     }
 
-    expect(registeredCliCommands.length).toBe(75);
+    expect(registeredCliCommands.length).toBe(expectedCli);
 
     // Verify no duplicate CLI command names
     const uniqueCommands = new Set(registeredCliCommands);
-    expect(uniqueCommands.size).toBe(75);
+    expect(uniqueCommands.size).toBe(expectedCli);
 
     // Check against CLI documentation
     for (const cmd of registeredCliCommands) {
@@ -110,7 +115,7 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
   it('verifies destructive commands have safe opt-in flags and protected defaults', () => {
     // Check malware remediation
     expect(cliSource).toContain(".option('--fix'");
-    // Check bugfix patch application
+    // Check bug fix patch application
     expect(cliSource).toContain(".option('--apply'");
     // Check dead asset purge
     expect(cliSource).toContain(".option('--purge'");
@@ -130,12 +135,17 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
     const manifestPath = path.resolve(__dirname, '../../docs/generated/CAPABILITY_MANIFEST.json');
     expect(fs.existsSync(manifestPath)).toBe(true);
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    expect(manifest.version).toBe('1.0.0');
+    expect(manifest.version).toBe(pkgVersion);
     expect(manifest.package).toBe('@engnadia/veloprove');
     expect(manifest.cliBinary).toBe('veloprove');
-    expect(manifest.totalMcpTools).toBe(75);
-    expect(manifest.totalCliCommands).toBe(75);
+    expect(manifest.totalMcpTools).toBe(expectedMcp);
+    expect(manifest.totalCliCommands).toBe(expectedCli);
     expect(manifest.capabilities.length).toBeGreaterThanOrEqual(70);
+    for (const cap of manifest.capabilities) {
+      expect(cap.verificationStatus).toMatch(
+        /^(VERIFIED|VERIFIED_WITH_WARNINGS|PARTIAL|BLOCKED|NOT_IMPLEMENTED|NOT_APPLICABLE)$/
+      );
+    }
   });
 
   it('verifies npm pack artifact naming and size sanity (packageSize <= unpackedSize)', () => {
@@ -147,7 +157,7 @@ describe('VeloProve Interface Parity & Integrity Validation', () => {
     });
     const packData = JSON.parse(packOutputRaw)[0];
 
-    expect(packData.filename).toBe('engnadia-veloprove-1.0.0.tgz');
+    expect(packData.filename).toBe(`engnadia-veloprove-${pkgVersion}.tgz`);
     expect(packData.size).toBeLessThanOrEqual(packData.unpackedSize);
     expect(packData.size).toBeGreaterThan(100 * 1024); // > 100KB
     expect(packData.unpackedSize).toBeGreaterThan(1024 * 1024); // > 1MB

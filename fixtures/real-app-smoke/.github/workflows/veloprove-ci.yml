@@ -29,8 +29,13 @@ jobs:
       - name: Initialize & Inspect VeloProve
         run: npx veloprove inspect
 
+      - name: Project Twin + Drift (PARTIAL MVP)
+        run: |
+          npx veloprove twin update --with-impact --with-drift || npx veloprove twin build --with-impact --with-drift
+          npx veloprove drift --json
+
       - name: Run Test Suites
-        run: npx veloprove test
+        run: npx veloprove test --affected || npx veloprove test
 
       - name: Evaluate Release Confidence
         run: npx veloprove release --ci

@@ -1,0 +1,190 @@
+{
+  "counts": {
+    "catalogRows": 86,
+    "cli": 78,
+    "dashboardActionsInCatalog": 52,
+    "dashboardActionsInServer": 54,
+    "cliWithoutDashboardAction": 29
+  },
+  "intentionalCliWithoutDashButton": [
+    {
+      "cli": "refine",
+      "tier": "needs-state",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "run-collection",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "request",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "load-test",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "mock-data",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "owasp-scan",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "graphql",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "ws-test",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "remote-init",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "remote-connect",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "remote-audit",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "stabilize",
+      "tier": "needs-state",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "db-snapshot",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "db-restore",
+      "tier": "needs-state",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "chaos",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "alert",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "rate-limit",
+      "tier": "needs-url",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "mock-server",
+      "tier": "interactive",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "twin",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "impact",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "drift",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "init",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "ui",
+      "tier": "interactive",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "tui",
+      "tier": "interactive",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "setup-ci",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "sandbox",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "watch",
+      "tier": "interactive",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "hook",
+      "tier": "offline",
+      "documented": true,
+      "mentionedInUiCopy": true
+    },
+    {
+      "cli": "mcp",
+      "tier": "interactive",
+      "documented": true,
+      "mentionedInUiCopy": true
+    }
+  ],
+  "catalogDashMissingServer": [],
+  "serverOnlyHelpers": [
+    "lint-fix",
+    "init-security-policy"
+  ]
+}

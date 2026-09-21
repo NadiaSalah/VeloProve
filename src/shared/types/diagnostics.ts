@@ -85,6 +85,8 @@ export interface SourceFixSuggestion {
     description: string;
     diffOrPatch?: string;
   };
+  /** Honesty: PARTIAL when no real unified diff is available. */
+  completeness: 'PARTIAL' | 'COMPLETE';
   confidence: number;
   evidence: string[];
   recommendedValidation: string;
