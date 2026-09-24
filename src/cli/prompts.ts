@@ -31,9 +31,9 @@ export async function promptInitQuestions(
   if (!process.stdin.isTTY || process.env.CI) {
     return {
       testFramework: 'auto',
-      configureMcp: hinted.length > 0,
+      configureMcp: true,
       mcpTargets: hinted.length > 0 ? hinted.map((h) => h.id) : ['cursor'],
-      teachAi: hinted.length > 0,
+      teachAi: true,
       installDependencies: false
     };
   }

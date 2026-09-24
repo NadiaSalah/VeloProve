@@ -9,9 +9,9 @@ Do **not** bump to v2 unless a breaking major rewrite is explicitly approved.
 
 ## Needs human (P0)
 
-- [x] **Commit 1.0.1 sources** (Twin, Tool Lab, trust docs, fixtures, tests) — local commit done; **push still human**
-- [ ] **Push `main` + Publish `@engnadia/veloprove@1.0.1`** — `git push` then `npm publish` + GitHub Release/tag  
-  Gate: `npm run release:check` + `npm run audit:tools`
+- [x] **Commit 1.0.1 sources** (Twin, Tool Lab, trust docs, fixtures, tests)
+- [x] **Push `main` + tag `v1.0.1`** — first CI run failed (tests before build); hotfix pushed + tag moved
+- [ ] **Confirm npm `@engnadia/veloprove@1.0.1` live** — https://www.npmjs.com/package/@engnadia/veloprove
 - [ ] **Marketplace upload** — stills in `_local_demo/screenshots/` (gitignored; do not commit)
 
 ---

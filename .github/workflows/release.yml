@@ -30,11 +30,12 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Run Test Suites
-        run: npm test
-
+      # dist/ is gitignored — build before any test that execs the compiled CLI
       - name: Build Package
         run: npm run build
+
+      - name: Run Test Suites
+        run: npm test
 
       - name: Run Release Integrity Check
         run: npm run release:check
