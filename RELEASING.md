@@ -148,7 +148,7 @@ npm version major --no-git-tag-version  # 1.0.0 -> 2.0.0
 npm run release:check
 ```
 
-### Step 3: Commit and Push Version Tag
+### Step 3: Commit, tag, and push
 ```bash
 git add package.json CHANGELOG.md
 git commit -m "chore(release): v<target-version>"
@@ -156,12 +156,18 @@ git tag v<target-version>
 git push origin main --tags
 ```
 
-### Step 4: Automated CI/CD Publishing
-The GitHub Actions workflow (`.github/workflows/release.yml`) will automatically:
-1. Run all tests and builds.
-2. Generate the npm distribution tarball (`engnadia-veloprove-<version>.tgz`).
-3. Create a GitHub Release with the tarball attached.
-4. Publish the package to npm with provenance.
+### Step 4: Publish manually (no GitHub Actions release workflow)
+From a machine logged into npm with publish rights on `@engnadia` (e.g. `codartco` member):
+
+```bash
+# Windows TLS workaround when needed:
+# $env:NODE_OPTIONS='--use-system-ca'
+npm run release:check
+npm publish --access public
+# If 2FA prompts: npm publish --access public --otp=<code>
+```
+
+Optionally create a GitHub Release from the tag in the GitHub UI and attach `npm pack` output (`engnadia-veloprove-<version>.tgz`).
 
 ### Step 5: Marketplace (human)
 1. Confirm `docs/AGENTS.md` + guides are in the published tarball (`npm pack --dry-run`).
