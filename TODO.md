@@ -10,8 +10,10 @@ Do **not** bump to v2 unless a breaking major rewrite is explicitly approved.
 ## Needs human (P0)
 
 - [x] **Commit 1.0.1 sources** (Twin, Tool Lab, trust docs, fixtures, tests)
-- [x] **Push `main` + tag `v1.0.1`** — first CI run failed (tests before build); hotfix pushed + tag moved
-- [ ] **Confirm npm `@engnadia/veloprove@1.0.1` live** — https://www.npmjs.com/package/@engnadia/veloprove
+- [x] **Push `main` + tag `v1.0.1`** — GitHub Release live with tarball
+- [ ] **Publish npm `@engnadia/veloprove@1.0.1`** — CI publish failed (bad/missing `NPM_TOKEN`); local `.npmrc` also 401  
+  Fix: create fresh [npm access token](https://www.npmjs.com/settings/~/tokens) → set repo secret `NPM_TOKEN` → re-run [failed release workflow](https://github.com/NadiaSalah/VeloProve/actions/runs/35957847119)  
+  Or: `npm login` then `npm publish --access public` from this tree
 - [ ] **Marketplace upload** — stills in `_local_demo/screenshots/` (gitignored; do not commit)
 
 ---
