@@ -47,9 +47,9 @@ Multi-LLM matrix, k6 exporters, multi-language engines, plugin marketplace, auto
 
 | Channel | Ready? | Notes |
 |---------|--------|--------|
-| **npm tarball** | Yes (from this working tree after `build`) | `files` + `.npmignore`; includes `dist/`, `docs/guides` (incl. `trust.md`), marketplace assets; **excludes** screenshots, fixtures, `docs/internal`, `src/` |
-| **GitHub tag** | **Not until commit** | Many `??` paths are 1.0.1 features — must be committed or the tag will miss Twin/Lab |
-| **README gallery** | Yes | Committed path `docs/assets/screenshots/` (not in npm) |
+| **npm tarball** | Yes (after `build` / `prepack`) | `files` + `.npmignore`; includes `dist/`, `docs/guides` (incl. `trust.md`), marketplace assets; **excludes** screenshots, fixtures, `docs/internal`, `src/` |
+| **GitHub** | Commit `ff59605` local — needs **push** + tag `v1.0.1` | |
+| **README gallery** | Yes | `docs/assets/screenshots/` (not in npm) |
 | **Marketplace** | Local stills ready | Upload manually from `_local_demo/screenshots/` |
 
 ---
